@@ -157,11 +157,11 @@ python demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --proj
 
 
 
-![image-20230427093103453](asset\image-20230427093103453.png)
+![image-20230427093103453](asset/image-20230427093103453.png)
 
 
 
-![image-20230427142525745](asset\image-20230427142525745.png)
+![image-20230427142525745](asset/image-20230427142525745.png)
 
 ***🔨To Do list***
 
