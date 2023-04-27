@@ -21,3 +21,4 @@ setuptools
 termcolor
 nltk
 gradio
+omegaconf
