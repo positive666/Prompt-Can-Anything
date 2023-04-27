@@ -26,6 +26,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 runs/
+train_imgs/
 MANIFEST
 
 # PyInstaller
