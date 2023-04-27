@@ -150,7 +150,7 @@ Run
 	2. run demo
 
 ```bash
-python demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --project <out label path >
+python demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --save_caption 
 ```
 
 **🏃Demo **
