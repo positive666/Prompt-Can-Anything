@@ -14,11 +14,12 @@ Target:  Plan to generate high-quality data annotation data and train our  model
 
  2.  Semi-automatic interaction  UI tool (coming soon)
 
-**Feature**
+## Feature
 
 - 🔥Data Engine	
-	<details open >
-	    Provide fully automated data annotation with one-click export (detection, segmentation, text, and nerf  reconstruction results) and refine these through engineering optimization, , through the correlation models of stable diffusion and gpt, we can create more data source power for downstream tasks.
+	
+	Provide fully automated data annotation with one-click export (detection, segmentation, text, and nerf  reconstruction results) and refine these through engineering optimization, ,through the correlation models of stable diffusion and gpt, we can create more data source power for downstream tasks.
+	
 	</details >
 	
 - Extended one-click annotation training for the use of three-party projects, such as Yolo, Lora modes. （coming soon）
@@ -29,8 +30,8 @@ Target:  Plan to generate high-quality data annotation data and train our  model
 <details open >
 <summary>⭐ Research🚀 project🔥 Inspiration（In preparation）</summary>
 
-	  At  research level, Zero-shot comparative learning is research trend, we hope to understand as much as possible the model design details of the project we are applying, so that we want to combine text, images, and audio to design a strong aligned backbone.
-	  At  project level, Tensorrt acceleration of the basic model accelerates efficiency.
+	  At research level, Zero-shot comparative learning is research trend, we hope to understand as much as possible the model design details of the project we are applying, so that we want to combine text, images, and audio to design a strong aligned backbone.
+	  At project level, Tensorrt acceleration of the basic model accelerates efficiency.
 
 </details >
 
