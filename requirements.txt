@@ -8,3 +8,16 @@ numpy
 opencv-python
 supervision==0.4.0
 pycocotools
+urllib3==1.25.11 
+tqdm
+diffusers
+huggingface_hub
+matplotlib
+onnxruntime
+Pillow
+PyYAML
+requests
+setuptools
+termcolor
+nltk
+gradio

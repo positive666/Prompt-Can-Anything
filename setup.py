@@ -16,8 +16,8 @@ import torch
 from setuptools import find_packages, setup
 from torch.utils.cpp_extension import CUDA_HOME, CppExtension, CUDAExtension
 
-version = "0.1.0"
-package_name = "Prompt-can-anything"
+version = "0.1"
+package_name = "Prompt-Can-Anything"
 cwd = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -169,8 +169,8 @@ if __name__ == "__main__":
     print(f"Building wheel {package_name}-{version}")
 
     setup(
-        name="Prompt-can-anything",
-        version="0.1.0",
+        name="Prompt-Can-Anything",
+        version="0.1",
         author="positive666",
         description="open-set object detector",
         #license=license,
