@@ -157,13 +157,11 @@ python demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --proj
 
 
 
-![image-20230427093103453](C:\Users\gwsd\AppData\Roaming\Typora\typora-user-images\image-20230427093103453.png)
-
-![image-20230427093135810](C:\Users\gwsd\AppData\Roaming\Typora\typora-user-images\image-20230427093135810.png)
-
-web-demo(coming soon)
+![image-20230427093103453](asset\image-20230427093103453.png)
 
 
+
+![image-20230427142525745](asset\image-20230427142525745.png)
 
 ***🔨To Do list***
 
