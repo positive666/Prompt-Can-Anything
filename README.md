@@ -7,7 +7,11 @@ Current: Making a fully automated AI tool for engineering and research to create
 
 Target:  Plan to generate high-quality data annotation data and train our  models.
 
- 1. Auto-label tool  current structure 
+So it's just a tool for prompt any thing(YOCO)
+
+ 1. Auto-label tool  ,current structure (YOCO)
+
+    In addition, we will introduce video, audio, and 3D annotation in the future.
 
 ![structure](asset/data_engine.png)
 
