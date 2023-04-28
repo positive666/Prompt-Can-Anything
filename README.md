@@ -20,9 +20,9 @@ So it's just a tool for prompt any thing(YOCO)
 
 ## Feature
 
-- 🔥Data Engine	
+- 🔥Data Engine(
 	
-	Provide fully automated data annotation with one-click export (detection, segmentation, text, and nerf  reconstruction results) and refine these through engineering optimization, ,through the correlation models of stable diffusion and gpt, we can create more data source power for downstream tasks.
+	Provide fully automated data annotation with one-click export (detection, segmentation, text, and nerf  reconstruction results) and refine these through engineering optimization, ,through the correlation models of stable diffusion and gpt, we can create more data source power for downstream tasks. 
 	
 	</details >
 	
@@ -43,7 +43,7 @@ So it's just a tool for prompt any thing(YOCO)
 
 ### <div align="left">⭐[news list] </div>
 
-	-【2023/4/26】  Automatic annotation:Commit preliminary code ,For the input image or folder, you can obtain the results of detection, segmentation, and text annotation , optional chatgpt api.
+	-【2023/4/26】  YOCO,Automatic annotation TOOLS:Commit preliminary code ,For the input image or folder, you can obtain the results of detection, segmentation, and text annotation , optional chatgpt api.
 
 
 
@@ -63,7 +63,7 @@ So it's just a tool for prompt any thing(YOCO)
 
   
 
-**:hammer_and_wrench: Quick Start**
+**:hammer_and_wrench: YOCO:Quick Start**
 
 First, Make sure you have a basic gpu deep learning environment.
 

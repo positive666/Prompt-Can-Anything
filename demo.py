@@ -42,15 +42,16 @@ def load_auto_backend_models(opt):
     """
     # Load model
     device = select_device(opt.device)
-    if opt.tag2txt:
+    if opt.tag2text:
         models_config['tag2text'] = AutoBackend("tag2text",weights=Tag2Text_Model_Path,device=device, fp16=opt.half)
     if opt.det:
-        models_config['grounded'] = AutoBackend("grounded-DINO",weights=GROUNED_MODEL_TYPE['S'], device=device,args_config= 'model_cards/groundingdino/config/GroundingDINO_SwinT_OGC.py', fp16=half)
+        models_config['grounded'] = AutoBackend("grounded-DINO",weights=GROUNED_MODEL_TYPE['S'], device=device,
+                                                args_config= 'model_cards/groundingdino/config/GroundingDINO_SwinT_OGC.py', fp16=opt.half)
     if opt.sam:
         models_config['sam']= AutoBackend("segment-anything",weights=SAM_MODEL_TYPE['vit_h'] ,device=device, fp16=opt.half)
     if opt.lama:
         models_config['lama']= AutoBackend("lama",weights=None,args_config='model_cards/lama/configs/prediction/default.yaml',device=device)
-    return models_config
+    #return models_config
         
 def Auto_run(weights=ROOT / '',  # model.pt path(s)
         source= 'data/images',  # file/dir/URL/glob, 0 for webcam
@@ -81,17 +82,16 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
         hide_labels=False,  # hide labels
         hide_conf=False,  # hide confidences
         half=False,  # use FP16 half-precision inference
-        trace=False,
-        lama=False,
-        sam=True,
-        det=True,
+        trace=False,  # u
+        lama=False,   # use lama models
+        sam=True,    # use segment-anythings
+        det=True,    # use grounded detect model with text
         tag2text=True,
         save_mask=False,
         save_caption=False,
         batch_process=False,
         process_name=0,
         ):  
-    
             LOGGER.info(f'当前的进程ID：{process_name},加载的模型列表：{models_config.keys()}')
             global categories
             cls_index = -1      # 设置默认值为 -1
@@ -150,7 +150,6 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
                     if save_img:
                         seen+=1
                         plt.figure(figsize=(10,10))
-                        #img_rgb = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
                         plt.imshow(img_rgb)
                         for box,sc,label in zip(preds[0],preds[1],preds[2]):
                                 show_box(box.numpy(),plt.gca(),label)
@@ -176,9 +175,10 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
                     for xyxy, conf, cls in zip(preds[0],preds[1],preds[2]):                     
                             xywh = (xyxy2xywh((xyxy).view(1,4)) / gn).view(-1).tolist()  # normalized xywh   
                             if cls not  in categories:
+                               # print(f'Add {cls} to categories: {categories}')
                                 categories.update({
-                                        str(cls): len(categories)})         
-                                write_categories(cls,f'{save_dir}/classes.txt')
+                                        str(cls): len(categories)})        
+                                write_categories(cls,f'{save_dir}/classes_id.txt')
                                 cls_index = len(categories) - 1
                             else:
                                 cls_index = categories[str(cls)]
@@ -188,13 +188,14 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
                             #         class_ids.append(cls)  
                             if save_txt :                                               
                                 save_format(label_format="txt",save_path=f'{save_dir}/labels', 
-                                    img_name=name_p, results=line)     
-                                #LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}{txt_path}")                 
+                                    img_name=name_p, results=line)   
+                                             
                     if save_xml:    
                             h,w=im.shape[:2]
                             save_format("xml",f'{save_dir}/xmls' ,name_p, Path(source).parent,
                                 preds, h,w)
             if save_txt:
+                #class_ids.append(cls) 
                 LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}/labels")  
             if save_xml:           
                 LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}/xmls")
@@ -265,7 +266,7 @@ def main(opt):
         words_name= input("please your prompt words: ")
         opt.input_prompt=words_name
         
-    models_config=load_auto_backend_models(opt)
+    load_auto_backend_models(opt)
     LOGGER.info(f"模型加载成功{models_config.keys()}")
     if opt.batch_process and os.path.isdir(opt.source):
         #检查目录是否存在以及检查是否为目录的操作

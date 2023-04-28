@@ -33,11 +33,11 @@ LOGGING_NAME='Prompt-Can-Anything'
 set_logging(LOGGING_NAME)  # run before defining LOGGER
 LOGGER = logging.getLogger(LOGGING_NAME)  # define globally 
 
-def write_categories(c, file_path):
+def write_categories(cls_name, file_path):
     # 打开TXT文件，以写入模式覆盖文件内容
-    with open(file_path, 'w') as f:
+    with open(file_path, 'a') as f:
         # 将列表元素写入TXT文件，每个元素都写入新的一行
-        f.write(str(c)+"\n")
+        f.write(cls_name+"\n")
         # 强制刷新缓存，确保文件已经被完全写入
         f.flush()
 
