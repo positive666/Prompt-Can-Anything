@@ -29,28 +29,30 @@ from utils import VID_FORMATS,IMG_FORMATS,write_categories
 import multiprocessing
 import xml.etree.cElementTree as ET
 from tqdm import tqdm
+
 # 初始已知类别列表和颜色列表
 categories = {}
-#colors = [(0, 255, 0), (0, 0, 255), (255, 0, 0), (0, 255, 255)]
 # 初始对应类别编号
 class_ids = []
-models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None}
-    
-    
-def load_auto_backend_models(device,half):
+models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None,'sd': None}
+
+def load_auto_backend_models(opt):
     """
-    加载多个 Auto模型
+    加载多个模型
     """
-        # Load model
-    device = select_device(device)
-    models_config['tag2text']=AutoBackend("tag2text",weights=Tag2Text_Model_Path,device=device, fp16=half)
-    models_config['grounded'] = AutoBackend("grounded-DINO",weights=GROUNED_MODEL_TYPE['S'], device=device,args_config= 'model_cards/groundingdino/config/GroundingDINO_SwinT_OGC.py', fp16=half)
-    models_config['sam']=AutoBackend("segment-anything",weights=SAM_MODEL_TYPE['vit_h'] ,device=device, fp16=half)
-    models_config['lama']=AutoBackend("lama",weights=None,args_config='model_cards/lama/configs/prediction/default.yaml',device=device)
+    # Load model
+    device = select_device(opt.device)
+    if opt.tag2txt:
+        models_config['tag2text'] = AutoBackend("tag2text",weights=Tag2Text_Model_Path,device=device, fp16=opt.half)
+    if opt.det:
+        models_config['grounded'] = AutoBackend("grounded-DINO",weights=GROUNED_MODEL_TYPE['S'], device=device,args_config= 'model_cards/groundingdino/config/GroundingDINO_SwinT_OGC.py', fp16=half)
+    if opt.sam:
+        models_config['sam']= AutoBackend("segment-anything",weights=SAM_MODEL_TYPE['vit_h'] ,device=device, fp16=opt.half)
+    if opt.lama:
+        models_config['lama']= AutoBackend("lama",weights=None,args_config='model_cards/lama/configs/prediction/default.yaml',device=device)
     return models_config
         
-    
-def Auto_run( weights=ROOT / '',  # model.pt path(s)
+def Auto_run(weights=ROOT / '',  # model.pt path(s)
         source= 'data/images',  # file/dir/URL/glob, 0 for webcam
         input_prompt="Anything in this image",
         data=ROOT / 'data/',  # dataset.yaml path
@@ -92,7 +94,7 @@ def Auto_run( weights=ROOT / '',  # model.pt path(s)
     
             LOGGER.info(f'当前的进程ID：{process_name},加载的模型列表：{models_config.keys()}')
             global categories
-            cls_index = -1  # 设置默认值为 -1
+            cls_index = -1      # 设置默认值为 -1
             source = str(source)
             print(f'input:{source}')
             img_paths=None
@@ -118,7 +120,6 @@ def Auto_run( weights=ROOT / '',  # model.pt path(s)
             seen=0
             # loda data and inference
             caption=None
-            
             for source in tqdm(img_paths,desc="Processing"): 
                     im = cv2.imread(source)
                     name_p= source.split('/')[-1].split('.')[0]
@@ -147,7 +148,6 @@ def Auto_run( weights=ROOT / '',  # model.pt path(s)
                                 save_mask_data(str(save_dir)+'/masks', caption, masks, preds[0], preds[2],name_p)
                     # Write results
                     if save_img:
-
                         seen+=1
                         plt.figure(figsize=(10,10))
                         #img_rgb = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
@@ -173,7 +173,6 @@ def Auto_run( weights=ROOT / '',  # model.pt path(s)
                             img_rgb=img_inpainted     
                                       
                     gn = torch.tensor(im.shape)[[1, 0, 1, 0]]  # normalization gain whwh      
-                    #print(f'图像名字:{name_p}')
                     for xyxy, conf, cls in zip(preds[0],preds[1],preds[2]):                     
                             xywh = (xyxy2xywh((xyxy).view(1,4)) / gn).view(-1).tolist()  # normalized xywh   
                             if cls not  in categories:
@@ -204,7 +203,7 @@ def Auto_run( weights=ROOT / '',  # model.pt path(s)
             if save_mask:
                 LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}/masks")
                    
-def run_do(shared_args,process_name):
+def run_do(shared_args,process_name=0):
     
     Auto_run(**vars(shared_args), process_name=process_name)
 
@@ -257,12 +256,16 @@ def main(opt):
     check_requirements(exclude=('tensorboard', 'thop'))
     global models_config
     
-    models_config=load_auto_backend_models(opt.device,opt.half)
+    
     if opt.chatgpt:
-        
         global chatbot
         chatbot=Chatbot(api_key=API_KEY,proxy=PROXIES,engine="gpt-3.5-turbo")
-
+    if  not opt.tag2text:
+        LOGGER.info('your must input prompt')
+        words_name= input("please your prompt words: ")
+        opt.input_prompt=words_name
+        
+    models_config=load_auto_backend_models(opt)
     LOGGER.info(f"模型加载成功{models_config.keys()}")
     if opt.batch_process and os.path.isdir(opt.source):
         #检查目录是否存在以及检查是否为目录的操作
@@ -274,7 +277,6 @@ def main(opt):
         segment_size =100
         for file_name in opt.source:
             file_path = os.path.join(opt.source, file_name)
-
             # pass 
             if not  Path(file_path).suffix[1:] in (IMG_FORMATS + VID_FORMATS):
                 continue
@@ -298,7 +300,7 @@ def main(opt):
                 for future in concurrent.futures.as_completed(futures):
                     segment = future.result()
     else:
-        Auto_run(**vars(opt),process_name=0)
+        Auto_run(**vars(opt))
 
 if __name__ == "__main__":
     opt = parse_opt()
