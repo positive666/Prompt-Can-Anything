@@ -9,7 +9,7 @@ import torch
 import torch.backends.cudnn as cudnn
 import matplotlib.pyplot as plt
 from PIL import Image
-
+import random
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  #  root directory
 if str(ROOT) not in sys.path:
@@ -30,8 +30,11 @@ import multiprocessing
 import xml.etree.cElementTree as ET
 from tqdm import tqdm
 
-# 初始已知类别列表和颜色列表
+# 初始已知类别列表
+global categories
 categories = {}
+global category_colors
+category_colors={}
 # 初始对应类别编号
 class_ids = []
 models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None,'sd': None}
@@ -46,7 +49,7 @@ def load_auto_backend_models(opt):
         models_config['tag2text'] = AutoBackend("tag2text",weights=Tag2Text_Model_Path,device=device, fp16=opt.half)
     if opt.det:
         models_config['grounded'] = AutoBackend("grounded-DINO",weights=GROUNED_MODEL_TYPE['S'], device=device,
-                                                args_config= 'model_cards/groundingdino/config/GroundingDINO_SwinT_OGC.py', fp16=opt.half)
+        args_config= 'model_cards/groundingdino/config/GroundingDINO_SwinT_OGC.py', fp16=opt.half)
     if opt.sam:
         models_config['sam']= AutoBackend("segment-anything",weights=SAM_MODEL_TYPE['vit_h'] ,device=device, fp16=opt.half)
     if opt.lama:
@@ -90,10 +93,10 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
         save_mask=False,
         save_caption=False,
         batch_process=False,
+        color_flag=False,
         process_name=0,
         ):  
             LOGGER.info(f'当前的进程ID：{process_name},加载的模型列表：{models_config.keys()}')
-            global categories
             cls_index = -1      # 设置默认值为 -1
             source = str(source)
             print(f'input:{source}')
@@ -116,7 +119,7 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
             (save_dir / 'captions' if save_caption else save_dir).mkdir(parents=True, exist_ok=True)  # make dir
             p = Path(str(save_dir) )  # to Path
             save_path = str(save_dir / p.name)  # im.jpg    
-            txt_path = str(save_dir / 'labels' / p.stem) + ''  # im.txt
+            txt_path  = str(save_dir / 'labels' / p.stem) + ''  # im.txt
             seen=0
             # loda data and inference
             caption=None
@@ -125,6 +128,7 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
                     name_p= source.split('/')[-1].split('.')[0]
                     img_rgb = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
                     preds=None
+                    masks=[]
                     prompt=input_prompt
                     if tag2text:
                         preds = models_config['tag2text'](im=img_rgb ,prompt=prompt)
@@ -145,6 +149,7 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
                     if preds is not None and sam:
                             masks= models_config['sam'](im= img_rgb, prompt=preds[0])
                             if  save_mask:
+                                #save_coco_segmentation_txt(masks,name_p,f'{save_dir}/masks',preds[0],preds[2])
                                 save_mask_data(str(save_dir)+'/masks', caption, masks, preds[0], preds[2],name_p)
                     # Write results
                     if save_img:
@@ -170,26 +175,50 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
                                     im=img_rgb, prompt=sub_mask[0])
                             Image.fromarray(img_inpainted.astype(np.uint8)).save(img_inpainted_p)
                             img_rgb=img_inpainted     
-                                      
-                    gn = torch.tensor(im.shape)[[1, 0, 1, 0]]  # normalization gain whwh      
-                    for xyxy, conf, cls in zip(preds[0],preds[1],preds[2]):                     
+                    for category in categories:
+                        if category not in category_colors:
+                            category_colors[category] = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))            
+                    gn = torch.tensor(im.shape)[[1, 0, 1, 0]]  # normalization gain whwh   
+                    
+                   
+              
+                    #if color_flag and save_mask:
+                    seg_mask = np.zeros_like(img_rgb)  # img_array 为输入图像的数组表示
+                    category_color=[]
+                    for xyxy, conf, cls,mask in zip(preds[0],preds[1],preds[2],masks):       #per im boxes              
                             xywh = (xyxy2xywh((xyxy).view(1,4)) / gn).view(-1).tolist()  # normalized xywh   
-                            if cls not  in categories:
+                            if cls not in categories:
                                # print(f'Add {cls} to categories: {categories}')
                                 categories.update({
                                         str(cls): len(categories)})        
                                 write_categories(cls,f'{save_dir}/classes_id.txt')
                                 cls_index = len(categories) - 1
-                            else:
+                                if color_flag:
+                                    category_colors.update({
+                                        str(cls):  (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))}) 
+                                category_color=category_colors[str(cls)]
+                            else:   
                                 cls_index = categories[str(cls)]
+                                if color_flag and  str(cls) not in category_colors:
+                                     category_colors.update({
+                                        str(cls):  (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))})
+                                category_color=category_colors[str(cls)]
                             line = (cls_index, xywh, conf) if save_conf else (cls_index, xywh)  # label format
                             line = str(line).replace('[', '').replace(']', '').replace("(",'').replace(")"," ").replace(",", " " * 2)
+                            if color_flag and save_mask:
+                                h, w = mask.shape[-2:]
+                                mask_color = np.array(category_color).reshape((1, 1, -1))  
+                                seg_mask = seg_mask + mask.cpu().numpy().reshape(h, w, 1)  * mask_color  # add
                             # if cls not in class_ids:
                             #         class_ids.append(cls)  
                             if save_txt :                                               
-                                save_format(label_format="txt",save_path=f'{save_dir}/labels', 
-                                    img_name=name_p, results=line)   
-                                             
+                                save_format(label_format="txt",save_path=f'{save_dir}/labels', img_name=name_p, results=line)
+                    if color_flag and save_mask:
+                        plt.figure(figsize=(10,10))
+                        plt.imshow(seg_mask)
+                        plt.title('Captioning: ' + caption + '\n' + 'Tagging:' + prompt + '\n')    
+                        plt.axis('off')            
+                        plt.savefig(os.path.join(f'{save_dir}/masks', f'{name_p}_cls.jpg'), bbox_inches="tight", dpi=300, pad_inches=0.0)                                                         
                     if save_xml:    
                             h,w=im.shape[:2]
                             save_format("xml",f'{save_dir}/xmls' ,name_p, Path(source).parent,
@@ -246,7 +275,8 @@ def parse_opt():
     parser.add_argument('--tag2text', default=True,action='store_true', help='tag2text model ')
     parser.add_argument('--save-mask', default=True,action='store_true', help='mask save json')
     parser.add_argument('--save-caption', default=True,action='store_true', help='caption ')
-    parser.add_argument('--batch_process', action='store_true', help='therads process file')
+    parser.add_argument('--batch-process', action='store_true', help='therads process file')
+    parser.add_argument('--color-flag', action='store_true', help='therads process file')
     opt = parser.parse_args()
     print_args(vars(opt))
     return opt
@@ -254,10 +284,9 @@ def parse_opt():
 import threading
 import concurrent.futures
 def main(opt):
+    
     check_requirements(exclude=('tensorboard', 'thop'))
-    global models_config
-    
-    
+    global models_config  
     if opt.chatgpt:
         global chatbot
         chatbot=Chatbot(api_key=API_KEY,proxy=PROXIES,engine="gpt-3.5-turbo")
@@ -281,7 +310,6 @@ def main(opt):
             # pass 
             if not  Path(file_path).suffix[1:] in (IMG_FORMATS + VID_FORMATS):
                 continue
-
             # 使用Pillow库读取图像文件并将其转换为NumPy数组
             img = Image.open(file_path)
             img_array = np.asarray(img)
