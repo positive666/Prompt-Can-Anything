@@ -42,6 +42,7 @@ So it's just a tool for prompt any thing(YOCO)
 
 
 ### <div align="left">⭐[news list] </div>
+	-【2023/5/4】   add  semantic segmentatio label, add args(--color-flag --save-mask )
 
 	-【2023/4/26】  YOCO,Automatic annotation TOOLS:Commit preliminary code ,For the input image or folder, you can obtain the results of detection, segmentation, and text annotation , optional chatgpt api.
 
