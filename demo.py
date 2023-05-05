@@ -285,7 +285,7 @@ def main(opt):
     if opt.chatgpt:
         global chatbot
         chatbot=Chatbot(api_key=API_KEY,proxy=PROXIES,engine="gpt-3.5-turbo")
-    if  not opt.input_prompt:
+    if  not opt.tag2text::
         LOGGER.info('your must input prompt')
         words_name= input("please your prompt words: ")
         opt.input_prompt=words_name
