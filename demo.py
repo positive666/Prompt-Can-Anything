@@ -236,7 +236,7 @@ def parse_opt():
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', nargs='+', type=str, default=ROOT / 'your model path', help='model path(s)')
     parser.add_argument('--source', type=str, default=ROOT / 'data/images', help='file/dir/URL/glob, 0 for webcam')
-    parser.add_argument('--input_prompt', type=str, default='None', help='provide prompt words')
+    parser.add_argument('--input_prompt', type=str, default='', help='provide prompt words')
     parser.add_argument('--data', type=str, default=ROOT / 'data/coco128.yaml', help='(optional) dataset.yaml path')
     parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[640], help='inference size h,w')
     parser.add_argument('--conf-thres', type=float, default=0.25, help='confidence threshold')
@@ -285,10 +285,10 @@ def main(opt):
     if opt.chatgpt:
         global chatbot
         chatbot=Chatbot(api_key=API_KEY,proxy=PROXIES,engine="gpt-3.5-turbo")
-    if  not opt.tag2text::
-        LOGGER.info('your must input prompt')
-        words_name= input("please your prompt words: ")
-        opt.input_prompt=words_name
+    # if  not opt.tag2text::
+        # LOGGER.info('your must input prompt')
+        # words_name= input("please your prompt words: ")
+        # opt.input_prompt=words_name
         
     load_auto_backend_models(opt)
     LOGGER.info(f"模型加载成功{models_config.keys()}")
