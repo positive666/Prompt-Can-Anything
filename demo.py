@@ -118,8 +118,8 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
             (save_dir / 'masks' if save_mask else save_dir).mkdir(parents=True, exist_ok=True)  # make dir
             (save_dir / 'captions' if save_caption else save_dir).mkdir(parents=True, exist_ok=True)  # make dir
             p = Path(str(save_dir) )  # to Path
-            save_path = str(save_dir / p.name)  # im.jpg    
-            txt_path  = str(save_dir / 'labels' / p.stem) + ''  # im.txt
+            #save_path = str(save_dir / p.name)  # im.jpg    
+           # txt_path  = str(save_dir / 'labels' / p.stem) + ''  # im.txt
             seen=0
             # loda data and inference
             caption=None
@@ -180,45 +180,40 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
                             category_colors[category] = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))            
                     gn = torch.tensor(im.shape)[[1, 0, 1, 0]]  # normalization gain whwh   
                     
-                   
-              
-                    #if color_flag and save_mask:
-                    seg_mask = np.zeros_like(img_rgb)  # img_array 为输入图像的数组表示
-                    category_color=[]
-                    for xyxy, conf, cls,mask in zip(preds[0],preds[1],preds[2],masks):       #per im boxes              
-                            xywh = (xyxy2xywh((xyxy).view(1,4)) / gn).view(-1).tolist()  # normalized xywh   
-                            if cls not in categories:
-                               # print(f'Add {cls} to categories: {categories}')
-                                categories.update({
-                                        str(cls): len(categories)})        
-                                write_categories(cls,f'{save_dir}/classes_id.txt')
-                                cls_index = len(categories) - 1
-                                if color_flag:
+                    if color_flag or save_txt:
+                        seg_mask = np.zeros_like(img_rgb)  # img_array 为输入图像的数组表示
+                        category_color=[]
+                        for xyxy, conf, cls,mask in zip(preds[0],preds[1],preds[2],masks):       #per im boxes              
+                                xywh = (xyxy2xywh((xyxy).view(1,4)) / gn).view(-1).tolist()  # normalized xywh   
+                                if cls not in categories:
+                                # print(f'Add {cls} to categories: {categories}')
+                                    categories.update({
+                                            str(cls): len(categories)})        
+                                    write_categories(cls,f'{save_dir}/classes_id.txt')
+                                    cls_index = len(categories) - 1
                                     category_colors.update({
-                                        str(cls):  (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))}) 
-                                category_color=category_colors[str(cls)]
-                            else:   
-                                cls_index = categories[str(cls)]
-                                if color_flag and  str(cls) not in category_colors:
-                                     category_colors.update({
-                                        str(cls):  (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))})
-                                category_color=category_colors[str(cls)]
-                            line = (cls_index, xywh, conf) if save_conf else (cls_index, xywh)  # label format
-                            line = str(line).replace('[', '').replace(']', '').replace("(",'').replace(")"," ").replace(",", " " * 2)
-                            if color_flag and save_mask:
-                                h, w = mask.shape[-2:]
-                                mask_color = np.array(category_color).reshape((1, 1, -1))  
-                                seg_mask = seg_mask + mask.cpu().numpy().reshape(h, w, 1)  * mask_color  # add
-                            # if cls not in class_ids:
-                            #         class_ids.append(cls)  
-                            if save_txt :                                               
-                                save_format(label_format="txt",save_path=f'{save_dir}/labels', img_name=name_p, results=line)
+                                            str(cls):  (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))}) 
+                                    category_color=category_colors[str(cls)]
+                                else:   
+                                    cls_index = categories[str(cls)]
+                                    if str(cls) not in category_colors:
+                                        category_colors.update({
+                                            str(cls):  (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))})
+                                    category_color=category_colors[str(cls)]
+                                line = (cls_index, xywh, conf) if save_conf else (cls_index, xywh)  # label format
+                                line = str(line).replace('[', '').replace(']', '').replace("(",'').replace(")"," ").replace(",", " " * 2)
+                                if save_mask:
+                                    h, w = mask.shape[-2:]
+                                    mask_color = np.array(category_color).reshape((1, 1, -1))  
+                                    seg_mask = seg_mask + mask.cpu().numpy().reshape(h, w, 1)  * mask_color  # add    
+                                if save_txt:                                 
+                                    save_format(label_format="txt",save_path=f'{save_dir}/labels', img_name=name_p, results=line)
                     if color_flag and save_mask:
-                        plt.figure(figsize=(10,10))
-                        plt.imshow(seg_mask)
-                        plt.title('Captioning: ' + caption + '\n' + 'Tagging:' + prompt + '\n')    
-                        plt.axis('off')            
-                        plt.savefig(os.path.join(f'{save_dir}/masks', f'{name_p}_cls.jpg'), bbox_inches="tight", dpi=300, pad_inches=0.0)                                                         
+                            plt.figure(figsize=(10,10))
+                            plt.imshow(seg_mask)
+                            plt.title('Captioning: ' + caption + '\n' + 'Tagging:' + prompt + '\n')    
+                            plt.axis('off')            
+                            plt.savefig(os.path.join(f'{save_dir}/masks', f'{name_p}_cls.jpg'), bbox_inches="tight", dpi=300, pad_inches=0.0)                                                         
                     if save_xml:    
                             h,w=im.shape[:2]
                             save_format("xml",f'{save_dir}/xmls' ,name_p, Path(source).parent,
@@ -276,7 +271,7 @@ def parse_opt():
     parser.add_argument('--save-mask', default=True,action='store_true', help='mask save json')
     parser.add_argument('--save-caption', default=True,action='store_true', help='caption ')
     parser.add_argument('--batch-process', action='store_true', help='therads process file')
-    parser.add_argument('--color-flag', action='store_true', help='therads process file')
+    parser.add_argument('--color-flag', action='store_true', help='class-color ')
     opt = parser.parse_args()
     print_args(vars(opt))
     return opt
@@ -290,7 +285,7 @@ def main(opt):
     if opt.chatgpt:
         global chatbot
         chatbot=Chatbot(api_key=API_KEY,proxy=PROXIES,engine="gpt-3.5-turbo")
-    if  not opt.tag2text:
+    if  not opt.input_prompt:
         LOGGER.info('your must input prompt')
         words_name= input("please your prompt words: ")
         opt.input_prompt=words_name
