@@ -16,11 +16,13 @@ So it's just a tool for prompt any thing(YOCO)
 ![structure](asset/data_engine.png)
 
 
+
+
  2.  Semi-automatic interaction  UI tool (coming soon)
 
 ## Feature
 
-- 🔥Data Engine(
+- 🔥Data Engine
 	
 	Provide fully automated data annotation with one-click export (detection, segmentation, text, and nerf  reconstruction results) and refine these through engineering optimization, ,through the correlation models of stable diffusion and gpt, we can create more data source power for downstream tasks. 
 	
@@ -43,7 +45,7 @@ So it's just a tool for prompt any thing(YOCO)
 
 ### <div align="left">⭐[news list] </div>
 	-【2023/5/4】   add  semantic segmentatio label, add args(--color-flag --save-mask )
-
+	
 	-【2023/4/26】  YOCO,Automatic annotation TOOLS:Commit preliminary code ,For the input image or folder, you can obtain the results of detection, segmentation, and text annotation , optional chatgpt api.
 
 
@@ -153,6 +155,13 @@ Run
 	
 	2. set config file and args in utils/conf.py ,add your download weights to " MODEL_xxxx_PATH“  ,if need chatgpt,configure the "PROXIES", "API_KEY " 
 	2. run demo
+	
+	```bash
+	"--tag2text" :  provide images tage , you can use chatgpt to merge or filter words
+	"--input_prompt" :  Select the detection target noun you are interested in, and you can turn off Tag2text
+	'--color-flag': Give your semantic segmentation MASK the same category the same color
+	```
+	
 
 ```bash
 python demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --save_caption 
