@@ -127,7 +127,7 @@ Run
 	    <tr>
 	      <th>3</th>
 	      <td>Lama</td>
-	        <td> </td>
+	        <td>FFC</td>
 	         <td> </td>
 	      <td><a href="https://disk.yandex.ru/d/ouP6l8VJ0HpMZg">Download  link</a></td>
 	    <tr>
