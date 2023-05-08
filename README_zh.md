@@ -128,6 +128,7 @@ pip install --upgrade diffusers[torch]
       <td><a href="https://github.com/IDEA-Research/GroundingDINO/blob/main/groundingdino/config/GroundingDINO_SwinT_OGC.py">链接</a></td>
     </tr>
     <tr>
+</table>
    2. 配置文件和参数在 utils/conf.py 下,下载模型后将路径配置在" MODEL_xxxx_PATH“的变量  ,如果使用 chatgpt,配置其代理和API密钥
    2. run demo
 
@@ -137,9 +138,9 @@ pip install --upgrade diffusers[torch]
    '--color-flag': 使用BOX的标签同类别和实例分割区别:语音分割的类别颜色
    ```
 
-```bash
-python demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --save_caption 
-```
+	```bash
+	python demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --save_caption 
+	```
 
 🏃Demo 
 
