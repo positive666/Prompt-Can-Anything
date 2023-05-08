@@ -1,4 +1,7 @@
 # Prompt-Can-Anything
+
+<p align="center"> English | <a href="README_zh.md">中文</a></p>
+
 A fully automated  toolkit: You just give prompt ！you only click once! you can do anything by sota model with prompt and creativity
 
 **Motivation**
