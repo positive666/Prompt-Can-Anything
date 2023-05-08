@@ -18,7 +18,7 @@ import pandas as pd
 import torch
 import json
 from PIL import Image, ImageDraw, ImageFont
-
+from pycocotools import mask as maskUtils
 from utils import TryExcept, threaded
 from utils.ops import (CONFIG_DIR, FONT, LOGGER, check_requirements, clip_boxes, increment_path,
                            is_ascii, xywh2xyxy, xyxy2xywh,fitness)
@@ -27,7 +27,10 @@ from utils.ops import (CONFIG_DIR, FONT, LOGGER, check_requirements, clip_boxes,
 RANK = int(os.getenv('RANK', -1))
 matplotlib.rc('font', **{'size': 11})
 matplotlib.use('Agg')  # for writing to files only
-
+segments_cag = {0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [],
+            8: [], 9: [], 10: [], 11: [], 12: [], 13: [], 14: [], 15: [],
+            16: [], 17: [], 18: [], 19: []}
+            
 def save_mask_data(output_dir, caption, mask_list, box_list, label_list,img_name):
     
     value = 0  # 0 for background
@@ -83,16 +86,54 @@ def scale_image(im1_shape, masks, im0_shape, ratio_pad=None):
         masks = masks[:, :, None]
     return masks
 
-def show_mask(mask, ax, random_color=False):
-    if random_color:
-        color = np.concatenate([np.random.random(3), np.array([0.6])], axis=0)
+def show_mask(mask, ax, random_color=False,cls_color=None):
+    if cls_color is not None:
+        h, w = mask.shape[-2:]
+        mask_image = mask.reshape(h, w, 1) * np.array(cls_color).reshape(1, 1, -1)
+        ax.imshow(mask_image)
+       
     else:
-        color = np.array([30/255, 144/255, 255/255, 0.6])
-    h, w = mask.shape[-2:]
-    mask_image = mask.reshape(h, w, 1) * color.reshape(1, 1, -1)
-    ax.imshow(mask_image)
-
-
+        if random_color :
+            color = np.concatenate([np.random.random(3), np.array([0.6])], axis=0)
+        else:
+            color = np.array([30/255, 144/255, 255/255, 0.6])
+        h, w = mask.shape[-2:]
+        mask_image = mask.reshape(h, w, 1) * color.reshape(1, 1, -1)
+        ax.imshow(mask_image)
+    
+def Draw_img(data,draw,mode='box',label=None,random_color=None):
+    if not random_color:
+            color = (np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255),153)
+    else: 
+            color = tuple(random_color.tolist())
+    if  mode=='mask' :
+        # if not random_color:
+        #     color = (np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255),153)
+        # else: 
+        #     color = tuple(random_color.tolist())
+        
+        coords=np.transpose(np.nonzero(data))
+        for coord in coords:
+            draw.point(coord[::-1],fill=color)
+            
+    elif mode=='box':
+        #color=tuple(np.random.randint(0,255,size=3).tolist())
+        draw.rectangle(((data[0],data[1]),(data[2],data[3])),outline=color,width=8)
+        if label:
+         
+            font = ImageFont.truetype('asset/Arial.ttf', 45)
+            if hasattr(font,'getbbox'):
+                bbox=draw.textbbox((data[0],data[1]),str(label),font)
+            else:
+                w,h=draw.textsize(str(label),font)
+                bbox=(data[0],data[1],w+data[0],data[1]+h)
+            draw.rectangle(bbox,fill=color)    
+            draw.text((data[0],data[1]),str(label),fill='white',font=font)
+            #draw.text((data[0],data[1]),label,font=font)
+    
+    else :
+        print('no support format！！')
+        
 def show_box(box, ax, label):
     x0, y0 = box[0], box[1]
     w, h = box[2] - box[0], box[3] - box[1]
@@ -119,12 +160,11 @@ class Colors:
 
 colors = Colors()  # create instance for 'from utils.plots import colors'
 
-def check_font(font=FONT, progress=False):
-    # Download font to CONFIG_DIR if necessary
+def check_font(font=FONT, url="",progress=False):
     font = Path(font)
     file = CONFIG_DIR / font.name
     if not font.exists() and not file.exists():
-        url = "https://ultralytics.com/assets/" + font.name
+        url = url + font.name
         LOGGER.info(f'Downloading {url} to {file}...')
         torch.hub.download_url_to_file(url, str(file), progress=progress)
 

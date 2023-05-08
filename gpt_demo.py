@@ -5,7 +5,7 @@ chatbot=Chatbot(api_key=API_KEY,proxy=PROXIES,engine="gpt-3.5-turbo")
 for data in chatbot.ask_stream(prompt="Hello world"):
      print(data,end='',flush=True)
 
-def check_caption(caption, pred_phrases, max_tokens=100, model="gpt-3.5-turbo"):
+def check_caption(caption, pred_phrases, max_tokens=100, model="gpt-3.5-turbo",chatbot=None):
     object_list = [obj.split('(')[0] for obj in pred_phrases]
     object_num = []
     for obj in set(object_list):

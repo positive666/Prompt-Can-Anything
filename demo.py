@@ -104,11 +104,15 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
             if os.path.isdir(source):
                 img_paths = [os.path.join(source, f) for f in os.listdir(source) if
                     Path(f).suffix[1:] in (IMG_FORMATS + VID_FORMATS)] 
+            elif os.path.isfile(source):
+                img_paths = [source]    
+            else:
+                 return False        
             # 获取文件夹中的所有图像
             is_file = Path(source).suffix[1:] in (IMG_FORMATS + VID_FORMATS)
             save_img = not nosave and not source.endswith('.txt')  # save inference images
             is_url = source.lower().startswith(('rtsp://', 'rtmp://', 'http://', 'https://'))
-            webcam = source.isnumeric() or source.endswith('.streams') or (is_url )
+            #webcam = source.isnumeric() or source.endswith('.streams') or (is_url )
             if is_url and is_file:
                 source = check_file(source)  # download
             # Directories
@@ -117,9 +121,7 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
             (save_dir / 'xmls' if save_xml else save_dir).mkdir(parents=True, exist_ok=True)  # make dir
             (save_dir / 'masks' if save_mask else save_dir).mkdir(parents=True, exist_ok=True)  # make dir
             (save_dir / 'captions' if save_caption else save_dir).mkdir(parents=True, exist_ok=True)  # make dir
-            p = Path(str(save_dir) )  # to Path
-            #save_path = str(save_dir / p.name)  # im.jpg    
-           # txt_path  = str(save_dir / 'labels' / p.stem) + ''  # im.txt
+
             seen=0
             # loda data and inference
             caption=None
@@ -142,23 +144,23 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
                             save_format(label_format="txt",save_path=f'{save_dir}/captions', 
                             img_name=name_p, results=caption)
                     if det:
-                        preds= models_config['grounded'](im= img_rgb,prompt= prompt) 
+                        preds= models_config['grounded'](im= img_rgb,prompt= prompt,box_threshold=conf_thres,text_threshold=text_thres, iou_threshold=iou_thres) 
                         if chatgpt:
                             from gpt_demo import check_caption
-                            caption=check_caption(caption,preds[2])
+                            caption=check_caption(caption,preds[2],chatbot)
                     if preds is not None and sam:
-                            masks= models_config['sam'](im= img_rgb, prompt=preds[0])
+                            masks= models_config['sam'](im= img_rgb, prompt=preds[0],box_threshold=conf_thres,text_threshold=text_thres, iou_threshold=iou_thres)
                             if  save_mask:
-                                #save_coco_segmentation_txt(masks,name_p,f'{save_dir}/masks',preds[0],preds[2])
                                 save_mask_data(str(save_dir)+'/masks', caption, masks, preds[0], preds[2],name_p)
                     # Write results
                     if save_img:
                         seen+=1
                         plt.figure(figsize=(10,10))
                         plt.imshow(img_rgb)
-                        for box,sc,label in zip(preds[0],preds[1],preds[2]):
-                                show_box(box.numpy(),plt.gca(),label)
-                        for mask in masks:         
+                        if det:
+                            for box,label in zip(preds[0],preds[2]):
+                                    show_box(box.numpy(),plt.gca(),label)
+                            for mask in masks:            
                                 show_mask(mask.cpu().numpy(),plt.gca(),random_color=True)
                         plt.title('Captioning: ' + caption + '\n' + 'Tagging:' + prompt + '\n')    
                         plt.axis('off')
@@ -181,7 +183,7 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
                     gn = torch.tensor(im.shape)[[1, 0, 1, 0]]  # normalization gain whwh   
                     
                     if color_flag or save_txt:
-                        seg_mask = np.zeros_like(img_rgb)  # img_array 为输入图像的数组表示
+                        seg_mask = np.zeros_like(img_rgb)  # img_array 
                         category_color=[]
                         for xyxy, conf, cls,mask in zip(preds[0],preds[1],preds[2],masks):       #per im boxes              
                                 xywh = (xyxy2xywh((xyxy).view(1,4)) / gn).view(-1).tolist()  # normalized xywh   
@@ -285,10 +287,10 @@ def main(opt):
     if opt.chatgpt:
         global chatbot
         chatbot=Chatbot(api_key=API_KEY,proxy=PROXIES,engine="gpt-3.5-turbo")
-    # if  not opt.tag2text::
-        # LOGGER.info('your must input prompt')
-        # words_name= input("please your prompt words: ")
-        # opt.input_prompt=words_name
+    # if  not opt.input_prompt and opt.input_prompt=='':
+    #     LOGGER.info(' input prompt')
+    #     words_name= input("please your prompt words: ")
+    #     opt.input_prompt=words_name
         
     load_auto_backend_models(opt)
     LOGGER.info(f"模型加载成功{models_config.keys()}")
@@ -298,7 +300,7 @@ def main(opt):
             LOGGER.info(f"Error: Input directory {opt.source} does not exist.")
             return 
         seen=0
-        output_dir=f'{opt.source}_subs{seen}'
+       # output_dir=f'{opt.source}_subs{seen}'
         segment_size =100
         for file_name in opt.source:
             file_path = os.path.join(opt.source, file_name)

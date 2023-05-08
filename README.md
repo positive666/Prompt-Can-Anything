@@ -175,12 +175,15 @@ python demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --save
 
 
 
-![image-20230427142525745](asset/image-20230427142525745.png)
+![image-20230508075845259](asset/webdemo.png)
+
+
 
 ***🔨To Do list***
 
 - [x] Release demo and code(2 days within).
-- [ ] web-ui demo and support video ,inpainting model demo
+- [x] web ui   demo 
+- [ ] support video ,chatgpt, add inpainting model demo
 - [ ] add 3d nerf demo 
 - [ ] fintune sam and ground?? 
 - [ ] Release training datasets.
