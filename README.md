@@ -158,7 +158,6 @@ Run
 	2. run demo
 	
 	```bash
-	"--tag2text" :  provide images tage , you can use chatgpt to merge or filter words
 	"--input_prompt" :  Select the detection target noun you are interested in, and you can turn off Tag2text
 	'--color-flag': Give your semantic segmentation MASK the same category the same color
 	```
@@ -168,7 +167,7 @@ Run
 python demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --save_caption 
 ```
 
-**🏃Demo **
+🏃Demo 
 
 
 
@@ -189,7 +188,7 @@ python demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --save
 - [ ] fintune sam and ground?? 
 - [ ] Release training datasets.
 
-## 
+
 
 ## :cupid: Acknowledgements
 
