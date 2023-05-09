@@ -26,9 +26,7 @@ So it's just a tool for prompt any thing(YOCO)
 
 
 
-
-
-
+"Prompt" control models output, example,  "bear“ as a prompt to guide models to complete the relevant annotations 
 
 <img src="F:\git_code\Prompt-Can-Anything\asset\4.png" alt="4" style="zoom: 80%;" /><img src="F:\git_code\Prompt-Can-Anything\asset\2.png" alt="2" style="zoom: 80%;" />
 
@@ -36,7 +34,7 @@ So it's just a tool for prompt any thing(YOCO)
 
 
 
-​			     "Prompt" control models output, example,  "bear“ as a prompt to guide models to complete the relevant annotations 
+​			  
 
 
 
