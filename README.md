@@ -20,17 +20,17 @@ So it's just a tool for prompt any thing(YOCO)
 
 ​    	Support multi-tasks, such as :
 
-​        default tasks include images understand /detect/instance segment .....(add methods for image generation and inpainting )
+​                 default tasks include images understand /detect/instance segment .....(add methods for image generation and inpainting )
 
-<img src="F:\git_code\Prompt-Can-Anything\asset\1.jpg" alt="1" style="zoom:25%;" />				
-
-
+<img src="F:\git_code\Prompt-Can-Anything\asset\1.jpg" alt="1" style="zoom: 80%;" />				
 
 
 
 
 
-<img src="F:\git_code\Prompt-Can-Anything\asset\4.jpg" alt="4" style="zoom: 25%;" /><img src="F:\git_code\Prompt-Can-Anything\asset\2.jpg" alt="2" style="zoom:25%;" />
+
+
+<img src="F:\git_code\Prompt-Can-Anything\asset\4.png" alt="4" style="zoom: 50%;" /><img src="F:\git_code\Prompt-Can-Anything\asset\2.png" alt="2" style="zoom: 50%;" />
 
 
 
