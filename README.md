@@ -53,7 +53,7 @@ So it's just a tool for prompt any thing(YOCO)
 
 
 
-**Preliminary-Works**
+## Preliminary-Works
 
 
 
@@ -68,8 +68,8 @@ So it's just a tool for prompt any thing(YOCO)
 - [lama](https://github.com/advimman/lama) :  Resolution-robust large mask Inpainting with Fourier Convolutions
 
   
-
-**:hammer_and_wrench: YOCO:Quick Start**
+  
+  ## :hammer_and_wrench: YOCO: Quick Start
 
 First, Make sure you have a basic gpu deep learning environment.
 
@@ -80,7 +80,7 @@ gir clone https://github.com/positive666/Prompt-Can-Anything
 cd Prompt-Can-Anything
 ```
 
-Install environment:
+**Install environment:**
 
 ```bash
 pip install -e .
@@ -95,7 +95,7 @@ pip install --upgrade diffusers[torch]
 
 more ,you can see "pip install < your missing packages>"
 
-Run	
+**Run**	
 
 1. downloads models weights
 
@@ -170,7 +170,7 @@ Run
 python demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --save_caption 
 ```
 
-🏃Demo 
+## 🏃Demo 
 
 
 
@@ -182,7 +182,7 @@ python demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --save
 
 
 
-***🔨To Do list***
+## 🔨To Do List
 
 - [x] Release demo and code(2 days within).
 - [x] web ui   demo 
