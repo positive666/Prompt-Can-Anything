@@ -27,9 +27,7 @@ from utils.ops import (CONFIG_DIR, FONT, LOGGER, check_requirements, clip_boxes,
 RANK = int(os.getenv('RANK', -1))
 matplotlib.rc('font', **{'size': 11})
 matplotlib.use('Agg')  # for writing to files only
-segments_cag = {0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [],
-            8: [], 9: [], 10: [], 11: [], 12: [], 13: [], 14: [], 15: [],
-            16: [], 17: [], 18: [], 19: []}
+
             
 def save_mask_data(output_dir, caption, mask_list, box_list, label_list,img_name):
     
@@ -105,13 +103,9 @@ def Draw_img(data,draw,mode='box',label=None,random_color=None):
     if not random_color:
             color = (np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255),153)
     else: 
-            color = tuple(random_color.tolist())
-    if  mode=='mask' :
-        # if not random_color:
-        #     color = (np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255),153)
-        # else: 
-        #     color = tuple(random_color.tolist())
         
+            color = random_color+(153,)
+    if  mode=='mask' :        
         coords=np.transpose(np.nonzero(data))
         for coord in coords:
             draw.point(coord[::-1],fill=color)

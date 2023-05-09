@@ -18,6 +18,18 @@ So it's just a tool for prompt any thing(YOCO)
 
 ![structure](asset/data_engine.png)
 
+​    	Support multi-tasks, such as :
+
+​                          default tasks include images understand /detect/instance segment .....(add methods for image generation and inpainting )
+
+<img src="F:\git_code\Prompt-Can-Anything\asset\1.jpg" alt="1" style="zoom:25%;" />				<img src="F:\git_code\Prompt-Can-Anything\asset\4.jpg" alt="4" style="zoom: 25%;" /><img src="F:\git_code\Prompt-Can-Anything\asset\2.jpg" alt="2" style="zoom:25%;" />
+
+
+
+
+
+​			     "Prompt" control models output, example,  "bear“ as a prompt to guide models to complete the relevant annotations 
+
 
 
 
@@ -46,7 +58,7 @@ So it's just a tool for prompt any thing(YOCO)
 
 
 
-### <div align="left">⭐[news list] </div>
+### <div align="left">⭐[News list] </div>
 	-【2023/5/7】   add web demo:At present, the function of text generation, detection and segmentation of images or image folders on the website has been tested normally, and the program does not need to be restarted, and the last model loading configuration is remembered, and it will be continuously optimized in the future.
 	-【2023/5/4】   add  semantic segmentatio label, add args(--color-flag --save-mask )
 	-【2023/4/26】  YOCO,Automatic annotation TOOLS:Commit preliminary code ,For the input image or folder, you can obtain the results of detection, segmentation, and text annotation , optional chatgpt api.
@@ -172,13 +184,15 @@ python demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --save
 
 ## 🏃Demo 
 
-
+1.   without web-ui
 
 ![image-20230427093103453](asset/image-20230427093103453.png)
 
+2. webui(update ...) 
 
+   
 
-![image-20230508075845259](asset/webdemo.png)
+![image-20230508075845259](asset/default_all.png)
 
 
 

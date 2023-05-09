@@ -133,7 +133,7 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
                     masks=[]
                     prompt=input_prompt
                     if tag2text:
-                        preds = models_config['tag2text'](im=img_rgb ,prompt=prompt)
+                        preds = models_config['tag2text'](im = img_rgb ,prompt=prompt,box_threshold=conf_thres,text_threshold=text_thres,iou_threshold=iou_thres)
                     # Currently ", " is better for detecting single tags
                     # while ". " is a little worse in some case
                         prompt=preds[0].replace(' |', ',')
@@ -141,16 +141,19 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
                         print(f"Caption: {caption}")
                         print(f"Tags: {prompt}")
                         if save_caption:
-                            save_format(label_format="txt",save_path=f'{save_dir}/captions', 
-                            img_name=name_p, results=caption)
+                            save_format(label_format="txt",save_path=f'{save_dir}/captions',img_name=name_p, results=caption)
                     if det:
-                        preds= models_config['grounded'](im= img_rgb,prompt= prompt,box_threshold=conf_thres,text_threshold=text_thres, iou_threshold=iou_thres) 
+                        if input_prompt:
+                            prompt=input_prompt
+                        print('grouned start input prompt:',prompt)
+                        preds= models_config['grounded'](im = img_rgb,prompt=prompt, box_threshold=conf_thres,text_threshold=text_thres, iou_threshold=iou_thres) 
                         if chatgpt:
                             from gpt_demo import check_caption
-                            caption=check_caption(caption,preds[2],chatbot)
+                            caption=check_caption(caption, preds[2], chatbot)
                     if preds is not None and sam:
-                            masks= models_config['sam'](im= img_rgb, prompt=preds[0],box_threshold=conf_thres,text_threshold=text_thres, iou_threshold=iou_thres)
-                            if  save_mask:
+                            print('sam start input prompt:',preds[0])
+                            masks= models_config['sam'](im = img_rgb, prompt=preds[0],box_threshold=conf_thres,text_threshold=text_thres, iou_threshold=iou_thres)
+                            if save_mask:
                                 save_mask_data(str(save_dir)+'/masks', caption, masks, preds[0], preds[2],name_p)
                     # Write results
                     if save_img:
@@ -162,7 +165,8 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
                                     show_box(box.numpy(),plt.gca(),label)
                             for mask in masks:            
                                 show_mask(mask.cpu().numpy(),plt.gca(),random_color=True)
-                        plt.title('Captioning: ' + caption + '\n' + 'Tagging:' + prompt + '\n')    
+                        if tag2text:
+                            plt.title('Captioning: ' + caption + '\n' + 'Tagging:' + prompt + '\n')    
                         plt.axis('off')
                         plt.savefig(f'{save_dir}/{seen}.png',bbox_iches='tight',dpi=300,pad_inches=0.0)     
                         

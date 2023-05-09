@@ -22,6 +22,7 @@ from utils import VID_FORMATS,IMG_FORMATS,write_categories
 import multiprocessing
 import xml.etree.cElementTree as ET
 import gradio as gr
+from gradio.inputs import File
 import random
 
 FILE = Path(__file__).resolve()
@@ -111,6 +112,7 @@ def Auto_run(
         ):  
 
             global models_config
+            global category_colors
             # if not memory_model  
             load_auto_backend_models(lama,sam,det,tag2text,device)
             # memory_model=True
@@ -133,7 +135,7 @@ def Auto_run(
 
             # Directories
             is_file = Path(source).suffix[1:] in (IMG_FORMATS + VID_FORMATS)
-            save_img = img_save and not source.endswith('.txt')  # save inference images
+          #  save_img = img_save and not source.endswith('.txt')  # save inference images
             is_url = source.lower().startswith(('rtsp://', 'rtmp://', 'http://', 'https://'))
             #webcam = source.isnumeric() or source.endswith('.streams') or (is_url )
             if is_url and is_file:
@@ -157,6 +159,7 @@ def Auto_run(
                     masks=[]
                     prompt=input_prompt
                     if tag2text:
+                        print(f'text_prompt:{prompt}')
                         preds = models_config['tag2text'](im = img_rgb ,prompt=prompt,box_threshold=conf_thres,text_threshold=text_thres,iou_threshold=iou_thres)
                     # Currently ", " is better for detecting single tags
                     # while ". " is a little worse in some case
@@ -167,18 +170,20 @@ def Auto_run(
                         if save_caption:
                             save_format(label_format="txt",save_path=f'{save_dir}/captions',img_name=name_p, results=caption)
                     if det:
-                        preds= models_config['grounded'](im = img_rgb,prompt= prompt,box_threshold=conf_thres,text_threshold=text_thres, iou_threshold=iou_thres) 
+                        if input_prompt:
+                            prompt=input_prompt
+                            print('your input prompt replace default:',prompt)
+                        preds= models_config['grounded'](im = img_rgb,prompt=prompt, box_threshold=conf_thres,text_threshold=text_thres, iou_threshold=iou_thres) 
                         if chatgpt:
                             from gpt_demo import check_caption
                             caption=check_caption(caption, preds[2], chatbot)
-                    if preds is not None and sam:
+                    if preds is not None and sam :
                             masks= models_config['sam'](im = img_rgb, prompt=preds[0],box_threshold=conf_thres,text_threshold=text_thres, iou_threshold=iou_thres)
                             if save_mask:
                                 save_mask_data(str(save_dir)+'/masks', caption, masks, preds[0], preds[2],name_p)
                     # Write results
-                    seen=0
-                    if save_img:
-                        
+                    
+                    if img_save:
                         seen+=1
                         plt.figure(figsize=(20,18))
                         plt.imshow(img_rgb)
@@ -188,7 +193,8 @@ def Auto_run(
                             if sam :              
                                 for mask in masks:         
                                     show_mask(mask.cpu().numpy(),plt.gca(),random_color=True)
-                        plt.title('Captioning: ' + caption + '\n' + 'Tagging:' + prompt + '\n')    
+                        if tag2text:
+                            plt.title('Captioning: ' + caption + '\n' + 'Tagging:' + prompt + '\n')    
                         plt.axis('off')
                         plt.savefig(f'{save_dir}/{seen}.jpg',bbox_iches='tight',dpi=600,pad_inches=0.0)     
                         
@@ -239,7 +245,7 @@ def Auto_run(
                         if save_mask:
                             plt.figure(figsize=(10,10))
                             plt.imshow(seg_mask)
-                            plt.title('Captioning: ' + caption + '\n' + 'Tagging:' + prompt + '\n')    
+                            #plt.title('Captioning: ' + caption + '\n' + 'Tagging:' + prompt + '\n')    
                             plt.axis('off')            
                             plt.savefig(os.path.join(f'{save_dir}/masks', f'{name_p}_cls.jpg'), bbox_inches="tight", dpi=300, pad_inches=0.0)                                                         
                     if save_xml:    
@@ -256,7 +262,7 @@ def Auto_run(
 
                         for mask in masks:    
                             Draw_img(mask[0].cpu().numpy(),draw_mask,'mask',None,category_colors[str(label)] if color_flag else None)
-                        img_rgb=img_rgb+img_mask   
+                        img_rgb.paste(img_mask, mask=img_mask)  
                     #img_rgb.save(f'{save_dir}/{seen}.jpg')    
                     
             if save_txt:
@@ -271,7 +277,7 @@ def Auto_run(
             LOGGER.info('Done...')
             #re=Image.open(f'{save_dir}/{seen}.jpg') 
 
-            return [[img_rgb],caption,prompt]
+            return [[img_rgb],caption,prompt,len(categories)]
             
 
 
@@ -286,7 +292,7 @@ def main():
           with block:
                with gr.Row():
                     with gr.Column():
-                         with gr.Accordion('Options', open=False):
+                         with gr.Accordion('Grounded-DINO threshold Options', open=False):
                             box_threshold=gr.inputs.Number(label='Confidence Threshold', default=0.3)
                             iou_threshold=gr.inputs.Number(label='ioue Threshold', default=0.5)
                             text_threshold=gr.inputs.Number(label='TEXT Threshold', default=0.25)
@@ -297,13 +303,13 @@ def main():
                             'Save img': gr.inputs.Checkbox(label='Save img',default=False),
                             'Chat GPT': gr.inputs.Checkbox(label='ChatGPT',default=False),
                             'Visualize': gr.inputs.Checkbox(label='Visualize',default=False),
-                            'Project': gr.inputs.Textbox(label='Project',default='runs/detect'),
+                            'Project': gr.inputs.Textbox(label='Project:save dir_path',default='runs/detect'),
                             'Name': gr.inputs.Textbox(label='Name',default='exp'),
                             'Exist Ok': gr.inputs.Checkbox(label='Exist Ok',default=False)
                             }   
                            
                          inputxs.extend(list(option_inputs.values()))
-                         with gr.Accordion('Method_Options', open=True):                
+                         with gr.Accordion('Method_Options:free combo', open=True):                
                                    
                             methods_options={'Lama': gr.inputs.Checkbox(label='Lama model',default=False), 'Sam': gr.inputs.Checkbox(label='Sam model',default=False),
                                 'Det': gr.inputs.Checkbox(label='Grounded',default=False), 
@@ -319,10 +325,10 @@ def main():
                                 'Save Mask': gr.inputs.Checkbox(label='Save Mask',default=False),  
                                 'Save Caption': gr.inputs.Checkbox(label='Save Caption',default=False),  
                                 'Batch Process': gr.inputs.Checkbox(label='Batch Process',default=False), 
-                                'Color Flag': gr.inputs.Checkbox(label='Color Flag',default=False)
+                                'Color Flag': gr.inputs.Checkbox(label='Color Flag : classes mask',default=False)
                             }
                          inputxs.extend(list( save_options.values()))
-                        
+                         
                          API_KEY=gr.inputs.Textbox(label='OPENAI_kety',default='')  
                          prompt_input=gr.inputs.Textbox(lines=2, label="Prompt: User Specified Tags (Optional, Enter with commas)")
                          dir_inputs =gr.inputs.Textbox(label='dir_path',default='train_imgs')
@@ -332,9 +338,10 @@ def main():
                          run_button = gr.Button(label="Run")
                     with gr.Column():
                          gallery = gr.Gallery(label="Generated images",show_label=False,elem_id="gallery",).style(preview=True, grid=2, object_fit="scale-down")
-                         output_text = gr.outputs.Textbox(label="Caption")
+                         output_text = gr.Textbox(label="Caption",lines=2)
+                         output_classes= gr.Textbox(label="Class_numbers:auto generate classes numbers, 【color flag】 or 【save_txt】 must be ture ")
                          output_tag= gr.outputs.Textbox(label="Tag")
-                         outputs = [gallery, output_text, output_tag]
+                         outputs = [gallery, output_text, output_tag,output_classes]
                         
                run_button.click(fn=Auto_run, inputs=inputs, outputs=outputs)
 
