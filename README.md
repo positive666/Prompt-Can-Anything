@@ -180,11 +180,15 @@ more ,you can see "pip install < your missing packages>"
 
 ```bash
 python demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --save_caption 
+   Or
+python app.py 
 ```
 
 ## 🏃Demo 
 
 1.   without web-ui
+
+   
 
 ![image-20230427093103453](asset/image-20230427093103453.png)
 
