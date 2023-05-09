@@ -210,7 +210,7 @@ python app.py
 
 ## 🔨To Do List
 
-- [x] Release demo and code(2 days within).
+- [x] Release demo and code.
 - [x] web ui   demo 
 - [ ] support video ,chatgpt, add inpainting model demo
 - [ ] add 3d nerf demo 
