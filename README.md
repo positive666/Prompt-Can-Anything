@@ -22,9 +22,13 @@ So it's just a tool for prompt any thing(YOCO)
 
 ​                 default tasks include images understand /detect/instance segment .....(add methods for image generation and inpainting )
 
-<img src="asset/1.jpg">				
+<img src="asset/1.jpg" style="zoom:80%;" />
 
-<img src="asset/demo2.png" >
+"Prompt" control models output, example
+
+​					<img src="asset/d2.png">
+
+
 
 
  2.  Semi-automatic interaction  UI tool (coming soon)
