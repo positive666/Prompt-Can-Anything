@@ -22,21 +22,9 @@ So it's just a tool for prompt any thing(YOCO)
 
 ​                 default tasks include images understand /detect/instance segment .....(add methods for image generation and inpainting )
 
-<img src="F:\git_code\Prompt-Can-Anything\asset\1.jpg" alt="1" style="zoom: 80%;" />				
+<img src="asset/1.jpg">				
 
-
-
-"Prompt" control models output, example,  "bear“ as a prompt to guide models to complete the relevant annotations 
-
-<img src="F:\git_code\Prompt-Can-Anything\asset\4.png" alt="4" style="zoom: 100%;" /><img src="F:\git_code\Prompt-Can-Anything\asset\2.png" alt="2" style="zoom: 100%;" />
-
-
-
-
-
-​			  
-
-
+<img src="asset/demo2.png" >
 
 
  2.  Semi-automatic interaction  UI tool (coming soon)
