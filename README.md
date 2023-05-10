@@ -16,17 +16,17 @@ So it's just a tool for prompt any thing(YOCO)
 
     In addition, we will introduce video, audio, and 3D annotation in the future.
 
-<img src="asset/data_engine.png" alt="structure" style="zoom: 80%;" />
+<img src="asset/data_engine.png" alt="structure" style="zoom: 67%;" />
 
 ​    	Support multi-tasks, such as :
 
 ​                 default tasks include images understand /detect/instance segment .....(add methods for image generation and inpainting )
 
-<img src="asset/1.jpg" style="zoom: 50%;" />
+<img src="asset/1.jpg" style="zoom: 33%;" />
 
 "Prompt" control models output, example
 
-​					<img src="asset/d2.png" style="zoom:80%;" >
+​					<img src="asset/d2.png" style="zoom: 67%;" >
 
 
 
