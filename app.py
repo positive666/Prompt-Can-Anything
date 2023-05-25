@@ -18,6 +18,7 @@ from ChatGPT.config.private import API_KEY,PROXIES
 from utils.torch_utils import select_device
 from utils.conf import SAM_MODEL_TYPE,GROUNED_MODEL_TYPE,Tag2Text_Model_Path,NUM_WORKS
 from utils import VID_FORMATS,IMG_FORMATS,write_categories
+sys.path.append("VisualGLM_6B")
 from VisualGLM_6B.chatglm import *
 import multiprocessing
 import xml.etree.cElementTree as ET
