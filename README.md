@@ -191,7 +191,7 @@ more ,you can see "pip install < your missing packages>"
    
 
 
-![image-20230427093103453](F:\git_code\Prompt-Can-Anything\asset\image-20230427093103453.png)
+![image-20230427093103453](asset\image-20230427093103453.png)
 
 2. webui
 
@@ -199,7 +199,7 @@ more ,you can see "pip install < your missing packages>"
 		python app.py
 ```
 
-![image-20230508075845259](F:\git_code\Prompt-Can-Anything\asset\default_all.png)
+![image-20230508075845259](asset\default_all.png)
 
 
 

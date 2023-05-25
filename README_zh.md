@@ -165,7 +165,7 @@ pip install --upgrade diffusers[torch]
 ```pyhton
 		python app.py
 ```
-![image-20230508075845259](F:\git_code\Prompt-Can-Anything\asset\default_all.png)
+![image-20230508075845259](asset\default_all.png)
 
 
 
@@ -176,7 +176,7 @@ pip install --upgrade diffusers[torch]
 		python app.py --chat_glm --quant
 ```
 
-![visual_chatglm](F:\git_code\Prompt-Can-Anything\asset\visual_chatglm.png)
+![visual_chatglm](asset\visual_chatglm.png)
 
 **🔨计划清单**
 
