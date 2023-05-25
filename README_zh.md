@@ -17,6 +17,7 @@
 ![structure](asset/data_engine.png)
 
 2. 半自动交互UI工具（计划推出）
+2.  图像编辑和创作（近期更新）
 
 ## 特性
 
@@ -24,9 +25,15 @@
 
   提供完全自动的数据注释，并通过工程优化对其进行细化，通过稳定扩散和GPT的相关模型，我们可以为下游任务创建更多的数据源能力。
 
-- 可扩展的一键注释训练，用于三方项目的使用，例如Yolo、Lora模式。（即将推出）
+  可扩展的一键注释训练，用于三方项目的使用，例如Yolo、Lora模式。（即将推出）
 
-- 加速视频和数据集的处理（即将推出）
+- 🚀🚀内容创作和视觉GPT
+
+   目前使用了chatgpt(需要配置代理，可能在CONDA环境里也要修改端口号)	，加入了清华开源的VisualGLM
+
+- 🔥希望它不只是一个工具或者插件，我们会整理各个模型的细致分析和微调改进方法。			
+
+- 🚀加速视频和数据集的处理（即将推出）
 
 <details open>
 <summary>⭐ 研究 🚀 项目 🔥 灵感（筹备中）</summary>
@@ -39,11 +46,15 @@
 
 ### <div align="left">⭐ [新闻列表]</div>
 
+- 【2023/5/23】添加Web演示：加入清华的VisualGLM-6B版本
+
 - 【2023/5/7】添加Web演示：目前，已经测试了文本生成、图像或图像文件夹的检测和分割功能，程序无需重新启动，记住了最后的模型加载配置，并将在未来持续优化。
 - 【2023/5/4】添加语义分割标签，添加args（--color-flag --save-mask）
 - 【2023/4/26】YOCO，自动标注工具：提交初步代码，针对输入图像或文件夹，可以获得检测、分割和文本注释的结果，额外提供选择chatgpt api。
 
 **预备工作**
+
+- [VisualGLM-6B](https://github.com/THUDM/VisualGLM-6B.git) : Visual ChatGlm. 
 
 - [Segment Anything](https://github.com/facebookresearch/segment-anything)：强大的分割模型。但它需要提示（如盒子/点）来生成蒙版。
 
@@ -59,7 +70,7 @@
 
 首先，需要有基本的gpu深度学习环境。
 
-（建议使用Linux，Windows可能在编译Grounded-DINO Deformable算子时出现问题，参见[Grounding DINO](https://github.com/IDEA-Research/GroundingDINO)）
+（建议使用Linux，Windows可能在编译Grounded-DINO Deformable和配置Visualglm时候算子时出现问题，参见[Grounding DINO](https://github.com/IDEA-Research/GroundingDINO)）
 
 ```bash
 gir clone https://github.com/positive666/Prompt-Can-Anything
@@ -79,7 +90,7 @@ pip install -e .
 pip install --upgrade diffusers[torch]
 ```
 
-更多内容，可以查看“pip install < your missing packages>”。
+更多内容，可以查看requirements, “pip install < your missing packages>”。
 
 运行
 
@@ -130,36 +141,50 @@ pip install --upgrade diffusers[torch]
     <tr>
 </table>
    2. 配置文件和参数在 utils/conf.py 下,下载模型后将路径配置在" MODEL_xxxx_PATH“的变量  ,如果使用 chatgpt,配置其代理和API密钥
-   2. run demo
 
-   ```bash
-   
+      
+
+**🏃Demo** 
+
+1. without web-ui
+
+      ```bash
    "--input_prompt" :  你可以手动输入prompt,比如你只想检测你感兴趣的目标类别，可以直接输入给grounded检测模型，也可以输入给tag2text
    '--color-flag': 使用BOX的标签同类别和实例分割区别:语音分割的类别颜色
    ```
 
-	```bash
-	python demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --save_caption 
-	```
+   
+   	python demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --save_caption 
+   
+   
 
-🏃Demo 
+![image-20230427093103453](F:\git_code\Prompt-Can-Anything\asset\image-20230427093103453.png)
+
+2. webui
+
+```pyhton
+		python app.py
+```
+![image-20230508075845259](F:\git_code\Prompt-Can-Anything\asset\default_all.png)
 
 
-![image-20230427093103453](asset/image-20230427093103453.png)
 
 
+3. webui with chatglm			
 
-![image-20230508075845259](asset/webdemo.png)
+```
+		python app.py --chat_glm --quant
+```
 
+![visual_chatglm](F:\git_code\Prompt-Can-Anything\asset\visual_chatglm.png)
 
-
-***🔨To Do list***
+**🔨计划清单**
 
 - [x] Release demo and code(2 days within).
 - [x] web ui   demo 
-- [ ] support video ,chatgpt, add inpainting model demo
+- [x] support video ,chatgpt, visualglm,add inpainting model demo
 - [ ] add 3d nerf demo 
-- [ ] fintune sam and ground?? 
+- [ ] fintune sam and ground 
 - [ ] Release training datasets.
 
 
@@ -169,6 +194,7 @@ pip install --upgrade diffusers[torch]
 - [Grounding DINO](https://github.com/IDEA-Research/GroundingDINO)
 - [Tag2text](https://github.com/xinyu1205/Tag2Text) 
 - [lama](https://github.com/advimman/lama) 
+- [VisualGLM-6B](https://github.com/THUDM/VisualGLM-6B.git) 
 
 感谢他们的出色工作！
 

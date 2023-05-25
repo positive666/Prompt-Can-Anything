@@ -18,7 +18,7 @@ from ChatGPT.config.private import API_KEY,PROXIES
 from utils.torch_utils import select_device
 from utils.conf import SAM_MODEL_TYPE,GROUNED_MODEL_TYPE,Tag2Text_Model_Path,NUM_WORKS
 from utils import VID_FORMATS,IMG_FORMATS,write_categories
-
+from chatglm import *
 import multiprocessing
 import xml.etree.cElementTree as ET
 import gradio as gr
@@ -37,7 +37,7 @@ global category_colors
 category_colors={}
 # 初始对应类别编号
 class_ids = []
-models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None,'sd': None}
+models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None,'sd': None,'chat_glm': None}
 #global memory_model
 
 def auto_opentab_delay(port=7585):
@@ -54,6 +54,7 @@ def load_auto_backend_models(lama,sam,det,tag2text,device):
     加载多个模型
     """
     # Load model
+    
     device = select_device(device)
     if tag2text and not models_config['tag2text']:
         models_config['tag2text'] = AutoBackend("tag2text",weights=Tag2Text_Model_Path,device=device)
@@ -177,7 +178,8 @@ def Auto_run(
                         if chatgpt:
                             from gpt_demo import check_caption
                             caption=check_caption(caption, preds[2], chatbot)
-                    if preds is not None and sam :
+                    if sam and det :        
+                        if preds[0].numel()>0:      
                             masks= models_config['sam'](im = img_rgb, prompt=preds[0],box_threshold=conf_thres,text_threshold=text_thres, iou_threshold=iou_thres)
                             if save_mask:
                                 save_mask_data(str(save_dir)+'/masks', caption, masks, preds[0], preds[2],name_p)
@@ -214,7 +216,7 @@ def Auto_run(
                             category_colors[category] = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))            
                     gn = torch.tensor(im.shape)[[1, 0, 1, 0]]  # normalization gain whwh   
                     
-                    if color_flag or save_txt:
+                    if (color_flag or save_txt) and(det ) :
                         seg_mask = np.zeros_like(img_rgb)  # img_array 为输入图像的数组表示
                         category_color=[]
                         for xyxy, conf, cls,mask in zip(preds[0],preds[1],preds[2],masks):       #per im boxes              
@@ -281,10 +283,12 @@ def Auto_run(
             
 
 
-def main():
+def main(args):
       
           check_requirements(exclude=('tensorboard', 'thop'))
-          global models_config
+          global models_config,tokenizer_glm
+          if args.chat_glm:
+                 models_config['chat_glm']=VisualGLM(quant=args.quant)
           block=gr.Blocks()
           inputxs=[]
           outputs=[]
@@ -330,28 +334,53 @@ def main():
                          inputxs.extend(list( save_options.values()))
                          
                          API_KEY=gr.inputs.Textbox(label='OPENAI_kety',default='')  
-                         prompt_input=gr.inputs.Textbox(lines=2, label="Prompt: User Specified Tags (Optional, Enter with commas)")
                          dir_inputs =gr.inputs.Textbox(label='dir_path',default='train_imgs')
-                         image_inputs = gr.inputs.Image(type='pil')
-                         inputs = [dir_inputs,image_inputs,prompt_input,box_threshold,iou_threshold,text_threshold,device_input]
+                         prompt_input=gr.inputs.Textbox(lines=3, label="Prompt: User Specified Tags (Optional, Enter with commas)")
+                         run_button = gr.Button('Run')
+                         image_prompt = gr.Image(type="filepath", label="Image Prompt", value=None)
+                         inputs = [dir_inputs,image_prompt,prompt_input,box_threshold,iou_threshold,text_threshold,device_input]
                          inputs.extend(inputxs)
-                         run_button = gr.Button(label="Run")
-                    with gr.Column():
+                         
+                         if models_config['chat_glm']:
+                            with gr.Row():
+                                run_button_2 = gr.Button('Send')
+                                clear_button = gr.Button('Clear')
+                            with gr.Row():
+                                temperature = gr.Slider(maximum=1, value=0.8, minimum=0, label='Temperature')
+                                top_p = gr.Slider(maximum=1, value=0.4, minimum=0, label='Top P')
+                            with gr.Group():
+                                with gr.Row():
+                                    maintenance_notice = gr.Markdown(MAINTENANCE_NOTICE1)   
+                    with gr.Column(scale=1.5):
                          gallery = gr.Gallery(label="Generated images",show_label=False,elem_id="gallery",).style(preview=True, grid=2, object_fit="scale-down")
                          output_text = gr.Textbox(label="Caption",lines=2)
                          output_classes= gr.Textbox(label="Class_numbers:auto generate classes numbers, 【color flag】 or 【save_txt】 must be ture ")
                          output_tag= gr.outputs.Textbox(label="Tag")
                          outputs = [gallery, output_text, output_tag,output_classes]
-                        
+                         if models_config['chat_glm']:   
+                            result_text = gr.components.Chatbot(label='Multi-round conversation History', value=[("", "Hi, What do you want to know about this image?")]).style(height=550)
+               
                run_button.click(fn=Auto_run, inputs=inputs, outputs=outputs)
-
-       
+               if  models_config['chat_glm']:   
+                            
+                run_button_2.click(fn=models_config['chat_glm'].request_model,inputs=[prompt_input, temperature, top_p, image_prompt, result_text],
+                            outputs=[prompt_input, result_text])
+                prompt_input.submit(fn=models_config['chat_glm'].request_model,inputs=[prompt_input, temperature, top_p, image_prompt, result_text],
+                                    outputs=[prompt_input, result_text])
+                clear_button.click(fn=clear_fn, inputs=clear_button, outputs=[prompt_input, result_text, image_prompt])
+                image_prompt.upload(fn=clear_fn2, inputs=clear_button, outputs=[result_text])
+                image_prompt.clear(fn=clear_fn2, inputs=clear_button, outputs=[result_text])
+        
           auto_opentab_delay()
           block.queue(concurrency_count=100)
           block.launch(server_name='0.0.0.0', server_port=7585, debug=True, share=False)
      
 if __name__ == "__main__":
-     #opt = parse_opt()
-     main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--quant", choices=[8, 4], type=int, default=4)
+    parser.add_argument("--share", action="store_true")
+    parser.add_argument("--chat_glm", default=False,action="store_true")
+    args = parser.parse_args()
+    main(args)
     
      

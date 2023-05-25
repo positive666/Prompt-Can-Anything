@@ -23,12 +23,15 @@ from ChatGPT.GPT import Chatbot
 from ChatGPT.config.private import API_KEY,PROXIES
 
 from utils.torch_utils import select_device
-from utils.conf import SAM_MODEL_TYPE,GROUNED_MODEL_TYPE,Tag2Text_Model_Path,NUM_WORKS
+from utils.conf import SAM_MODEL_TYPE,GROUNED_MODEL_TYPE,Tag2Text_Model_Path,GLIGEN_META_LIST
 from utils import VID_FORMATS,IMG_FORMATS,write_categories
 
 import multiprocessing
 import xml.etree.cElementTree as ET
 from tqdm import tqdm
+
+
+
 
 # 初始已知类别列表
 global categories
@@ -37,7 +40,7 @@ global category_colors
 category_colors={}
 # 初始对应类别编号
 class_ids = []
-models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None,'sd': None}
+models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None,'sd': None,'gligen':None}
 
 def load_auto_backend_models(opt):
     """
@@ -54,7 +57,9 @@ def load_auto_backend_models(opt):
         models_config['sam']= AutoBackend("segment-anything",weights=SAM_MODEL_TYPE['vit_h'] ,device=device, fp16=opt.half)
     if opt.lama:
         models_config['lama']= AutoBackend("lama",weights=None,args_config='model_cards/lama/configs/prediction/default.yaml',device=device)
-    #return models_config
+    if opt.gligen:
+        models_config['gligen']=AutoBackend("gligen",weights=GLIGEN_META_LIST[0])
+        print('【loads models done】')
         
 def Auto_run(weights=ROOT / '',  # model.pt path(s)
         source= 'data/images',  # file/dir/URL/glob, 0 for webcam
@@ -95,6 +100,7 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
         batch_process=False,
         color_flag=False,
         process_name=0,
+        gligen=False,
         ):  
             LOGGER.info(f'当前的进程ID：{process_name},加载的模型列表：{models_config.keys()}')
             cls_index = -1      # 设置默认值为 -1
@@ -150,7 +156,8 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
                         if chatgpt:
                             from gpt_demo import check_caption
                             caption=check_caption(caption, preds[2], chatbot)
-                    if preds is not None and sam:
+                    if sam and det :        
+                        if preds[0].numel()>0:
                             print('sam start input prompt:',preds[0])
                             masks= models_config['sam'](im = img_rgb, prompt=preds[0],box_threshold=conf_thres,text_threshold=text_thres, iou_threshold=iou_thres)
                             if save_mask:
@@ -241,7 +248,7 @@ def run_do(shared_args,process_name=0):
 def parse_opt():
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', nargs='+', type=str, default=ROOT / 'your model path', help='model path(s)')
-    parser.add_argument('--source', type=str, default=ROOT / 'data/images', help='file/dir/URL/glob, 0 for webcam')
+    parser.add_argument('--source', type=str, default=ROOT / 'train_imgs', help='file/dir/URL/glob, 0 for webcam')
     parser.add_argument('--input_prompt', type=str, default='', help='provide prompt words')
     parser.add_argument('--data', type=str, default=ROOT / 'data/coco128.yaml', help='(optional) dataset.yaml path')
     parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[640], help='inference size h,w')
@@ -271,13 +278,15 @@ def parse_opt():
     parser.add_argument('--half', action='store_true', help='use FP16 half-precision inference')
     parser.add_argument('--trace', action='store_true', help='trace model')
     parser.add_argument('--lama',default=False, action='store_true', help='lama model')
-    parser.add_argument('--sam', default=True,action='store_true', help='seg model')
-    parser.add_argument('--det',default=True, action='store_true', help='det model')
+    parser.add_argument('--sam', default=False,action='store_true', help='seg model')
+    parser.add_argument('--det',default=False, action='store_true', help='det model')
     parser.add_argument('--tag2text', default=True,action='store_true', help='tag2text model ')
-    parser.add_argument('--save-mask', default=True,action='store_true', help='mask save json')
+    parser.add_argument('--save-mask', default=False,action='store_true', help='mask save json')
     parser.add_argument('--save-caption', default=True,action='store_true', help='caption ')
     parser.add_argument('--batch-process', action='store_true', help='therads process file')
     parser.add_argument('--color-flag', action='store_true', help='class-color ')
+    parser.add_argument('--gligen', action='store_true', help='class-color ')
+   
     opt = parser.parse_args()
     print_args(vars(opt))
     return opt

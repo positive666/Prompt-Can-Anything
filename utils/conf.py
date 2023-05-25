@@ -59,5 +59,5 @@ NUM_WORKS=2
 # set model an model path 
 GROUNED_MODEL_TYPE= {'S': "../Grounded-Segment-Anything-main/groundingdino_swint_ogc.pth",'L':None}
 SAM_MODEL_TYPE= {'vit_h': "../large_model/weights/sam/sam_vit_h_4b8939.pth"  ,'vit_l':None,'vit_b':None}
-Tag2Text_Model_Path='/home/project/Grounded-Segment-Anything-main/Tag2Text/pretrained/tag2text_swin_14m.pth'#'weights/tag2text/tag2text_swin_14m.pth'
+Tag2Text_Model_Path='F:\\tag2text_swin_14m.pth'#'weights/tag2text/tag2text_swin_14m.pth'
 LAMA_MODEL_PATH='/home/project/Grounded-Segment-Anything-main/big-lama'

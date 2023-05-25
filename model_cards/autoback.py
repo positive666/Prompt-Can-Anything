@@ -21,12 +21,7 @@ from PIL import Image
 
 import sys
 #Grounding
-from model_cards.groundingdino.models import build_model
-import  model_cards.groundingdino.datasets.transforms as T
-from model_cards.groundingdino.models import build_model
-from model_cards.groundingdino.util import box_ops
-from model_cards.groundingdino.util.slconfig import SLConfig
-from model_cards.groundingdino.util.utils import clean_state_dict, get_phrases_from_posmap
+
 
 sys.path.append("model_cards")
 sys.path.append('model_cards/Tag2Text')
@@ -158,6 +153,10 @@ class AutoBackend(nn.Module):
         
         if pt or weights is None :  # PyTorch
             if methods == "grounded-DINO":
+                
+               from model_cards.groundingdino.models import build_model
+               from model_cards.groundingdino.util.slconfig import SLConfig
+               from model_cards.groundingdino.util.utils import clean_state_dict
                config_args=SLConfig.fromfile(args_config)
                config_args.device=self.device
                model=build_model(config_args)
@@ -245,7 +244,7 @@ class AutoBackend(nn.Module):
             if self.fp16 and im.dtype != torch.float16:
                 im = im.half()  # to FP16     
             if self.flag=="grounded-DINO":
-                    
+                    from model_cards.groundingdino.util.utils import  get_phrases_from_posmap 
                     caption=prompt
                     input_tensor=preprocess_image(im).to("cuda:0")
                     caption = caption.lower()
