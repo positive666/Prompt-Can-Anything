@@ -191,7 +191,7 @@ more ,you can see "pip install < your missing packages>"
    
 
 
-![image-20230427093103453](asset\image-20230427093103453.png)
+![image-20230427093103453](asset/image-20230427093103453.png)
 
 2. webui
 
@@ -199,7 +199,7 @@ more ,you can see "pip install < your missing packages>"
 		python app.py
 ```
 
-![image-20230508075845259](asset\default_all.png)
+![image-20230508075845259](asset/default_all.png)
 
 
 
@@ -210,7 +210,7 @@ more ,you can see "pip install < your missing packages>"
 		python app.py --chat_glm --quant
 ```
 
-![visual_chatglm](F:\git_code\Prompt-Can-Anything\asset\visual_chatglm.png)
+![visual_chatglm](asset/visual_chatglm.png)
 
 
 
