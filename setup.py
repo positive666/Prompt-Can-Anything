@@ -16,7 +16,7 @@ import torch
 from setuptools import find_packages, setup
 from torch.utils.cpp_extension import CUDA_HOME, CppExtension, CUDAExtension
 
-version = "0.1"
+version = "v1"
 package_name = "Prompt-Can-Anything"
 cwd = os.path.dirname(os.path.abspath(__file__))
 
