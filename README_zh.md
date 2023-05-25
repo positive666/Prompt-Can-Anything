@@ -83,6 +83,12 @@ cd Prompt-Can-Anything
 pip install -e .
 ```
 
+安装清华视觉GLM（可选，最好用LINUX系统，window后面测试后补充安装方案）：
+
+```bash
+git submodule update --init --recursive
+cd  VisualGLM_6B && pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
+```
 
 安装扩散器（可选）：
 

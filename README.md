@@ -102,7 +102,12 @@ cd Prompt-Can-Anything
 ```bash
 pip install -e .
 ```
+Install VisualGLM（Optional,Recommond Linux）
 
+```bash
+git submodule update --init --recursive
+cd  VisualGLM_6B && pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
+```
 
 Install diffusers（Optional）
 
