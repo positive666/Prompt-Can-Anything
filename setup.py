@@ -35,11 +35,11 @@ torch_ver = [int(x) for x in torch.__version__.split(".")[:2]]
 
 
 def get_extensions():
-    #print("build ")
+ 
     this_dir = os.path.dirname(os.path.abspath(__file__))
     print("build path:",this_dir)
-    extensions_dir = os.path.join(this_dir, "groundingdino", "models", "GroundingDINO", "csrc")
-
+    extensions_dir = os.path.join(this_dir, 'model_cards',"groundingdino", "models", "GroundingDINO", "csrc")
+    print("extensions_dir path:",extensions_dir)
     main_source = os.path.join(extensions_dir, "vision.cpp")
     sources = glob.glob(os.path.join(extensions_dir, "**", "*.cpp"))
     source_cuda = glob.glob(os.path.join(extensions_dir, "**", "*.cu")) + glob.glob(
@@ -172,7 +172,7 @@ if __name__ == "__main__":
         name="Prompt-Can-Anything",
         version="0.1",
         author="positive666",
-        description="open-set object detector",
+        description="muti-models",
         #license=license,
         install_requires=parse_requirements("requirements.txt"),
         packages=find_packages(
