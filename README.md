@@ -177,8 +177,8 @@ more ,you can see "pip install < your missing packages>"
 
    
 
-2. set config file and args in utils/conf.py ,add your download weights to " MODEL_xxxx_PATH“  ,if need chatgpt,configure the "PROXIES", "API_KEY " 
-
+2. set config file and args in utils/conf.py ,add your download weights to " MODEL_xxxx_PATH“  ,if need chatgpt, "PROXIES", "API_KEY " in ChatGPT/config/private.py
+ 
    
 
 **🏃Demo**

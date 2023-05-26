@@ -83,6 +83,8 @@ target/
 profile_default/
 ipython_config.py
 
+#key
+ChatGPT/config
 # pyenv
 .python-version
 
