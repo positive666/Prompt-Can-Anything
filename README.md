@@ -222,8 +222,9 @@ more ,you can see "pip install < your missing packages>"
 ## 🔨To Do List
 
 - [x] Release demo and code.
-- [x] web ui   demo 
-- [x] support video ,chatgpt, add inpainting model demo
+- [x] web ui  demo 
+- [x] VisualGLM  demo 
+- [ ] support video ,chatgpt, add inpainting model demo
 - [ ] add 3d nerf demo 
 - [ ] fintune sam and ground?? 
 - [ ] Release training datasets.
