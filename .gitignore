@@ -82,7 +82,7 @@ target/
 # IPython
 profile_default/
 ipython_config.py
-config_privat.py
+config_private.py
 #key
 ChatGPT/config
 # pyenv
