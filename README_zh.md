@@ -187,15 +187,15 @@ pip install --upgrade diffusers[torch]
    		python app.py
    ```
 
-   ![image-20230508075845259](F:/git_code/Prompt-Can-Anything/asset/default_all.png)
+   ![image-20230508075845259](asset/default_all.png)
 
    ​			
 
    
 
-   ![visual_chatglm](F:/git_code/Prompt-Can-Anything/asset/visual_chatglm.png)
+   ![visual_chatglm](asset/visual_chatglm.png)
 
-   ![image-20230527022556630](F:/git_code/Prompt-Can-Anything/asset/news.png)
+   ![image-20230527022556630](asset/news.png)
 
 **🔨计划清单**
 
