@@ -20,6 +20,6 @@ requests
 setuptools
 termcolor
 nltk
-gradio
+gradio>=3.28.0
 omegaconf
 #cpython #windows 

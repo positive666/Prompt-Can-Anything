@@ -8,7 +8,7 @@
 
 目标：计划生成高质量的数据标注数据并训练我们的模型。
 
-所以它只是一个可以提示任何事情的工具（YOCO）
+所以它不知是一个可以提示任何事情的工具（YOCO）
 
 1. 全自动标注工具，当前结构（YOCO）
 
@@ -16,8 +16,17 @@
 
 ![structure](asset/data_engine.png)
 
-2. 半自动交互UI工具（计划推出）
-2.  图像编辑和创作（近期更新）
+2. LLM模型服务：文本和声音：
+
+   ​	加入网络chatgpt服务和本地VisualGLM，基本的音频处理在迭代中，会加入ASR和TTS；
+
+2. 半自动交互UI工具（计划推出）：
+
+   这部分工作比较多了，因时间精力不作加急更新
+
+2. 图像编辑和创作（近期更新）
+
+2. 一键微调训练本地模型
 
 ## 特性
 
@@ -34,6 +43,10 @@
 - 🔥希望它不只是一个工具或者插件，我们会整理各个模型的细致分析和微调改进方法。			
 
 - 🚀加速视频和数据集的处理（即将推出）
+
+- 3D数字人应用
+
+- 一键微调模型和训练下游视觉任务模型（筹备中）
 
 <details open>
 <summary>⭐ 研究 🚀 项目 🔥 灵感（筹备中）</summary>
@@ -146,7 +159,7 @@ pip install --upgrade diffusers[torch]
     </tr>
     <tr>
 </table>
-   2. 配置文件和参数在 utils/conf.py 下,下载模型后将路径配置在" MODEL_xxxx_PATH“的变量  ,如果使用 chatgpt,配置其代理和API密钥
+   2. 配置隐私文件和参数在 config_private.py 下,下载模型后将路径配置在" MODEL_xxxx_PATH“的变量  ,如果使用 chatgpt,配置其代理和API密钥
 
       
 
@@ -168,21 +181,21 @@ pip install --upgrade diffusers[torch]
 
 2. webui
 
-```pyhton
-		python app.py
-```
-![image-20230508075845259](asset/default_all.png)
+   
 
+   ```pyhton
+   		python app.py
+   ```
 
+   ![image-20230508075845259](F:/git_code/Prompt-Can-Anything/asset/default_all.png)
 
+   ​			
 
-3. webui with chatglm			
+   
 
-```
-		python app.py --chat_glm --quant
-```
+   ![visual_chatglm](F:/git_code/Prompt-Can-Anything/asset/visual_chatglm.png)
 
-![visual_chatglm](asset/visual_chatglm.png)
+   ![image-20230527022556630](F:/git_code/Prompt-Can-Anything/asset/news.png)
 
 **🔨计划清单**
 

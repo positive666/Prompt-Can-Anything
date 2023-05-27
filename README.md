@@ -28,8 +28,15 @@ So it's just a tool for prompt any thing(YOCO)
 
 ​					<img src="asset/d2.png" style="zoom: 67%;" >
 
-2. image editing and generate(coming soon)
-3. Semi-automatic interaction  UI tool (coming soon)
+2. LLM models provide prompt and audio prrompt (update...)
+
+    
+
+3. image editing and generate(coming soon)
+
+   
+
+4. Semi-automatic interaction  UI tool (coming soon)
 
 
 
@@ -49,7 +56,9 @@ So it's just a tool for prompt any thing(YOCO)
 
 - 🚀 Accelerate video and dataset processing (to be released soon).
 
-- Accelerated  processing of videos and datasets（coming soon）
+- 🚀 3D  Avataor
+
+-  🔥🔥 in the future, it will integrate one-click fine-tuning of localization models（coming soon）
 
 
 <details open >
@@ -63,7 +72,7 @@ So it's just a tool for prompt any thing(YOCO)
 
 
 ### <div align="left">⭐[News list] </div>
-	-【2023/5/23】  add web demo:Add VisualGLM 
+	-【2023/5/23】  add web demo:Add VisualGLM ,chatgpt form [Academic-gpt](https://github.com/binary-husky/gpt_academic)
 	-【2023/5/7】   add web demo:At present, the function of text generation, detection and segmentation of images or image folders on the website has been tested normally, and the program does not need to be restarted, and the last model loading configuration is remembered, and it will be continuously optimized in the future.
 	-【2023/5/4】   add  semantic segmentatio label, add args(--color-flag --save-mask )
 	-【2023/4/26】  YOCO,Automatic annotation TOOLS:Commit preliminary code ,For the input image or folder, you can obtain the results of detection, segmentation, and text annotation , optional chatgpt api.
@@ -72,7 +81,7 @@ So it's just a tool for prompt any thing(YOCO)
 
 ## Preliminary-Works
 
-- [VisualGLM-6B](https://github.com/THUDM/VisualGLM-6B.git) : Visual ChatGlm. 
+- [VisualGLM-6B](https://github.com/THUDM/VisualGLM-6B) : Visual ChatGlm. 
 
 - [Segment Anything](https://github.com/facebookresearch/segment-anything) : Strong segmentation model. But it needs prompts (like boxes/points) to generate masks. 
 
@@ -177,8 +186,8 @@ more ,you can see "pip install < your missing packages>"
 
    
 
-2. set config file and args in utils/conf.py ,add your download weights to " MODEL_xxxx_PATH“  ,if need chatgpt, "PROXIES", "API_KEY " in ChatGPT/config/private.py
- 
+2. set your config file and args in config_private.py ,add your download weights to " MODEL_xxxx_PATH“  ,if need chatgpt, "PROXIES", "API_KEY " in ChatGPT/config/private.py
+
    
 
 **🏃Demo**
@@ -196,6 +205,8 @@ more ,you can see "pip install < your missing packages>"
    
 
 
+
+
 ![image-20230427093103453](asset/image-20230427093103453.png)
 
 2. webui
@@ -206,18 +217,13 @@ more ,you can see "pip install < your missing packages>"
 
 ![image-20230508075845259](asset/default_all.png)
 
+​			
 
 
-
-3. webui with VisualGLM			
-
-```
-		python app.py --chat_glm --quant
-```
 
 ![visual_chatglm](asset/visual_chatglm.png)
 
-
+![image-20230527022556630](asset/news.png)
 
 ## 🔨To Do List
 
