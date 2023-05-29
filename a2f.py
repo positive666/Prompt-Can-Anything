@@ -16,8 +16,8 @@ import keyboard
 import time
 import whisper 
 import requests
-from ChatGPT.GPT import Chatbot
-from ChatGPT.config.private import API_KEY,PROXIES
+
+from config_private import API_KEY
 
 
 
@@ -103,5 +103,5 @@ def send_stream(whisper_modelm,chat_bot):
 
 if __name__ == "__main__":
       whisper_model = whisper.load_model("base")
-      chatbot=Chatbot(api_key=API_KEY,proxy=PROXIES,engine="gpt-3.5-turbo")
+     # chatbot=Chatbot(api_key=API_KEY,proxy=PROXIES,engine="gpt-3.5-turbo")
       send_stream(whisper_model,chatbot)

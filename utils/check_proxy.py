@@ -24,7 +24,7 @@ def backup_and_download(current_version, remote_version):
     """
     一键更新协议：备份和下载
     """
-    from toolbox import get_conf
+    from utils.toolbox import get_conf
     import shutil
     import os
     import requests
@@ -62,7 +62,7 @@ def patch_and_restart(path):
     import sys
     import time
     import glob
-    from colorful import print亮黄, print亮绿, print亮红
+    from utils.colorful import print亮黄, print亮绿, print亮红
     # if not using config_private, move origin config.py as config_private.py
     if not os.path.exists('config_private.py'):
         print亮黄('由于您没有设置config_private.py私密配置，现将您的现有配置移动至config_private.py以防止配置丢失，',
@@ -99,7 +99,7 @@ def auto_update(raise_error=False):
     一键更新协议：查询版本和用户意见
     """
     try:
-        from toolbox import get_conf
+        from utils.toolbox import get_conf
         import requests
         import time
         import json
@@ -116,7 +116,7 @@ def auto_update(raise_error=False):
             current_version = f.read()
             current_version = json.loads(current_version)['version']
         if (remote_version - current_version) >= 0.01:
-            from colorful import print亮黄
+            from utils.colorful import print亮黄
             print亮黄(
                 f'\n新版本可用。新版本:{remote_version}，当前版本:{current_version}。{new_feature}')
             print('（1）Github更新地址:\nhttps://github.com/binary-husky/chatgpt_academic\n')
@@ -128,7 +128,7 @@ def auto_update(raise_error=False):
                 except:
                     msg = '更新失败。'
                     if raise_error:
-                        from toolbox import trimmed_format_exc
+                        from utils.toolbox import trimmed_format_exc
                         msg += trimmed_format_exc()
                     print(msg)
             else:
@@ -139,13 +139,13 @@ def auto_update(raise_error=False):
     except:
         msg = '自动更新程序：已禁用'
         if raise_error:
-            from toolbox import trimmed_format_exc
+            from utils.toolbox import trimmed_format_exc
             msg += trimmed_format_exc()
         print(msg)
 
 def warm_up_modules():
     print('正在执行一些模块的预热...')
-    from request_llm.bridge_all import model_info
+    from llm_cards.bridge_all import model_info
     enc = model_info["gpt-3.5-turbo"]['tokenizer']
     enc.encode("模块预热", disallowed_special=())
     enc = model_info["gpt-4"]['tokenizer']
@@ -154,6 +154,6 @@ def warm_up_modules():
 if __name__ == '__main__':
     import os
     os.environ['no_proxy'] = '*'  # 避免代理网络产生意外污染
-    from toolbox import get_conf
+    from utils.toolbox import get_conf
     proxies, = get_conf('proxies')
     check_proxy(proxies)

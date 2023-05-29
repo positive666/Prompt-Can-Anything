@@ -15,7 +15,7 @@ from utils.plot import Annotator, save_one_box,show_box,show_mask,save_mask_data
 #from ChatGPT.GPT import Chatbot
 #from ChatGPT.config.private import API_KEY,PROXIES
 from config_private import *
-from utils.bridge_chatgpt import predict
+from llm_cards.bridge_chatgpt import predict
 from utils.toolbox import format_io, find_free_port, on_file_uploaded, on_report_generated, get_conf, ArgsGeneralWrapper, DummyWith
 
 from utils.torch_utils import select_device
@@ -45,7 +45,7 @@ class_ids = []
 models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None,'sd': None,'visual_glm': None,'chatgpt': None,}
 
 
-def auto_opentab_delay(port=7588):
+def auto_opentab_delay(port=7586):
         import threading, webbrowser, time
         print(f"如果浏览器没有自动打开，请复制并转到以下URL：")
         print(f"\t（亮色主题）: http://localhost:{port}")
@@ -386,8 +386,7 @@ if __name__ == "__main__":
                          dir_inputs =gr.inputs.Textbox(label='加载本地图像文件夹路径',default='train_imgs')
                         
                          
-                    with gr.Column():
-                        
+                    with gr.Column():      
                          with gr.Row():
                                     with gr.Row():
                                         record_audio = gr.Audio(label="record your voice", source="microphone")
@@ -415,9 +414,15 @@ if __name__ == "__main__":
                                     #stopBtn = gr.Button("停止", variant="secondary")
                         
                          with gr.Row():
-                                temperature = gr.Slider(maximum=1, value=0.8, minimum=0, label='Temperature')
-                                top_p = gr.Slider(maximum=1, value=0.4, minimum=0, label='Top P')
-                      
+                                top_p = gr.Slider(minimum=-0, maximum=1.0, value=1.0, step=0.01,interactive=True, label="Top-p (nucleus sampling)",)
+                                temperature = gr.Slider(minimum=-0, maximum=2.0, value=1.0, step=0.01, interactive=True, label="Temperature",)
+                                max_length_sl = gr.Slider(minimum=256, maximum=4096, value=512, step=1, interactive=True, label="Local LLM MaxLength",)
+                                md_dropdown = gr.Dropdown(AVAIL_LLM_MODELS, value=LLM_MODEL, label="更换LLM模型/请求源").style(container=False)
+                         chat_txt=gr.Textbox(show_label=False, placeholder="question").style(container=False)
+                         with gr.Accordion("备选输入区", open=True, visible=False) as area_input_secondary:
+                            with gr.Row():
+                                txt = gr.Textbox(show_label=False, placeholder="Input question here.", label="输入区2").style(container=False)
+                         run_button_chat = gr.Button('Text_Sumbit',variant="primary")   
                                                              
                     with gr.Column():
                         #with gr.Row():
@@ -430,17 +435,14 @@ if __name__ == "__main__":
                             output_tag= gr.outputs.Textbox(label="Tag")
                             system_prompt = gr.Textbox(show_label=True, placeholder=f"Chat Prompt", label="下方输入对话支持图像和文本", value="AI assistant.")
                          outputs = [gallery, output_text, output_tag,output_classes]
-                         chat_txt=gr.Textbox(show_label=False, placeholder="I.").style(container=False)
-                         with gr.Accordion("备选输入区", open=True, visible=False) as area_input_secondary:
-                            with gr.Row():
-                                txt = gr.Textbox(show_label=False, placeholder="Input question here.", label="输入区2").style(container=False)
-                         run_button_chat = gr.Button('Text_Sumbit',variant="primary")
+                        
                         # chatbot = gr.Chatbot(label=f"当前模型：{LLM_MODEL}")
                         # chatbot.style(height=CHATBOT_HEIGHT/2)
                          history = gr.State([])
                         
                          result_text = gr.components.Chatbot(label=f'Multi-round conversation History,当前模型：{LLM_MODEL}', value=[("", "Hi, What do you want to know ?")]).style(height=CHATBOT_HEIGHT/2)
-                         input_combo = [cookies, chat_txt,txt,top_p, temperature, result_text, history,system_prompt]
+                         input_combo = [cookies, max_length_sl,md_dropdown,chat_txt,txt,top_p, temperature, result_text, history,system_prompt]
+                        
                          output_combo = [cookies, result_text, history, status]
                          predict_args = dict(fn=ArgsGeneralWrapper(predict), inputs=input_combo, outputs=output_combo)
                          
@@ -465,7 +467,7 @@ if __name__ == "__main__":
                image_prompt.clear(fn=clear_fn2, inputs=clear_button, outputs=[result_text])
         
           auto_opentab_delay()
-          block.queue(concurrency_count=CONCURRENT_COUNT).launch(server_name='0.0.0.0', server_port=7588,debug=True, share=False)
+          block.queue(concurrency_count=CONCURRENT_COUNT).launch(server_name='0.0.0.0', server_port=7586,debug=True, share=False)
      
 
      
