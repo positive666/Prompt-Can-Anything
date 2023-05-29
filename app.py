@@ -45,7 +45,7 @@ class_ids = []
 models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None,'sd': None,'visual_glm': None,'chatgpt': None,}
 
 
-def auto_opentab_delay(port=7585):
+def auto_opentab_delay(port=7588):
         import threading, webbrowser, time
         print(f"如果浏览器没有自动打开，请复制并转到以下URL：")
         print(f"\t（亮色主题）: http://localhost:{port}")
@@ -342,6 +342,7 @@ if __name__ == "__main__":
           with gr.Blocks(title="Prompt-Can-Anythings",reload=True) as block:
                cookies = gr.State({'api_key': API_KEY, 'llm_model': LLM_MODEL})
                with gr.Row():
+                  
                     with gr.Column():
                          with gr.Accordion('Grounded-DINO threshold Options（模型参数配置）', open=False):
                             box_threshold=gr.inputs.Number(label='Confidence Threshold', default=0.3)
@@ -382,13 +383,24 @@ if __name__ == "__main__":
                                 'Color Flag': gr.inputs.Checkbox(label='Color Flag : classes mask',default=False)
                             }
                          inputxs.extend(list(save_options.values()))
-                         dir_inputs =gr.inputs.Textbox(label='dir_path[图像文件夹路径]',default='train_imgs')
+                         dir_inputs =gr.inputs.Textbox(label='加载本地图像文件夹路径',default='train_imgs')
                         
+                         
+                    with gr.Column():
+                        
+                         with gr.Row():
+                                    with gr.Row():
+                                        record_audio = gr.Audio(label="record your voice", source="microphone")
+                                        upload_audio = gr.Audio(label="or upload audio here", source="upload")
+                                        with gr.Column():
+                                            with gr.Row():
+                                              run_button_3 = gr.Button('send_record')
+                                              run_button_4 = gr.Button('send_upload')   
                          with gr.Row(): 
                             image_prompt = gr.Image(type="filepath", label="Image Prompt[上传图像]", value=None)
-                            #prompt_input=gr.Textbox(show_label=False, placeholder="Input prompt text or question.",lable='输入').style(container=False)
+                      
                          
-                            prompt_input=gr.inputs.Textbox(lines=5, label="Prompt: User Specified Tags (Optional, Enter with commas)")
+                            prompt_input=gr.inputs.Textbox(lines=5, label="text prompt with iamge : User Specified Tags (Optional, Enter with commas)")
                          run_button = gr.Button('Run cv Task',variant="primary")
                        
                          inputs = [dir_inputs,image_prompt,prompt_input,box_threshold,iou_threshold,text_threshold,device_input,quant]
@@ -406,38 +418,28 @@ if __name__ == "__main__":
                                 temperature = gr.Slider(maximum=1, value=0.8, minimum=0, label='Temperature')
                                 top_p = gr.Slider(maximum=1, value=0.4, minimum=0, label='Top P')
                       
-                         with gr.Column():
-                                with gr.Row():
-                                    with gr.Row():
-                                        record_audio = gr.Audio(label="record your voice", source="microphone")
-                                        upload_audio = gr.Audio(label="or upload audio here", source="upload")
-                                        with gr.Column():
-                                            with gr.Row():
-                                              run_button_3 = gr.Button('send_record')
-                                              run_button_4 = gr.Button('send_upload')
-                                                            
+                                                             
                     with gr.Column():
                         #with gr.Row():
                         
                          gallery = gr.Gallery(label="Generated images",show_label=False,elem_id="gallery",).style(preview=True, grid=2, object_fit="scale-down")
-                         output_text = gr.Textbox(label="Caption",lines=3)
-                         
-                         output_classes= gr.Textbox(label="Class_numbers:auto generate classes numbers, color flag or save_txt must be ture ")
                          with gr.Row():
-                             output_tag= gr.outputs.Textbox(label="Tag")
-                          
-                             system_prompt = gr.Textbox(show_label=True, placeholder=f"Chat Prompt", label="Chat prompt", value="AI assistant.")
+                            output_text = gr.Textbox(label="Caption",lines=3)
+                            output_classes= gr.Textbox(label="Class_numbers:auto generate classes numbers, color flag or save_txt must be ture ")
+                         with gr.Row():
+                            output_tag= gr.outputs.Textbox(label="Tag")
+                            system_prompt = gr.Textbox(show_label=True, placeholder=f"Chat Prompt", label="下方输入对话支持图像和文本", value="AI assistant.")
                          outputs = [gallery, output_text, output_tag,output_classes]
                          chat_txt=gr.Textbox(show_label=False, placeholder="I.").style(container=False)
                          with gr.Accordion("备选输入区", open=True, visible=False) as area_input_secondary:
                             with gr.Row():
                                 txt = gr.Textbox(show_label=False, placeholder="Input question here.", label="输入区2").style(container=False)
-                         run_button_chat = gr.Button('Sumbit',variant="primary")
+                         run_button_chat = gr.Button('Text_Sumbit',variant="primary")
                         # chatbot = gr.Chatbot(label=f"当前模型：{LLM_MODEL}")
                         # chatbot.style(height=CHATBOT_HEIGHT/2)
                          history = gr.State([])
                         
-                         result_text = gr.components.Chatbot(label='Multi-round conversation History,当前模型：{LLM_MODEL}', value=[("", "Hi, What do you want to know about this image?")]).style(height=CHATBOT_HEIGHT/2)
+                         result_text = gr.components.Chatbot(label=f'Multi-round conversation History,当前模型：{LLM_MODEL}', value=[("", "Hi, What do you want to know ?")]).style(height=CHATBOT_HEIGHT/2)
                          input_combo = [cookies, chat_txt,txt,top_p, temperature, result_text, history,system_prompt]
                          output_combo = [cookies, result_text, history, status]
                          predict_args = dict(fn=ArgsGeneralWrapper(predict), inputs=input_combo, outputs=output_combo)
@@ -463,7 +465,7 @@ if __name__ == "__main__":
                image_prompt.clear(fn=clear_fn2, inputs=clear_button, outputs=[result_text])
         
           auto_opentab_delay()
-          block.queue(concurrency_count=CONCURRENT_COUNT).launch(server_name='0.0.0.0', server_port=7585, debug=True, share=False)
+          block.queue(concurrency_count=CONCURRENT_COUNT).launch(server_name='0.0.0.0', server_port=7588,debug=True, share=False)
      
 
      
