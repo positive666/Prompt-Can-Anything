@@ -339,7 +339,7 @@ if __name__ == "__main__":
           outputs=[]
           cancel_handles = []
          # block=block.queue()
-          with gr.Blocks(title="Prompt-Can-Anythings",reload=True) as block:
+          with gr.Blocks(title="Prompt-Can-Anythings",reload=True, full_width=True) as block:
                cookies = gr.State({'api_key': API_KEY, 'llm_model': LLM_MODEL})
                with gr.Row():
                   
@@ -384,13 +384,17 @@ if __name__ == "__main__":
                             }
                          inputxs.extend(list(save_options.values()))
                          dir_inputs =gr.inputs.Textbox(label='加载本地图像文件夹路径',default='train_imgs')
-                         md_dropdown = gr.Dropdown(AVAIL_LLM_MODELS, value=LLM_MODEL, label="更换LLM模型/请求源").style(container=False)
-                         
-                    with gr.Column():      
+                         with gr.Accordion('LLM模型配置', open=True):
+                            md_dropdown = gr.Dropdown(AVAIL_LLM_MODELS, value=LLM_MODEL, label="更换LLM模型/请求源").style(container=False)
+                            max_length_sl = gr.Slider(minimum=256, maximum=4096, value=512, step=1, interactive=True, label="Local LLM MaxLength")
+                            with gr.Row():
+                                top_p = gr.Slider(minimum=-0, maximum=1.0, value=1.0, step=0.01,interactive=True, label="nucleus sampling",)
+                                temperature = gr.Slider(minimum=-0, maximum=2.0, value=1.0, step=0.01, interactive=True, label="Temperature",)
+                    with gr.Column(scale=7):      
                          with gr.Row():
                                     with gr.Row():
-                                        record_audio = gr.Audio(label="record your voice", source="microphone")
-                                        upload_audio = gr.Audio(label="or upload audio here", source="upload")
+                                        record_audio = gr.Audio(label="record your voice", source="microphone",height=30,width=300)
+                                        upload_audio = gr.Audio(label="or upload audio here", source="upload",height=30,width=300)
                                         with gr.Column():
                                             with gr.Row():
                                               run_button_3 = gr.Button('send_record')
@@ -410,42 +414,40 @@ if __name__ == "__main__":
                                 clear_button= gr.Button("清除", variant="secondary")
                                 status = gr.Markdown(f"Tip: 按Enter提交, 按Shift+Enter换行。当前模型: {LLM_MODEL} \n ")
                          with gr.Row():
-                                    resetBtn = gr.Button("重置", variant="secondary") 
-                                    #stopBtn = gr.Button("停止", variant="secondary")
-                        
-                         #with gr.Row():
-                         top_p = gr.Slider(minimum=-0, maximum=1.0, value=1.0, step=0.01,interactive=True, label="Top-p (nucleus sampling)",)
-                         temperature = gr.Slider(minimum=-0, maximum=2.0, value=1.0, step=0.01, interactive=True, label="Temperature",)
-                         max_length_sl = gr.Slider(minimum=256, maximum=4096, value=512, step=1, interactive=True, label="Local LLM MaxLength",)
-                                
+
+                                    resetBtn = gr.Button("重置", variant="secondary"); resetBtn.style(size="sm")
+                                    stopBtn2 = gr.Button("停止", variant="secondary"); stopBtn2.style(size="sm")
+                             
                          chat_txt=gr.Textbox(show_label=False, placeholder="question").style(container=False)
                          with gr.Accordion("备选输入区", open=True, visible=False) as area_input_secondary:
                             with gr.Row():
                                 txt = gr.Textbox(show_label=False, placeholder="Input question here.", label="输入区2").style(container=False)
                          run_button_chat = gr.Button('Chat_Sumbit',variant="primary")   
                                                              
-                    with gr.Column():
+                    with gr.Column(scale=10):
                         #with gr.Row():
                         
                          gallery = gr.Gallery(label="Generated images",show_label=False,elem_id="gallery",).style(preview=True, grid=2, object_fit="scale-down")
                          with gr.Row():
                             output_text = gr.Textbox(label="Caption",lines=3)
-                            output_classes= gr.Textbox(label="Class_numbers:auto generate classes numbers, color flag or save_txt must be ture ")
+                            with gr.Column():
+                                output_classes= gr.Textbox(label="Class_numbers:auto generate classes numbers, color flag or save_txt must be ture ")
+                                output_tag= gr.outputs.Textbox(label="Tag")
                          with gr.Row():
-                            output_tag= gr.outputs.Textbox(label="Tag")
-                            system_prompt = gr.Textbox(show_label=True, placeholder=f"Chat Prompt", label="下方输入对话支持图像和文本", value="AI assistant.")
-                         outputs = [gallery, output_text, output_tag,output_classes]
-                        
-                        # chatbot = gr.Chatbot(label=f"当前模型：{LLM_MODEL}")
-                        # chatbot.style(height=CHATBOT_HEIGHT/2)
+                            with gr.Accordion("备选输入区", open=True, visible=False) as area_input_secondary:
+                                 system_prompt = gr.Textbox(show_label=True, placeholder=f"Chat Prompt", label="下方输入对话支持图像和文本", value="AI assistant.")
+                       
                          history = gr.State([])
-                        
-                         result_text = gr.components.Chatbot(label=f'Multi-round conversation History,当前模型：{LLM_MODEL}', value=[("", "Hi, What do you want to know ?")]).style(height=CHATBOT_HEIGHT/2)
-                         input_combo = [cookies, max_length_sl,md_dropdown,chat_txt,txt,top_p, temperature, result_text, history,system_prompt]
-                        
-                         output_combo = [cookies, result_text, history, status]
-                         predict_args = dict(fn=ArgsGeneralWrapper(predict), inputs=input_combo, outputs=output_combo)
+                         with gr.Row():
+                            with gr.Column(scale=2):
+                                result_text = gr.components.Chatbot(label=f'Multi-round conversation History,当前模型：{LLM_MODEL}', value=[("", "Hi, What do you want to know ?")]).style(height=CHATBOT_HEIGHT)
                          
+                  
+                            
+               input_combo = [cookies, max_length_sl,md_dropdown,chat_txt,txt,top_p, temperature, result_text, history,system_prompt]
+                        
+               output_combo = [cookies, result_text, history, status]
+               predict_args = dict(fn=ArgsGeneralWrapper(predict), inputs=input_combo, outputs=output_combo)        
                run_button.click(fn=Auto_run, inputs=inputs, outputs=outputs)
                 # 提交按钮、重置按钮
                cancel_handles.append(chat_txt.submit(**predict_args))
@@ -453,7 +455,10 @@ if __name__ == "__main__":
                cancel_handles.append(run_button_chat.click(**predict_args))
                cancel_handles.append(clear_button.click(**predict_args))
                resetBtn.click(lambda: ([], [], "已重置"), None, [result_text, history, status])
-            
+               stopBtn2.click(fn=None, inputs=None, outputs=None, cancels=cancel_handles)
+               def on_md_dropdown_changed(k):
+                    return {result_text: gr.update(label="当前模型："+k)}
+               md_dropdown.select(on_md_dropdown_changed, [md_dropdown], [result_text] )
                 
                gpt_inputs= [prompt_input, temperature, top_p, image_prompt, result_text,record_audio,upload_audio,quant]  
                gpt_inputs.extend(visualglm)
