@@ -72,7 +72,7 @@ So it's just a tool for prompt any thing(YOCO)
 
 
 ### <div align="left">⭐[News list] </div>
-	-【2023/5/23】  add web demo:Add VisualGLM ,chatgpt form [Academic-gpt](https://github.com/binary-husky/gpt_academic)
+	-【2023/5/23】  add web demo:Add VisualGLM ,chatgpt from [Academic-gpt](https://github.com/binary-husky/gpt_academic)
 	-【2023/5/7】   add web demo:At present, the function of text generation, detection and segmentation of images or image folders on the website has been tested normally, and the program does not need to be restarted, and the last model loading configuration is remembered, and it will be continuously optimized in the future.
 	-【2023/5/4】   add  semantic segmentatio label, add args(--color-flag --save-mask )
 	-【2023/4/26】  YOCO,Automatic annotation TOOLS:Commit preliminary code ,For the input image or folder, you can obtain the results of detection, segmentation, and text annotation , optional chatgpt api.
@@ -123,6 +123,8 @@ Install diffusers（Optional）
 ```bash
 pip install --upgrade diffusers[torch]
 ```
+
+for Linux,pyaudio may need offline install, see [pyaudio-wheels · PyPI](https://pypi.org/project/pyaudio-wheels/#files) ,select your python version, pip install xxxx.whl
 
 more ,you can see "pip install < your missing packages>"
 
@@ -203,6 +205,7 @@ more ,you can see "pip install < your missing packages>"
    	python demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --save_caption 
 
    
+
 
 
 

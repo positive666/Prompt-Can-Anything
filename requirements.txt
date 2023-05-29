@@ -23,3 +23,6 @@ nltk
 gradio>=3.28.0
 omegaconf
 #cpython #windows 
+mdtex2html
+soundfile
+pyaudio

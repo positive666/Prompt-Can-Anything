@@ -111,6 +111,8 @@ pip install --upgrade diffusers[torch]
 
 更多内容，可以查看requirements, “pip install < your missing packages>”。
 
+对于pyaudio，在ubuntu可能通过pip并不一定成功，进入这里[pyaudio-wheels · PyPI](https://pypi.org/project/pyaudio-wheels/#files)，选择对应你Python的版本，下载后pip安装whl。 
+
 运行
 
 1. 下载模型权重
