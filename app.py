@@ -384,7 +384,7 @@ if __name__ == "__main__":
                             }
                          inputxs.extend(list(save_options.values()))
                          dir_inputs =gr.inputs.Textbox(label='加载本地图像文件夹路径',default='train_imgs')
-                        
+                         md_dropdown = gr.Dropdown(AVAIL_LLM_MODELS, value=LLM_MODEL, label="更换LLM模型/请求源").style(container=False)
                          
                     with gr.Column():      
                          with gr.Row():
@@ -413,16 +413,16 @@ if __name__ == "__main__":
                                     resetBtn = gr.Button("重置", variant="secondary") 
                                     #stopBtn = gr.Button("停止", variant="secondary")
                         
-                         with gr.Row():
-                                top_p = gr.Slider(minimum=-0, maximum=1.0, value=1.0, step=0.01,interactive=True, label="Top-p (nucleus sampling)",)
-                                temperature = gr.Slider(minimum=-0, maximum=2.0, value=1.0, step=0.01, interactive=True, label="Temperature",)
-                                max_length_sl = gr.Slider(minimum=256, maximum=4096, value=512, step=1, interactive=True, label="Local LLM MaxLength",)
-                                md_dropdown = gr.Dropdown(AVAIL_LLM_MODELS, value=LLM_MODEL, label="更换LLM模型/请求源").style(container=False)
+                         #with gr.Row():
+                         top_p = gr.Slider(minimum=-0, maximum=1.0, value=1.0, step=0.01,interactive=True, label="Top-p (nucleus sampling)",)
+                         temperature = gr.Slider(minimum=-0, maximum=2.0, value=1.0, step=0.01, interactive=True, label="Temperature",)
+                         max_length_sl = gr.Slider(minimum=256, maximum=4096, value=512, step=1, interactive=True, label="Local LLM MaxLength",)
+                                
                          chat_txt=gr.Textbox(show_label=False, placeholder="question").style(container=False)
                          with gr.Accordion("备选输入区", open=True, visible=False) as area_input_secondary:
                             with gr.Row():
                                 txt = gr.Textbox(show_label=False, placeholder="Input question here.", label="输入区2").style(container=False)
-                         run_button_chat = gr.Button('Text_Sumbit',variant="primary")   
+                         run_button_chat = gr.Button('Chat_Sumbit',variant="primary")   
                                                              
                     with gr.Column():
                         #with gr.Row():
