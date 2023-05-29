@@ -16,7 +16,7 @@ import keyboard
 import time
 import whisper 
 import requests
-
+from llm_cards.bridge_chatgpt import predict
 from config_private import API_KEY
 
 
@@ -93,8 +93,7 @@ def send_stream(whisper_modelm,chat_bot):
                
                print('asr model load done')
                speech_text, speech_language= speech_recognition(record_file,whisper_model)
-               for data in chatbot.ask_stream(prompt=speech_text):
-                    print(data,end='',flush=True)
+              
           
      #audio_data, samplerate = soundfile.read(audio_file, dtype="float32")
      # if len(audio_data.shape) > 1:

@@ -29,6 +29,8 @@ import xml.etree.cElementTree as ET
 import gradio as gr
 from gradio.inputs import File
 import random
+import subprocess
+from utils.colorful import *
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  #  root directory
@@ -44,6 +46,10 @@ category_colors={}
 class_ids = []
 models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None,'sd': None,'visual_glm': None,'chatgpt': None,}
 
+def command_output(cmd):
+    process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+    return output.decode()
 
 def auto_opentab_delay(port=7586):
         import threading, webbrowser, time
@@ -88,10 +94,10 @@ def load_auto_backend_models(lama,sam,det,tag2text,chatgpt,device=0,quant=4):
         print("PASS SAM")
     
     
-    if chatgpt and not models_config['chatgpt']:
-        models_config['chatgpt']= Chatbot(api_key=API_KEY,proxy=PROXIES,engine="gpt-3.5-turbo")
-    else:
-        models_config['chatgpt']=None 
+    # if chatgpt and not models_config['chatgpt']:
+    #     models_config['chatgpt']= Chatbot(api_key=API_KEY,proxy=PROXIES,engine="gpt-3.5-turbo")
+    # else:
+    #     models_config['chatgpt']=None 
     
     if lama and not models_config['lama']:
         models_config['lama']= AutoBackend("lama",weights=None,args_config='model_cards/lama/configs/prediction/default.yaml',device=device)
@@ -334,22 +340,21 @@ if __name__ == "__main__":
       
           check_requirements(exclude=('tensorboard', 'thop'))
          
-         
           inputxs=[]
           outputs=[]
           cancel_handles = []
-         # block=block.queue()
-          with gr.Blocks(title="Prompt-Can-Anythings",reload=True, full_width=True) as block:
+        
+          with gr.Blocks(title="Prompt-Can-Anythings",reload=True, theme=adjust_theme(), analytics_enabled=False,full_width=True,css=advanced_css) as block:
+               gr.HTML( f"<h1 align=\"center\"> Prompt-Can-Anythings_v1.0 </h1>")
                cookies = gr.State({'api_key': API_KEY, 'llm_model': LLM_MODEL})
                with gr.Row():
-                  
-                    with gr.Column():
+                    with gr.Column(scale=1):
                          with gr.Accordion('Grounded-DINO threshold Options（模型参数配置）', open=False):
                             box_threshold=gr.inputs.Number(label='Confidence Threshold', default=0.3)
                             iou_threshold=gr.inputs.Number(label='Iou Threshold', default=0.5)
                             text_threshold=gr.inputs.Number(label='Text Threshold', default=0.25)
                             device_input=gr.inputs.Textbox(label='device',default='0')
-                            quant=gr.inputs.Number(label='int_[4,8]', default=4)                     
+                            quant=gr.inputs.Number(label='int [4,8]', default=4)                     
                          with gr.Accordion('others Options(标注输出格式设置)', open=False):
                             option_inputs  = {
                             'Save Conf': gr.inputs.Checkbox(label='Save Conf',default=False),
@@ -368,7 +373,7 @@ if __name__ == "__main__":
                                 'Tag2text': gr.inputs.Checkbox(label='Tag2text',default=False)
                             }
                             visualglm=gr.inputs.Checkbox(label='VisualGLM',default=False),
-                            chatgpt=gr.inputs.Checkbox(label='ChatGPT(目前作为网络服务自动挂载)',default=True)
+                            chatgpt=gr.inputs.Checkbox(label='ChatGPT(目前为网络服务自动挂载)',default=True)
                          list_methods=list(methods_options.values())
                          inputxs.extend(list_methods)  
                          inputxs.append(chatgpt)    
@@ -390,7 +395,7 @@ if __name__ == "__main__":
                             with gr.Row():
                                 top_p = gr.Slider(minimum=-0, maximum=1.0, value=1.0, step=0.01,interactive=True, label="nucleus sampling",)
                                 temperature = gr.Slider(minimum=-0, maximum=2.0, value=1.0, step=0.01, interactive=True, label="Temperature",)
-                    with gr.Column(scale=7):      
+                    with gr.Column(scale=15):      
                          with gr.Row():
                                     with gr.Row():
                                         record_audio = gr.Audio(label="record your voice", source="microphone",height=30,width=300)
@@ -399,11 +404,11 @@ if __name__ == "__main__":
                                             with gr.Row():
                                               run_button_3 = gr.Button('send_record')
                                               run_button_4 = gr.Button('send_upload')   
-                         with gr.Row(): 
-                            image_prompt = gr.Image(type="filepath", label="Image Prompt[上传图像]", value=None)
+                        #with gr.Row(): 
+                         image_prompt = gr.Image(type="filepath", label="Image Prompt[上传图像]", value=None)
                       
                          
-                            prompt_input=gr.inputs.Textbox(lines=5, label="text prompt with iamge : User Specified Tags (Optional, Enter with commas)")
+                         prompt_input=gr.inputs.Textbox(lines=3, label="text prompt with iamge : User Specified Tags (Optional, Enter with commas)")
                          run_button = gr.Button('Run cv Task',variant="primary")
                        
                          inputs = [dir_inputs,image_prompt,prompt_input,box_threshold,iou_threshold,text_threshold,device_input,quant]
@@ -415,16 +420,16 @@ if __name__ == "__main__":
                                 status = gr.Markdown(f"Tip: 按Enter提交, 按Shift+Enter换行。当前模型: {LLM_MODEL} \n ")
                          with gr.Row():
 
-                                    resetBtn = gr.Button("重置", variant="secondary"); resetBtn.style(size="sm")
-                                    stopBtn2 = gr.Button("停止", variant="secondary"); stopBtn2.style(size="sm")
+                                resetBtn = gr.Button("重置", variant="secondary"); resetBtn.style(size="sm")
+                                stopBtn2 = gr.Button("停止", variant="secondary"); stopBtn2.style(size="sm")
                              
-                         chat_txt=gr.Textbox(show_label=False, placeholder="question").style(container=False)
+                         chat_txt=gr.Textbox(lines=2,show_label=False, placeholder="question").style(container=False)
                          with gr.Accordion("备选输入区", open=True, visible=False) as area_input_secondary:
                             with gr.Row():
                                 txt = gr.Textbox(show_label=False, placeholder="Input question here.", label="输入区2").style(container=False)
                          run_button_chat = gr.Button('Chat_Sumbit',variant="primary")   
                                                              
-                    with gr.Column(scale=10):
+                    with gr.Column(scale=20):
                         #with gr.Row():
                         
                          gallery = gr.Gallery(label="Generated images",show_label=False,elem_id="gallery",).style(preview=True, grid=2, object_fit="scale-down")
@@ -443,7 +448,7 @@ if __name__ == "__main__":
                                 result_text = gr.components.Chatbot(label=f'Multi-round conversation History,当前模型：{LLM_MODEL}', value=[("", "Hi, What do you want to know ?")]).style(height=CHATBOT_HEIGHT)
                          
                   
-                            
+               outputs = [gallery, output_text, output_tag,output_classes]             
                input_combo = [cookies, max_length_sl,md_dropdown,chat_txt,txt,top_p, temperature, result_text, history,system_prompt]
                         
                output_combo = [cookies, result_text, history, status]
