@@ -202,9 +202,10 @@ more ,you can see "pip install < your missing packages>"
 ```
 
 
-   	python demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --save_caption 
+   	python auto_label_demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --save_caption 
 
    
+
 
 
 
