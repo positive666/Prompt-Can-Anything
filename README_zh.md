@@ -1,5 +1,7 @@
 
+
 # Prompt-Can-Anything
+
 这是一个结合SOTA AI的应用web库以及研究的储备库，它能够帮你实现一切：你只需要提供提示！只需一次点击！通过SOTA模型的提示和创意，你可以做任何事情。
 
 **动机**
@@ -186,6 +188,10 @@ pip install --upgrade diffusers[torch]
    '--color-flag': 使用BOX的标签同类别和实例分割区别:语音分割的类别颜色
    ```
 
+   
+   
+   
+   
    
    	python auto_label_demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --save_caption 
    
