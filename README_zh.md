@@ -194,11 +194,11 @@ pip install --upgrade diffusers[torch]
    
    默认任务包括图像理解/检测/实例分割…(以及后修添加图像生成和编辑的方法去制作新数据)
    
-   <img src="asset/1.jpg" style="zoom: 49%;" />
+   <img src="asset/1.jpg" style="zoom: 39%;" />
    
    "Prompt" control models output, example
    
-   ​					<img src="asset/d2.png" style="zoom: 87%;" >
+   ​					<img src="asset/d2.png" style="zoom: 57%;" >
    
    
    	python auto_label_demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --save_caption 

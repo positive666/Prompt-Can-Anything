@@ -198,11 +198,11 @@ For PyAudio, it may not be successfully installed through pip on Linux platforms
 
 ​                 default tasks include images understand /detect/instance segment .....(add methods for image generation and inpainting )
 
-<img src="asset/1.jpg" style="zoom: 49%;" />
+<img src="asset/1.jpg" style="zoom: 32%;" />
 
 "Prompt" control models output, example
 
-​					<img src="asset/d2.png" style="zoom: 87%;" >
+​					<img src="asset/d2.png" style="zoom: 65%;" >
 
 
 
