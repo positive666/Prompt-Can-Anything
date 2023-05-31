@@ -201,15 +201,19 @@ pip install --upgrade diffusers[torch]
    		python app.py
    ```
 
+   ![image-20230527022556630](asset/anything.png)
+
+   
+
    ![image-20230508075845259](asset/default_all.png)
 
    ​			
 
    
-
+   
    ![visual_chatglm](asset/visual_chatglm.png)
-
-   ![image-20230527022556630](asset/news.png)
+   
+   
 
 ## 🔨计划清单
 
