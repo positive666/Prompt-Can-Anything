@@ -32,9 +32,9 @@
 
 3. ⭐ 应用角色扮演—— 3D &&2D 虚拟人
 
-   通过3D引擎去结合GPT等多模态任务去完成一个角色设计互动；
+   通过3D引擎去结合GPT等多模态任务完成一个角色设计互动；
 
-   通过saldtalker开源项目去结合GPT等多模态任务去完成一个角色设计互动；
+   通过saldtalker开源项目去结合GPT等多模态任务完成一个角色设计互动；
 
 4.  🔥🔥🚀无限的潜力“安尼森”
 
@@ -62,6 +62,8 @@
 
 -  近期会加入生成类模型并完成测试
 - 一键微调按钮功能，添加：sam
+
+
 
 
 
@@ -125,7 +127,7 @@ pip install --upgrade diffusers[torch]
 
 更多内容，可以查看requirements, “pip install < your missing packages>”, 如果出现安装版本问题，请仔细看requirements的版本
 
-对于pyaudio，在ubuntu可能通过pip并不一定成功，进入这里[pyaudio-wheels · PyPI](https://pypi.org/project/pyaudio-wheels/#files)，选择对应你Python的版本，下载后pip安装whl。 
+对于pyaudio，在Linux平台可能通过pip并不一定成功，进入这里[pyaudio-wheels · PyPI](https://pypi.org/project/pyaudio-wheels/#files)，选择对应你Python的版本，下载后pip安装whl，后续会详细补充。
 
 运行
 
@@ -188,9 +190,15 @@ pip install --upgrade diffusers[torch]
    '--color-flag': 使用BOX的标签同类别和实例分割区别:语音分割的类别颜色
    ```
 
+   支持多种任务，例如：
    
+   默认任务包括图像理解/检测/实例分割…(以及后修添加图像生成和编辑的方法去制作新数据)
    
+   <img src="asset/1.jpg" style="zoom: 49%;" />
    
+   "Prompt" control models output, example
+   
+   ​					<img src="asset/d2.png" style="zoom: 87%;" >
    
    
    	python auto_label_demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --save_caption 
