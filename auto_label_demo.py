@@ -19,14 +19,12 @@ ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
 from utils.ops import (LOGGER, Profile, check_file, check_img_size, check_imshow, check_requirements, colorstr, cv2,
                      dilate_mask, increment_path, non_max_suppression ,print_args, scale_boxes, xyxy2xywh,save_format)
 from utils.plot import Annotator, save_one_box,show_box,show_mask,save_mask_data
-from ChatGPT.GPT import Chatbot
-from ChatGPT.config.private import API_KEY,PROXIES
+
 
 from utils.torch_utils import select_device
-from utils.conf import SAM_MODEL_TYPE,GROUNED_MODEL_TYPE,Tag2Text_Model_Path,GLIGEN_META_LIST
+from config_private import SAM_MODEL_TYPE,GROUNED_MODEL_TYPE,Tag2Text_Model_Path,GLIGEN_META_LIST
 from utils import VID_FORMATS,IMG_FORMATS,write_categories
-
-import multiprocessing
+import json
 import xml.etree.cElementTree as ET
 from tqdm import tqdm
 
@@ -40,8 +38,20 @@ global category_colors
 category_colors={}
 # 初始对应类别编号
 class_ids = []
-models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None,'sd': None,'gligen':None}
+models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None,'sd': None,'visual_glm': None,'trans_zh': None,'gilgen':None}
+JSON_DATASETS=[]
 
+
+def save_text2img_data(output_dir, prompt,label,img_name):
+    global JSON_DATASETS
+    if not prompt:
+        prompt=f"这张图片的背景里有什么内容?"
+    example = {
+        "img": f"{img_name}",
+        "prompt": prompt,
+        "label": label
+    }
+    JSON_DATASETS.append((example))
 def load_auto_backend_models(opt):
     """
     加载多个模型
@@ -78,7 +88,7 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
         save_crop=False,  # save cropped prediction boxes
         nosave=False,  # do not save images/videos
         classes=None,  # filter by class: --class 0, or --class 0 2 3
-        chatgpt=False,
+        zh_select=False,
         agnostic_nms=False,  # class-agnostic NMS
         augment=False,  # augmented inference
         visualize=False,  # visualize features
@@ -102,6 +112,9 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
         process_name=0,
         gligen=False,
         ):  
+            global models_config
+            global category_colors
+            global JSON_DATASETS
             LOGGER.info(f'当前的进程ID：{process_name},加载的模型列表：{models_config.keys()}')
             cls_index = -1      # 设置默认值为 -1
             source = str(source)
@@ -146,16 +159,17 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
                         caption=preds[2]
                         print(f"Caption: {caption}")
                         print(f"Tags: {prompt}")
+                        if zh_select:
+                            caption=models_config['trans_zh'](prompt, max_length=1000, clean_up_tokenization_spaces=True)[0]["generated_text"]
                         if save_caption:
                             save_format(label_format="txt",save_path=f'{save_dir}/captions',img_name=name_p, results=caption)
+                            
                     if det:
                         if input_prompt:
                             prompt=input_prompt
                         print('grouned start input prompt:',prompt)
                         preds= models_config['grounded'](im = img_rgb,prompt=prompt, box_threshold=conf_thres,text_threshold=text_thres, iou_threshold=iou_thres) 
-                        if chatgpt:
-                            from gpt_demo import check_caption
-                            caption=check_caption(caption, preds[2], chatbot)
+                        
                     if sam and det :        
                         if preds[0].numel()>0:
                             print('sam start input prompt:',preds[0])
@@ -236,7 +250,11 @@ def Auto_run(weights=ROOT / '',  # model.pt path(s)
                 LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}/labels")  
             if save_xml:           
                 LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}/xmls")
-            if save_caption:
+            if save_caption:     
+                with open(f'{save_dir}/dataset.json', 'a',encoding='utf-8') as f: 
+                    json.dump(JSON_DATASETS,f,ensure_ascii=False) 
+                    f.write('\n')
+                    LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}/captions")
                 LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}/captions")
             if save_mask:
                 LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}/masks")
@@ -264,7 +282,7 @@ def parse_opt():
     parser.add_argument('--save-crop', action='store_true', help='save cropped prediction boxes')
     parser.add_argument('--nosave', action='store_true', help='do not save images/videos')
     parser.add_argument('--classes', nargs='+', type=int, help='filter by class: --classes 0, or --classes 0 2 3')
-    parser.add_argument('--chatgpt', action='store_true', help='gpt3.5/4')
+    parser.add_argument('--zh_select', action='store_true', default=False)
     parser.add_argument('--agnostic-nms', action='store_true', help='class-agnostic NMS')
     parser.add_argument('--augment', action='store_true', help='augmented inference')
     parser.add_argument('--visualize', action='store_true', help='visualize features')
@@ -297,9 +315,7 @@ def main(opt):
     
     check_requirements(exclude=('tensorboard', 'thop'))
     global models_config  
-    if opt.chatgpt:
-        global chatbot
-        chatbot=Chatbot(api_key=API_KEY,proxy=PROXIES,engine="gpt-3.5-turbo")
+
     # if  not opt.input_prompt and opt.input_prompt=='':
     #     LOGGER.info(' input prompt')
     #     words_name= input("please your prompt words: ")

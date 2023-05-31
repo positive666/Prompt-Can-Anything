@@ -3,6 +3,7 @@ import argparse
 import os
 import platform
 import sys
+import cv2
 from pathlib import Path
 import  numpy as np 
 import torch
@@ -12,14 +13,13 @@ from PIL import Image,ImageDraw,ImageFont
 from utils.ops import (LOGGER, Profile, check_file, check_img_size, check_imshow, check_requirements, colorstr, cv2,
                      dilate_mask, increment_path, non_max_suppression ,print_args, scale_boxes, xyxy2xywh,save_format)
 from utils.plot import Annotator, save_one_box,show_box,show_mask,save_mask_data,Draw_img
-#from ChatGPT.GPT import Chatbot
-#from ChatGPT.config.private import API_KEY,PROXIES
 from config_private import *
 from llm_cards.bridge_chatgpt import predict
+#from llm_cards.bridge_all import predict
 from utils.toolbox import format_io, find_free_port, on_file_uploaded, on_report_generated, get_conf, ArgsGeneralWrapper, DummyWith
 
 from utils.torch_utils import select_device
-from utils.conf import SAM_MODEL_TYPE,GROUNED_MODEL_TYPE,Tag2Text_Model_Path,NUM_WORKS
+from config_private import SAM_MODEL_TYPE,GROUNED_MODEL_TYPE,Tag2Text_Model_Path
 from utils import VID_FORMATS,IMG_FORMATS,write_categories
 sys.path.append("VisualGLM_6B")
 from VisualGLM_6B.chatglm import *
@@ -29,27 +29,47 @@ import xml.etree.cElementTree as ET
 import gradio as gr
 from gradio.inputs import File
 import random
-import subprocess
+import threading 
 from utils.colorful import *
+
+
+
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  #  root directory
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))  # add ROOT to PATH
 ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
-
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 global categories
 categories = {}
 global category_colors
 category_colors={}
 # 初始对应类别编号
 class_ids = []
-models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None,'sd': None,'visual_glm': None,'chatgpt': None,}
+models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None,'sd': None,'visual_glm': None, 'trans_zh': None,'gligen': None}
 
-def command_output(cmd):
-    process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
-    return output.decode()
+from llm_cards.core_functional import get_core_functions
+functional = get_core_functions()
+JSON_DATASETS=[]
+
+
+
+
+   
+def save_text2img_data(prompt,label,img_name):
+    global JSON_DATASETS
+    if not prompt:
+        prompt=f"这张图片的背景里有什么内容?"
+        
+    example = {
+        "img": f"{img_name}",
+        "prompt": prompt,
+        "label": label
+    }
+    JSON_DATASETS.append(example)
+            
 
 def auto_opentab_delay(port=7586):
         import threading, webbrowser, time
@@ -64,48 +84,81 @@ def auto_opentab_delay(port=7586):
         threading.Thread(target=open, name="open-browser", daemon=True).start()
         #threading.Thread(target=auto_update, name="self-upgrade", daemon=True).start()
         #threading.Thread(target=warm_up_modules, name="warm-up", daemon=True).start()
+import asyncio
+import concurrent.futures
 
-def load_auto_backend_models(lama,sam,det,tag2text,chatgpt,device=0,quant=4):
+async def load_auto_backend_models(lama, sam, det, tag2text, trans_zh, device=0, quant=4, bar=None): 
+    try:    
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+                wait_coros =  asyncio.get_event_loop().run_in_executor(pool, load_auto_backend_model, lama, sam, det, tag2text, trans_zh, device, quant, bar)
+                await asyncio.wait([wait_coros])
+        await asyncio.sleep(0.01) 
+    except Exception as e:
+        print("An error occurred: ", e)
+        return '第一次可能会出现问题,请再次点击加载按钮，也可以检查后台'
+    return 'Loads Done !'
+   
+
+def load_auto_backend_model(lama,sam,det,tag2text,trans_zh,device,quant,bar):
     """
     加载模型库
     """
-    # Load model
-         
+    # Load model    
+    global progress
+    global models_config    
+   # progress = gr.Progress()
+    #progress(0, desc="开始...")
     device = select_device(device)
-    if tag2text and not models_config['tag2text']:
-        models_config['tag2text'] = AutoBackend("tag2text",weights=Tag2Text_Model_Path,device=device)
-    elif not tag2text  :
-        models_config['tag2text'] =None 
-    else :
-        print('free or tag2text pass')    
-    if det and not models_config['grounded']:
-        models_config['grounded'] = AutoBackend("grounded-DINO",weights=GROUNED_MODEL_TYPE['S'], device=device,
-        args_config= 'model_cards/groundingdino/config/GroundingDINO_SwinT_OGC.py')
-    elif not det  :
-        models_config['grounded'] =None 
-    else :
-        print('free or grounded pass')
+    
+    for i in (range(1)):
         
-    if sam and not models_config['sam']:
-        models_config['sam']= AutoBackend("segment-anything",weights=SAM_MODEL_TYPE['vit_h'] ,device=device)
-    elif not sam :
-        models_config['sam'] =None 
-    else:
-        print("PASS SAM")
+        if tag2text and not models_config['tag2text']:
+                #progress.update(5) # 更新进度条
+                models_config['tag2text'] = AutoBackend("tag2text",weights=Tag2Text_Model_Path,device=device)
+               
+        elif not tag2text  :
+            print('free')
+            models_config['tag2text'] =None 
+        else :
+            print('free or tag2text pass')   
+             
+        if det and not models_config['grounded']:
+            models_config['grounded'] = AutoBackend("grounded-DINO",weights=GROUNED_MODEL_TYPE['S'], device=device,
+            args_config= 'model_cards/groundingdino/config/GroundingDINO_SwinT_OGC.py')
+            #progress.tqdm.write(f"{i+2}/{len(models_config)}")
+        elif not det  :
+            models_config['grounded'] =None 
+        else :
+            print('free or grounded pass')
+            
+        if sam and not models_config['sam']:
+            models_config['sam']= AutoBackend("segment-anything",weights=SAM_MODEL_TYPE['vit_h'] ,device=device)
+            #progress.tqdm.write(f"{i+3}/{len(models_config)}")
+        elif not sam :
+            models_config['sam'] =None      
+        else:
+            print("PASS SAM")
+            
+        if trans_zh and not models_config['trans_zh']:
+            from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM
+            cn_tokenizer = AutoTokenizer.from_pretrained("Helsinki-NLP/opus-mt-en-zh",cache_dir='weights')
+            cn_model = AutoModelForSeq2SeqLM.from_pretrained("Helsinki-NLP/opus-mt-en-zh",cache_dir='weights')
+            translator = pipeline("text2text-generation", model=cn_model, tokenizer=cn_tokenizer)
+            models_config['trans_zh']= translator       
+        elif not trans_zh  :
+            models_config['trans_zh'] =None 
+        else :
+            print('zh model pass')    
+        
+        if lama and not models_config['lama']:
+            models_config['lama']= AutoBackend("lama",weights=None,args_config='model_cards/lama/configs/prediction/default.yaml',device=device)
+        elif not lama :
+            models_config['lama'] =None 
+        else :
+            print(' free or lama pass') 
+       # gr.Interface.update(process)    # 更新界面，显示进度条状态
+        return 'OK'
     
-    
-    # if chatgpt and not models_config['chatgpt']:
-    #     models_config['chatgpt']= Chatbot(api_key=API_KEY,proxy=PROXIES,engine="gpt-3.5-turbo")
-    # else:
-    #     models_config['chatgpt']=None 
-    
-    if lama and not models_config['lama']:
-        models_config['lama']= AutoBackend("lama",weights=None,args_config='model_cards/lama/configs/prediction/default.yaml',device=device)
-    elif not lama :
-        models_config['lama'] =None 
-    else :
-        print(' free or lama pass')   
-
 def Auto_run(
         source= 'data/images',  # file/dir/URL/glob, 0 for webcam
         img_input='',
@@ -125,13 +178,14 @@ def Auto_run(
         sam=True,    # use segment-anythings
         det=True,    # use grounded detect model with text
         tag2text=True,
-        chatgpt=False,
+       # chatgpt=False,
         save_txt=False,  # save results to *.txt
         save_xml=False,  # save results to *.xml
         save_mask=False,
         save_caption=False,
         batch_process=False,
         color_flag=False,
+        zh_select=False,
         record_audio=None,
         up_audio=None,
         process_name=0,
@@ -140,9 +194,9 @@ def Auto_run(
             
             global models_config
             global category_colors
-             
-            load_auto_backend_models(lama,sam,det,tag2text,chatgpt,device,quant)
-            LOGGER.info (f'proceess ID：{process_name},loads model list ：{models_config.keys()}')            
+            global JSON_DATASETS
+           # load_auto_backend_models(lama,sam,det,tag2text,zh_select,device,quant)
+            #LOGGER.info (f'proceess ID：{process_name},loads model list ：{models_config.keys()}')            
             cls_index = -1        # 设置默认值为 -1
             if img_input:
                 source =img_input
@@ -189,16 +243,18 @@ def Auto_run(
                         caption=preds[2]
                         print(f"Caption: {caption}")
                         print(f"Tags: {prompt}")
+                        if zh_select and prompt :
+                            caption=models_config['trans_zh'](caption, max_length=1000, clean_up_tokenization_spaces=True)[0]["generated_text"]
                         if save_caption:
-                            save_format(label_format="txt",save_path=f'{save_dir}/captions',img_name=name_p, results=caption)
+                            save_text2img_data(None, caption,name_p)
+                            #save_format(label_format="txt",save_path=f'{save_dir}/captions',img_name=name_p, results=caption)
+                      
                     if det:
                         if input_prompt:
                             prompt=input_prompt
                             print('your input prompt replace default:',prompt)
                         preds= models_config['grounded'](im = img_rgb,prompt=prompt, box_threshold=conf_thres,text_threshold=text_thres, iou_threshold=iou_thres) 
-                        # if models_config['chatgpt']:
-                        #     from gpt_demo import check_caption
-                        #     caption=check_caption(caption, preds[2], models_config['chatgpt'])
+                      
                     if sam and det :        
                         if preds[0].numel()>0:      
                             masks= models_config['sam'](im = img_rgb, prompt=preds[0],box_threshold=conf_thres,text_threshold=text_thres, iou_threshold=iou_thres)
@@ -294,17 +350,19 @@ def Auto_run(
             if save_xml:           
                 LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}/xmls")
             if save_caption:
-                LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}/captions")
+               with open(f'{save_dir}/dataset.json', 'a',encoding='utf-8') as f: 
+                    json.dump(JSON_DATASETS,f,ensure_ascii=False) 
+                    f.write('\n')
+                    LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}/captions")
             if save_mask:
                 LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}/masks")
             LOGGER.info('Done...')
-            #re=Image.open(f'{save_dir}/{seen}.jpg') 
-
+        
+            #img_rgb= Image.fromarray(np.uint8(img_rgb), mode='RGB') 
             return [[img_rgb],caption,prompt,len(categories)]
-#memory_text=""    
+   
 def chat_app(prompt_input, temperature, top_p, image_prompt, result_text,record_audio,upload_audio,quant=4,visual_glm=False,chatgpt=False):
     global models_config
-   # print(chatgpt)
     if visual_glm and not models_config['visual_glm']:
         models_config['visual_glm'],tokenize=VisualGLM(gpu_device=0, quant=quant)
         print(f'量化VisualGLM模型:int{quant}')
@@ -312,21 +370,9 @@ def chat_app(prompt_input, temperature, top_p, image_prompt, result_text,record_
         models_config['visual_glm']=None 
     else:    
          print('free or no visual_glm')  
-    # if chatgpt and not models_config['chatgpt']:
-    #     print("加载ChatGPT")
-    #     models_config['chatgpt']= Chatbot(api_key=API_KEY,proxy=PROXIES,engine="gpt-3.5-turbo")
-    # elif not chatgpt:
-    #     models_config['chatgpt']=None
-    # else:    
-    #     print('')   
-   # answer=''
+   
     if models_config['visual_glm'] or models_config['chatgpt']:
-       # if chatgpt and not image_prompt:
-            # for data in models_config['chatgpt'].ask_stream(prompt=prompt_input):
-            #     print(data,end='',flush=True)
-            #     answer=answer+data
-            # result_text.append((prompt_input,answer) )   
-            # return "",result_text
+     
         if image_prompt and  prompt_input and models_config['visual_glm']:
             return(models_config['visual_glm'].request_model(prompt_input, temperature, top_p, image_prompt, result_text))
         else :
@@ -337,17 +383,19 @@ def chat_app(prompt_input, temperature, top_p, image_prompt, result_text,record_
         return result_text,"没有加载部署的VisualGLM模型!!!"
 
 if __name__ == "__main__":
-      
-          check_requirements(exclude=('tensorboard', 'thop'))
-         
+          
+          #check_requirements(exclude=('tensorboard', 'thop'))
+          voice_dir='voice_dir'
+          if not os.path.exists(voice_dir):
+                os.mkdir(voice_dir)
           inputxs=[]
           outputs=[]
           cancel_handles = []
-        
+          
           with gr.Blocks(title="Prompt-Can-Anythings",reload=True, theme=adjust_theme(), analytics_enabled=False,full_width=True,css=advanced_css) as block:
-               gr.HTML( f"<h1 align=\"center\"> Prompt-Can-Anythings_v1.0 </h1>")
+               gr.HTML( f"<h1 align=\"center\"> Prompt-Can-Anythings_v1.0 (快速迭代中~)</h1>")
                cookies = gr.State({'api_key': API_KEY, 'llm_model': LLM_MODEL})
-               with gr.Row():
+               with gr.Row().style(equal_height=False):
                     with gr.Column(scale=1):
                          with gr.Accordion('Grounded-DINO threshold Options（模型参数配置）', open=False):
                             box_threshold=gr.inputs.Number(label='Confidence Threshold', default=0.3)
@@ -368,54 +416,85 @@ if __name__ == "__main__":
                          inputxs.extend(list(option_inputs.values()))
                          with gr.Accordion('Method_Options:free combo', open=True):                
                                    
-                            methods_options={'Lama': gr.inputs.Checkbox(label='Lama model',default=False), 'Sam': gr.inputs.Checkbox(label='Sam ',default=False),
-                                'Det': gr.inputs.Checkbox(label='Grounded',default=False), 
-                                'Tag2text': gr.inputs.Checkbox(label='Tag2text',default=False)
-                            }
-                            visualglm=gr.inputs.Checkbox(label='VisualGLM',default=False),
-                            chatgpt=gr.inputs.Checkbox(label='ChatGPT(目前为网络服务自动挂载)',default=True)
+                                methods_options={'Lama': gr.inputs.Checkbox(label='Lama model[近期更新测试中]',default=False), 
+                                                'Sam': gr.inputs.Checkbox(label='Sam ',default=False),
+                                                'Det': gr.inputs.Checkbox(label='Grounded',default=False), 
+                                                'Tag2text': gr.inputs.Checkbox(label='Tag2text',default=False)
+                                }
+                                visualglm=gr.inputs.Checkbox(label='VisualGLM',default=False),
+                                chatgpt=gr.inputs.Checkbox(label='ChatGPT(目前为网络服务自动挂载)',default=True)
+                                    
+                                loads_model_button=gr.Button('热重载模型',variant="primary")
+                                loads_flag=gr.inputs.Textbox(label="加载模型进度")
+                            
                          list_methods=list(methods_options.values())
                          inputxs.extend(list_methods)  
-                         inputxs.append(chatgpt)    
+                        # inputxs.append(chatgpt)    
                          with gr.Accordion('format Options', open=False):                
                                    
                                 save_options={
                                 'Save txt': gr.inputs.Checkbox(label='Save txt',default=False), 
                                 'Save xml': gr.inputs.Checkbox(label='Save xml',default=False), 
                                 'Save Mask': gr.inputs.Checkbox(label='Save Mask',default=False),  
-                                'Save Caption': gr.inputs.Checkbox(label='Save Caption',default=False),  
+                                'Save Caption': gr.inputs.Checkbox(label='Save Caption',default=False), 
                                 'Batch Process': gr.inputs.Checkbox(label='Batch Process',default=False), 
                                 'Color Flag': gr.inputs.Checkbox(label='Color Flag : classes mask',default=False)
                             }
                          inputxs.extend(list(save_options.values()))
                          dir_inputs =gr.inputs.Textbox(label='加载本地图像文件夹路径',default='train_imgs')
                          with gr.Accordion('LLM模型配置', open=True):
-                            md_dropdown = gr.Dropdown(AVAIL_LLM_MODELS, value=LLM_MODEL, label="更换LLM模型/请求源").style(container=False)
+                            md_dropdown = gr.Dropdown(AVAIL_LLM_MODELS, value=LLM_MODEL, label="更换LLM模型/请求源 [暂时仅支持chatgpt]").style(container=False)
                             max_length_sl = gr.Slider(minimum=256, maximum=4096, value=512, step=1, interactive=True, label="Local LLM MaxLength")
                             with gr.Row():
                                 top_p = gr.Slider(minimum=-0, maximum=1.0, value=1.0, step=0.01,interactive=True, label="nucleus sampling",)
                                 temperature = gr.Slider(minimum=-0, maximum=2.0, value=1.0, step=0.01, interactive=True, label="Temperature",)
-                    with gr.Column(scale=15):      
+
+                    with gr.Column(variant='panel',scale=15):      
                          with gr.Row():
                                     with gr.Row():
-                                        record_audio = gr.Audio(label="record your voice", source="microphone",height=30,width=300)
-                                        upload_audio = gr.Audio(label="or upload audio here", source="upload",height=30,width=300)
+                                        record_audio = gr.Audio(label="record your voice", source="microphone").style(width=120)
+                                        #upload_audio = gr.Audio(label="or upload audio here", source="upload",height=30,width=300)
                                         with gr.Column():
                                             with gr.Row():
                                               run_button_3 = gr.Button('send_record')
-                                              run_button_4 = gr.Button('send_upload')   
-                        #with gr.Row(): 
-                         image_prompt = gr.Image(type="filepath", label="Image Prompt[上传图像]", value=None)
-                      
-                         
-                         prompt_input=gr.inputs.Textbox(lines=3, label="text prompt with iamge : User Specified Tags (Optional, Enter with commas)")
+                                             # run_button_4 = gr.Button('send_upload')   
+
+                         with gr.Tabs(elem_id="sadtalker_driven_audio"):
+                                with gr.TabItem('Upload OR TTS[待优化，未连接GPT通信]'):
+                                        with gr.Column(variant='panel'):
+                                            with gr.Row():
+                                                upload_audio = gr.Audio(label="Input audio(./wav/.mp3)", source="upload").style(height=60,width=120)
+                                        #with gr.Column(variant='panel'):
+                                                input_text = gr.Textbox(label="Generating audio from text", lines=2, placeholder="please enter some text here, we genreate the audio from text using @Coqui.ai TTS.")
+                                            tts = gr.Button('Generate audio',elem_id="sadtalker_audio_generate", variant='primary')
+                                                                
+                        #  if sys.platform!='win32':
+                        #             from utils.text2speech import T2S
+                        #             tts_model=T2S()
+                        #             t2s=tst.test   
+                        
+                         import edge_tts
+                         def t2s(text):
+                                    asyncio.run(t2s_inference(text))
+                                    return voice_dir+"/temp.mp3"
+                         async def t2s_inference(text):
+                                    generate_wave = edge_tts.Communicate(text, voice='zh-CN-YunxiNeural', rate='-4%', volume='+1%')
+                                    await generate_wave.save(voice_dir+"/temp.mp3")   
+                                            
+                         tts.click(fn=t2s, inputs=[input_text], outputs=[upload_audio])                      
+                         with gr.Tabs(elem_id="上传图像"):
+                                with gr.TabItem('Upload image'):
+                                        with gr.Row():
+                                            image_prompt = gr.Image(label="Source image", source="upload", type="filepath").style(height=200,width=180)
+                                      
+                         prompt_input=gr.inputs.Textbox(lines=2, label="prompt with image : User Specified Tags (Optional, Enter with commas)")
                          run_button = gr.Button('Run cv Task',variant="primary")
                        
                          inputs = [dir_inputs,image_prompt,prompt_input,box_threshold,iou_threshold,text_threshold,device_input,quant]
                          inputs.extend(inputxs)
 
                          with gr.Row():
-                                run_button_2 = gr.Button('Visual_chat',variant="primary")
+                                run_button_2 = gr.Button('VisualGLM',variant="primary")
                                 clear_button= gr.Button("清除", variant="secondary")
                                 status = gr.Markdown(f"Tip: 按Enter提交, 按Shift+Enter换行。当前模型: {LLM_MODEL} \n ")
                          with gr.Row():
@@ -423,36 +502,55 @@ if __name__ == "__main__":
                                 resetBtn = gr.Button("重置", variant="secondary"); resetBtn.style(size="sm")
                                 stopBtn2 = gr.Button("停止", variant="secondary"); stopBtn2.style(size="sm")
                              
-                         chat_txt=gr.Textbox(lines=2,show_label=False, placeholder="question").style(container=False)
+                         chat_txt=gr.Textbox(lines=3,show_label=False, placeholder="question").style(container=False)
                          with gr.Accordion("备选输入区", open=True, visible=False) as area_input_secondary:
                             with gr.Row():
                                 txt = gr.Textbox(show_label=False, placeholder="Input question here.", label="输入区2").style(container=False)
-                         run_button_chat = gr.Button('Chat_Sumbit',variant="primary")   
-                                                             
+                         run_button_chat = gr.Button('Chat_Sumbit',variant="primary")
+                         with gr.Accordion("学术GPT基础功能", open=True) as area_basic_fn:
+                              with gr.Row():
+                                for k in functional:
+                                    if ("Visible" in functional[k]) and (not functional[k]["Visible"]): continue
+                                    variant = functional[k]["Color"] if "Color" in functional[k] else "secondary"
+                                    functional[k]["Button"] = gr.Button(k, variant=variant)   
+                       
+                         with gr.Row():
+                                plugin_advanced_arg = gr.Textbox(show_label=True, label="高级参数输入区", visible=False, 
+                                                                 placeholder="这里是特殊函数插件的高级参数输入区").style(container=False)
+                                                    # 创建一个视频输入组件
+                        # video_input = gr.inputs.Video(type="mp4")
+                         video_output = gr.Video(type="auto")                                   
                     with gr.Column(scale=20):
-                        #with gr.Row():
-                        
+                     
                          gallery = gr.Gallery(label="Generated images",show_label=False,elem_id="gallery",).style(preview=True, grid=2, object_fit="scale-down")
                          with gr.Row():
-                            output_text = gr.Textbox(label="Caption",lines=3)
+                            output_text = gr.Textbox(label="图像理解",lines=2)
+                            zh_select=gr.inputs.Checkbox(label='翻译【勾选后需要重新一键重载模型】',default=False)
                             with gr.Column():
                                 output_classes= gr.Textbox(label="Class_numbers:auto generate classes numbers, color flag or save_txt must be ture ")
                                 output_tag= gr.outputs.Textbox(label="Tag")
                          with gr.Row():
                             with gr.Accordion("备选输入区", open=True, visible=False) as area_input_secondary:
                                  system_prompt = gr.Textbox(show_label=True, placeholder=f"Chat Prompt", label="下方输入对话支持图像和文本", value="AI assistant.")
-                       
-                         history = gr.State([])
+                                            
                          with gr.Row():
                             with gr.Column(scale=2):
-                                result_text = gr.components.Chatbot(label=f'Multi-round conversation History,当前模型：{LLM_MODEL}', value=[("", "Hi, What do you want to know ?")]).style(height=CHATBOT_HEIGHT)
-                         
-                  
+                                result_text = gr.Chatbot(label=f'Multi-round conversation History,当前模型：{LLM_MODEL}', value=[("", "Hi, What do you want to know ?")]).style(height=CHATBOT_HEIGHT)
+                                history = gr.State([])
+               cs=[]                 
+               cs.extend(list_methods) 
+               cs.append(zh_select)
+               cs.append(device_input)
+               cs.append(quant)
+               cs.append(loads_flag)
+               #cs.extend([zh_select, device_input, quant, loads_flag])
+               loads_model_button.click(fn=load_auto_backend_models,inputs=cs,outputs=[loads_flag])                     
+               inputs.append(zh_select)
                outputs = [gallery, output_text, output_tag,output_classes]             
-               input_combo = [cookies, max_length_sl,md_dropdown,chat_txt,txt,top_p, temperature, result_text, history,system_prompt]
-                        
+               input_combo = [cookies, max_length_sl,md_dropdown,chat_txt,txt,top_p, temperature, result_text, history,system_prompt,plugin_advanced_arg]       
                output_combo = [cookies, result_text, history, status]
-               predict_args = dict(fn=ArgsGeneralWrapper(predict), inputs=input_combo, outputs=output_combo)        
+               predict_args = dict(fn=ArgsGeneralWrapper(predict), inputs=input_combo, outputs=output_combo)  
+        
                run_button.click(fn=Auto_run, inputs=inputs, outputs=outputs)
                 # 提交按钮、重置按钮
                cancel_handles.append(chat_txt.submit(**predict_args))
@@ -461,10 +559,17 @@ if __name__ == "__main__":
                cancel_handles.append(clear_button.click(**predict_args))
                resetBtn.click(lambda: ([], [], "已重置"), None, [result_text, history, status])
                stopBtn2.click(fn=None, inputs=None, outputs=None, cancels=cancel_handles)
+              
+               for k in functional:
+                    if ("Visible" in functional[k]) and (not functional[k]["Visible"]): continue
+                    dict_args=dict(fn=ArgsGeneralWrapper(predict), inputs=[*input_combo, gr.State(True),gr.State(k)], outputs=output_combo)
+                    
+                    cancel_handles.append(functional[k]["Button"].click(**dict_args))
+
                def on_md_dropdown_changed(k):
                     return {result_text: gr.update(label="当前模型："+k)}
-               md_dropdown.select(on_md_dropdown_changed, [md_dropdown], [result_text] )
-                
+               md_dropdown.select(on_md_dropdown_changed, [md_dropdown], [result_text])
+               #
                gpt_inputs= [prompt_input, temperature, top_p, image_prompt, result_text,record_audio,upload_audio,quant]  
                gpt_inputs.extend(visualglm)
                gpt_inputs.append(chatgpt)       

@@ -262,5 +262,5 @@ def tag2text_caption(pretrained='', **kwargs):
         else:
             model, msg = load_checkpoint(model, pretrained)
         print('vit:', kwargs['vit'])
-        print('msg', msg)
+        #print('msg', msg)
     return model

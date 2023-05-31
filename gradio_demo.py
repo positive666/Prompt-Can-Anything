@@ -285,7 +285,7 @@ def Auto_run(
 
 def main(args):
       
-          check_requirements(exclude=('tensorboard', 'thop'))
+          #check_requirements(exclude=('tensorboard', 'thop'))
           global models_config,tokenizer_glm
           if args.chat_glm:
                  models_config['chat_glm']=VisualGLM(quant=args.quant)

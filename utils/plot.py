@@ -28,7 +28,8 @@ RANK = int(os.getenv('RANK', -1))
 matplotlib.rc('font', **{'size': 11})
 matplotlib.use('Agg')  # for writing to files only
 
-            
+
+          
 def save_mask_data(output_dir, caption, mask_list, box_list, label_list,img_name):
     
     value = 0  # 0 for background

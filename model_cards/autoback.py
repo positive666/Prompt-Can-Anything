@@ -26,11 +26,12 @@ import sys
 sys.path.append("model_cards")
 sys.path.append('model_cards/Tag2Text')
 sys.path.append('model_cards/lama')
-
+sys.path.append('model_cards/gligen')
+import  model_cards.groundingdino.datasets.transforms as T
 from model_cards.Tag2Text import inference 
 from Tag2Text.models import tag2text
 import torchvision.transforms as TS
-from utils.conf import LAMA_MODEL_PATH
+from config_private import LAMA_MODEL_PATH
 # segment anything
 from model_cards.segment_anything import build_sam, SamPredictor 
 
@@ -47,8 +48,9 @@ from utils import check_requirements,check_suffix,IMAGENET_MEAN,IMAGENET_STD
 from utils.downloads import is_url,LOGGER,attempt_download
 from torchvision.ops import nms as NMS
 from utils.plot import *
-Model_CARDS=['lama','segment-anything','grounded-DINO','Tag2Text']
-
+# gligen
+#from model_cards.gligen.gligen_inference import run,load_ckpt
+Model_CARDS=['lama','segment-anything','grounded-DINO','Tag2Text','gligen']
 
 def preprocess_image(img):
 
@@ -67,7 +69,6 @@ def preprocess_image(img):
     img_tensor,_ = transform(img_array,None)
 
     return  img_tensor
-               
 
 class Ensemble(nn.ModuleList):
     # Ensemble of models

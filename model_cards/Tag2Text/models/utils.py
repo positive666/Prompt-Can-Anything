@@ -22,7 +22,7 @@ def tie_encoder_decoder_weights(encoder: nn.Module, decoder: nn.Module,
                                 base_model_prefix: str, skip_key: str):
     uninitialized_encoder_weights: List[str] = []
     if decoder.__class__ != encoder.__class__:
-        logger.info(
+        print(
             f"{decoder.__class__} and {encoder.__class__} are not equal. In this case make sure that all encoder weights are correctly initialized."
         )
 

@@ -1,5 +1,5 @@
 # [step 1]>> 例如： API_KEY = "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" （此key无效）
-API_KEY ="sk-ebkxxxxx"
+API_KEY ="sk-ebkg6Xy15JfPYkhMdXEIT3Blbkxxx"
 
 # [step 2]>> 改为True应用代理，如果直接在海外服务器部署，此处不修改
 USE_PROXY = True
@@ -46,7 +46,7 @@ MAX_RETRY = 2
 
 # 模型选择是 (注意: LLM_MODEL是默认选中的模型, 同时它必须被包含在AVAIL_LLM_MODELS切换列表中 )
 LLM_MODEL = "gpt-3.5-turbo" # 可选 ↓↓↓
-AVAIL_LLM_MODELS = ["gpt-3.5-turbo", "api2d-gpt-3.5-turbo", "gpt-4", "api2d-gpt-4", "chatglm",  "stack-claude"]
+AVAIL_LLM_MODELS = ["gpt-3.5-turbo", "api2d-gpt-3.5-turbo", "gpt-4", "api2d-gpt-4", "chatglm", "stack-claude"]
 # P.S. 其他可用的模型还包括 ["newbing-free", "jittorllms_rwkv", "jittorllms_pangualpha", "jittorllms_llama"]
 
 # 本地LLM模型如ChatGLM的执行方式 CPU/GPU
@@ -139,3 +139,8 @@ CONCURRENT_COUNT = 100
 # 设置用户名和密码（相关功能不稳定，与gradio版本和网络都相关，如果本地使用不建议加这个）
 # [("username", "password"), ("username2", "password2"), ...]
 AUTHENTICATION = []
+# 填写你自己的模型地址，按照下面格式
+GROUNED_MODEL_TYPE= {'S': "../Grounded-Segment-Anything-main/groundingdino_swint_ogc.pth",'L':None}
+SAM_MODEL_TYPE= {'vit_h': "F:\\sam_vit_h_4b8939.pth"  ,'vit_l':None,'vit_b':None}
+Tag2Text_Model_Path='F:\\tag2text_swin_14m.pth'#'weights/tag2text/tag2text_swin_14m.pth'
+LAMA_MODEL_PATH='F:\\Inpaint-Anything\\big-lama'

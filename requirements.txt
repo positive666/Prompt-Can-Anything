@@ -4,7 +4,7 @@ transformers
 addict
 yapf
 timm
-numpy
+numpy==1.23
 opencv-python
 supervision==0.4.0
 pycocotools
@@ -26,3 +26,6 @@ omegaconf
 mdtex2html
 soundfile
 pyaudio
+ffmpeg
+#TTS #option LINUX 
+edge-tts

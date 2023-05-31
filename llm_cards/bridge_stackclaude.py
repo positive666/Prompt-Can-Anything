@@ -1,11 +1,11 @@
-from .bridge_newbing import preprocess_newbing_out, preprocess_newbing_out_simple
+#from llm_.bridge_newbing import preprocess_newbing_out, preprocess_newbing_out_simple
 from multiprocessing import Process, Pipe
-from toolbox import update_ui, get_conf, trimmed_format_exc
+from utils.toolbox import update_ui, get_conf, trimmed_format_exc
 import threading
 import importlib
 import logging
 import time
-from toolbox import get_conf
+from utils.toolbox import get_conf
 import asyncio
 load_message = "正在加载Claude组件，请稍候..."
 
