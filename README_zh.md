@@ -1,52 +1,46 @@
 
 # Prompt-Can-Anything
-一个完全自动化的工具箱：你只需要提供提示！只需一次点击！通过SOTA模型的提示和创意，你可以做任何事情。
+这是一个结合SOTA AI的应用web库以及研究的储备库，它能够帮你实现一切：你只需要提供提示！只需一次点击！通过SOTA模型的提示和创意，你可以做任何事情。
 
 **动机**
 
-当前：为工程和研究创建数据引擎的完全自动化AI工具可能需要使用更多的CLIP以及zero-shot模型。
+当前：为工程和研究所积累的AI智能体后台”安尼森“，这需要使用更多的多模态任务以及zero-shot模型，不仅提供多模态的AI处理web UI，逐渐丰富的功能。
 
-目标：计划生成高质量的数据标注数据并训练我们的模型。
-
-所以它不知是一个可以提示任何事情的工具（YOCO）
-
-1. 全自动标注工具，当前结构（YOCO）
-
-   此外，我们将在未来引入视频、音频和3D注释。
-
-![structure](asset/data_engine.png)
-
-2. LLM模型服务：文本和声音：
-
-   ​	加入网络chatgpt服务和本地VisualGLM，基本的音频处理在迭代中，会加入ASR和TTS；
-
-2. 半自动交互UI工具（计划推出）：
-
-   这部分工作比较多了，因时间精力不作加急更新
-
-2. 图像编辑和创作（近期更新）
-
-2. 一键微调训练本地模型
+目标：你可以通过它完成一切事情！让我们详细了解下该项目的开发进度和计划，最终完整的智能体结合本地储备的GPT可以帮你调用一切AI任务！欢迎提问、star和fork,以及伸出援助之手~
 
 ## 特性
 
-- 🔥 数据引擎
+1. （YOCO）它不仅是一个可以提示任何事情的工具
 
-  提供完全自动的数据注释，并通过工程优化对其进行细化，通过稳定扩散和GPT的相关模型，我们可以为下游任务创建更多的数据源能力。
+   🔥 数据引擎：
+   
+   此外，我们将在未来引入视频、音频和3D注释，YOCO依赖于集成的多模态模型以及GPT等辅助生成，当然它并不是万能的，通过有效的全自动标注和stable diffusion系列的方法去生产和控制符合需求的数据，完成”数据引擎“，并且生成的定制化的标签格式，去便于训练常规模型。
+   
+   🔥 模型训练: 
+   
+   对于每一个模型我们不仅要做到使用，还在阅读它的论文和微调方法以及和原作者交流，尝试一些改进和更好训练的开发工作，Fine-tune大模型和通过YOCO生成的定制化的标签格式，更高效地训练常规模型。
+   
+   
 
-  可扩展的一键注释训练，用于三方项目的使用，例如Yolo、Lora模式。（即将推出）
+![structure](asset/data_engine.png)
 
-- 🚀🚀内容创作和视觉GPT
+2. 🚀交互内容创作和视觉GPT
 
-   目前使用了chatgpt(需要配置代理，可能在CONDA环境里也要修改端口号)	，加入了清华开源的VisualGLM
+​      集成多样化GPT，目前主要以chatgpt的端口为主，利用开源的清华VISUALGLM，我们实现本地化GPT的部署和微调，以及尝试改进模型结构，通过多模态的应用工具进行对话和内容创作。
 
-- 🔥希望它不只是一个工具或者插件，我们会整理各个模型的细致分析和微调改进方法。			
+3. ⭐ 应用角色扮演—— 3D &&2D 虚拟人
 
-- 🚀加速视频和数据集的处理（即将推出）
+   通过3D引擎去结合GPT等多模态任务去完成一个角色设计互动；
 
-- 3D数字人应用
+   通过saldtalker开源项目去结合GPT等多模态任务去完成一个角色设计互动；
 
-- 一键微调模型和训练下游视觉任务模型（筹备中）
+4.  🔥🔥🚀无限的潜力“安尼森”
+
+​	   不断的创意和积累，SOTA -AI的集成和学习，我们会通过记录每一个集成的模型，对它进行一次详解，总结在文章中。
+
+​	   作者AI相关所有知识储备和工程经验总结给本地大模型（这部分是最终开发功能，计划中）
+
+
 
 <details open>
 <summary>⭐ 研究 🚀 项目 🔥 灵感（筹备中）</summary>
@@ -57,7 +51,25 @@
 
 </details>
 
-### <div align="left">⭐ [新闻列表]</div>
+### <div align="left">🔥 [更新预告，更新频繁，感兴趣FORK]</div>
+
+-  一键微调按钮功能，添加：visualglm
+
+-  语音文本处理链接gpt，加入chatglm
+- Tag2text新模型集成和测试
+
+-  近期会加入生成类模型并完成测试
+- 一键微调按钮功能，添加：sam
+
+
+
+</details>
+
+### <div align="left">⭐ [更新列表]</div>
+
+- 【2023/5/31】添加Web演示：修复已知问题BUG，添加ASR和TTS模块（临时版本），补充一些说明和测试。
+
+- 【2023/5/29】添加Web演示：加入了学术chatgpt部分功能，感谢他们的工作，其次添加了一键生成VisualGLM-6B数据集标注功能，后续可一键微调
 
 - 【2023/5/23】添加Web演示：加入清华的VisualGLM-6B版本
 
@@ -79,11 +91,11 @@
 
 - [lama](https://github.com/advimman/lama)：分辨率鲁棒的大屏蔽填充与傅立叶卷积
 
-**:hammer_and_wrench: YOCO: 快速入门**
+  ## :hammer_and_wrench: YOCO: 快速入门
 
 首先，需要有基本的gpu深度学习环境。
 
-（建议使用Linux，Windows可能在编译Grounded-DINO Deformable和配置Visualglm时候算子时出现问题，参见[Grounding DINO](https://github.com/IDEA-Research/GroundingDINO)）
+（强烈建议使用Linux，Windows可能在编译Grounded-DINO Deformable和配置Visualglm时候算子时出现问题，参见[Grounding DINO](https://github.com/IDEA-Research/GroundingDINO)）
 
 ```bash
 gir clone https://github.com/positive666/Prompt-Can-Anything
@@ -109,7 +121,7 @@ cd  VisualGLM_6B && pip install -i https://mirrors.aliyun.com/pypi/simple/ -r re
 pip install --upgrade diffusers[torch]
 ```
 
-更多内容，可以查看requirements, “pip install < your missing packages>”。
+更多内容，可以查看requirements, “pip install < your missing packages>”, 如果出现安装版本问题，请仔细看requirements的版本
 
 对于pyaudio，在ubuntu可能通过pip并不一定成功，进入这里[pyaudio-wheels · PyPI](https://pypi.org/project/pyaudio-wheels/#files)，选择对应你Python的版本，下载后pip安装whl。 
 
@@ -161,13 +173,13 @@ pip install --upgrade diffusers[torch]
     </tr>
     <tr>
 </table>
-   2. 配置隐私文件和参数在 config_private.py 下,下载模型后将路径配置在" MODEL_xxxx_PATH“的变量  ,如果使用 chatgpt,配置其代理和API密钥
+   2. 配置隐私文件和参数在 config_private.py 下,下载模型后将路径配置在" MODEL_xxxx_PATH“的变量  ,如果使用 chatgpt ,配置其代理和API密钥，可能在WEBUI使用过程中，如果其他服务如tts有联网问题，先关掉VPN链接，仅当使用Chatgpt时候打开。
 
       
 
-**🏃Demo** 
+## 🏃Demo
 
-1. without web-ui
+1. 自动标注的测试样例
 
       ```bash
    "--input_prompt" :  你可以手动输入prompt,比如你只想检测你感兴趣的目标类别，可以直接输入给grounded检测模型，也可以输入给tag2text
@@ -175,7 +187,7 @@ pip install --upgrade diffusers[torch]
    ```
 
    
-   	python demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --save_caption 
+   	python auto_label_demo.py  --source <data path>  --save-txt  --save-mask --save-xml  --save_caption 
    
    
 
@@ -199,14 +211,17 @@ pip install --upgrade diffusers[torch]
 
    ![image-20230527022556630](asset/news.png)
 
-**🔨计划清单**
+## 🔨计划清单
 
-- [x] Release demo and code(2 days within).
-- [x] web ui   demo 
-- [x] support video ,chatgpt, visualglm,add inpainting model demo
-- [ ] add 3d nerf demo 
-- [ ] fintune sam and ground 
-- [ ] Release training datasets.
+- [x] 释放初版
+- [x] web ui 界面调整 
+- [x] 支持chatgpt/VISUALGLM/ASR/TTS
+- [ ] Yoco一键标注微调VISUALGLM Demo
+- [ ] 3d &&2d avatvor
+- [ ] 完成计划的AI结合体“安尼森”
+- [ ] 微调sam分割器 and ground检测器 ,拓展SAM的输入控制
+- [ ] 释放训练方法.
+- [ ] 知识克隆
 
 
 ## 参考工作 
