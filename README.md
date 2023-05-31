@@ -24,17 +24,17 @@ You can accomplish anything through this project! Let’s learn more about the d
 
 <img src="asset/data_engine.png" alt="structure" style="zoom: 67%;" />
 
-2. 🚀 Interactive content creation and visual GPT
+ 2.  🚀 Interactive content creation and visual GPT
 
 Integrate diversified GPT, mainly using the port of chatgpt, and use the open-source Tsinghua VISUALGLM to deploy and fine-tune localized GPT, as well as try to improve the model structure. Through multimodal application tools, we can conduct dialogues and content creation.
 
-3. ⭐ 3D && 2D Avatar(comming soon)
+ 3. ⭐ 3D && 2D Avatar(comming soon)
 
 Complete a role design interaction through a 3D Engine combined with multimodal tasks such as GPT;
 
 Complete a role design interaction through the Saldtalker open source project and multimodal tasks such as GPT.
 
-4. 🔥🔥🚀 Unlimited potential “Anything”
+ 4.  🔥🔥🚀 Unlimited potential “Anything”
 
 Through continuous creativity and accumulation, we will integrate and learn from SOTA AI. We will record each integrated model and provide a detailed explanation and summary in the article. The author will summarize all the AI-related knowledge reserves and engineering experience for the local large model (this part is the final development function and is planned).
 
