@@ -24,7 +24,7 @@
    
    
 
-![structure](asset/data_engine.png)
+<img src="asset/data_engine.png" alt="structure" style="zoom: 33%;" />
 
 2. 🚀交互内容创作和视觉GPT
 
@@ -73,7 +73,7 @@
 
 ### <div align="left">⭐ [更新列表]</div>
 
-- 【2023/5/31】添加Web演示：修复已知问题BUG，添加TTS模块（临时版本），LINUX系统上测试通过了所有开放的功能，补充一些说明和测试。
+- 【2023/5/31】添加Web演示：修复已知问题BUG，添加TTS模块（临时版本），LINUX系统上测试通过了所有开放的功能，补充一些说明和测试，修改重载：每次勾选加载模型和释放模型后，点击重载，因为太多的模型结合visualglm这种本地化的大模型，显卡必须要20G+，所以要灵活调节释放模型
 
 - 【2023/5/29】添加Web演示：加入了学术chatgpt部分功能，感谢他们的工作，其次添加了一键生成VisualGLM-6B数据集标注功能，后续可一键微调
 
@@ -207,7 +207,7 @@ pip install --upgrade diffusers[torch]
    
    
 
-![image-20230427093103453](asset/image-20230427093103453.png)
+<img src="asset/image-20230427093103453.png" alt="image-20230427093103453" style="zoom:25%;" />
 
 2. webui
 
@@ -217,17 +217,17 @@ pip install --upgrade diffusers[torch]
    		python app.py
    ```
 
-   ![image-20230527022556630](asset/anything.png)
+   <img src="asset/anything.png" alt="image-20230527022556630" style="zoom:25%;" />
 
    
 
-   ![image-20230508075845259](asset/default_all.png)
+   <img src="asset/default_all.png" alt="image-20230508075845259" style="zoom:33%;" />
 
    ​			
 
    
    
-   ![visual_chatglm](asset/visual_chatglm.png)
+   <img src="asset/demo1.png" alt="visual_chatglm" style="zoom:33%;" />
    
    
 
