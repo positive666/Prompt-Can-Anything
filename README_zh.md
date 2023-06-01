@@ -217,7 +217,7 @@ pip install --upgrade diffusers[torch]
    		python app.py
    ```
 
-   <img src="asset/anything.png" alt="image-20230527022556630" style="zoom:25%;" />
+   <img src="asset/anything.png" alt="image-20230527022556630" style="zoom: 33%;" />
 
    
 
