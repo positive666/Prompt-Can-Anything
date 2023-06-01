@@ -31,6 +31,7 @@ CHATBOT_HEIGHT = 1115
 # 代码高亮
 CODE_HIGHLIGHT = True
 
+
 # 窗口布局
 LAYOUT = "LEFT-RIGHT"  # "LEFT-RIGHT"（左右布局） # "TOP-DOWN"（上下布局）
 DARK_MODE = True  # "LEFT-RIGHT"（左右布局） # "TOP-DOWN"（上下布局）
