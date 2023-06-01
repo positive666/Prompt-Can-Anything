@@ -103,4 +103,4 @@ def send_stream(whisper_modelm,chat_bot):
 if __name__ == "__main__":
       whisper_model = whisper.load_model("base")
      # chatbot=Chatbot(api_key=API_KEY,proxy=PROXIES,engine="gpt-3.5-turbo")
-      send_stream(whisper_model,chatbot)
+     # send_stream(whisper_model,chatbot)

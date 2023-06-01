@@ -47,6 +47,8 @@ global category_colors
 category_colors={}
 # 初始对应类别编号
 class_ids = []
+
+speech_AI={'whisper':None }
 global models_config
 models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None,'sd': None, 
                  'visual_glm': None , 'trans_zh': None,'gligen': None}
@@ -55,7 +57,21 @@ from llm_cards.core_functional import get_core_functions
 functional = get_core_functions()
 JSON_DATASETS=[]
 
-   
+async def load_speech_model(whisper=None):
+        import whisper 
+        
+        if whisper:
+            speech_AI['whisper'] = whisper.load_model("base")
+            LOGGER.info('loads whisper')
+            
+        elif not whisper:
+          LOGGER.info('free  memory')
+          models_config['visual_glm']=None  
+        else:    
+          LOGGER.info('pass')         
+        #await asyncio.sleep(0.01) 
+        return '语音识别记载完成'
+           
 def save_text2img_data(prompt,label,img_name):
     global JSON_DATASETS
     if not prompt:
@@ -71,7 +87,7 @@ def save_text2img_data(prompt,label,img_name):
 
 def auto_opentab_delay(port=7586):
         import threading, webbrowser, time
-        LOGGER.info(f"如果浏览器没有自动打开，请复制并转到以下URL：")
+        LOGGER.info(f"\n如果浏览器没有自动打开，请复制并转到以下URL：")
         LOGGER.info(f"\t（亮色主题）: http://localhost:{port}")
         LOGGER.info(f"\t（暗色主题）: http://localhost:{port}/?__theme=dark")
         def open():
@@ -376,9 +392,12 @@ def visual_chat(prompt_input, temperature, top_p, image_prompt, result_text,reco
     else:                
           return result_text,"没有加载部署的VisualGLM模型!!!"
 
+def clear_fn_image(value):
+    return [("", "Hi, What do you want to know ?")]
+
 if __name__ == "__main__":
          
-          check_requirements(exclude=('tensorboard', 'thop'))
+          #check_requirements(exclude=('tensorboard', 'thop'))
           voice_dir='voice_dir'
           if not os.path.exists(voice_dir):
                 os.mkdir(voice_dir)
@@ -418,7 +437,7 @@ if __name__ == "__main__":
                                 
                                 visual_glm=gr.inputs.Checkbox(label='VisualGLM',default=False)
                                 chatgpt=gr.inputs.Checkbox(label='ChatGPT(目前为网络服务自动挂载)',default=True)
-                                    
+                                
                                 loads_model_button=gr.Button('热重载模型',variant="primary")
                                 loads_flag=gr.inputs.Textbox(label="加载模型进度")
                             
@@ -446,25 +465,31 @@ if __name__ == "__main__":
                          with gr.Accordion('VisualGLM模型配置', open=False):
                               visual_temperature = gr.Slider(maximum=1, value=0.8, minimum=0, label='VisualGLMTemperature')
                               visual_top_p = gr.Slider(maximum=1, value=0.4, minimum=0, label='VisualGLM Top_P')
-                              
+                         
+                         with gr.Accordion('语音服务模型配置', open=True):
+                                            with gr.Row():
+                                                asr_select = gr.inputs.Checkbox(label='use ASR[暂未开放]',default=False).style(height=10,width=10)
+                                                asr_button = gr.Button('loads ASR').style(height=10,width=10)     
                     with gr.Column(variant='panel',scale=15):      
                          with gr.Row():
                                     with gr.Row():
                                         record_audio = gr.Audio(label="record your voice", source="microphone").style(width=120)
-                                        #upload_audio = gr.Audio(label="or upload audio here", source="upload",height=30,width=300)
                                         with gr.Column():
                                             with gr.Row():
-                                              run_button_3 = gr.Button('send_record')
+                                               send_record_button = gr.Button('声音转文本到输入框里同步')
                                               
-
                          with gr.Tabs(elem_id="Process_audio"):
-                                with gr.TabItem('Upload OR TTS[近期更新——未连GPT]'):
+                                with gr.TabItem('Upload OR TTS[近期更新—未连GPT]'):
+                                        
                                         with gr.Column(variant='panel'):
                                             with gr.Row():
                                                 upload_audio = gr.Audio(label="Input audio(./wav/.mp3)", source="upload").style(height=60,width=120)
                                                 input_text = gr.Textbox(label="Generating audio from text", lines=2, placeholder="please enter some text here, we genreate the audio from  TTS.")
-                                            tts = gr.Button('Generate audio',elem_id="audio_generate", variant='primary')
-                                                                
+                                            with gr.Row():
+                                                asr = gr.Button('Generate text[asr修复中]',elem_id="text_generate", variant='primary')
+                                                tts = gr.Button('Generate audio',elem_id="audio_generate", variant='primary')   
+                                              
+                                                              
                         #  if sys.platform!='win32':
                         #             from utils.text2speech import T2S
                         #             tts_model=T2S()
@@ -476,8 +501,22 @@ if __name__ == "__main__":
                          async def t2s_inference(text):
                                     generate_wave = edge_tts.Communicate(text, voice='zh-CN-YunxiNeural', rate='-4%', volume='+1%')
                                     await generate_wave.save(voice_dir+"/temp.mp3")   
-                                            
-                         tts.click(fn=t2s, inputs=[input_text], outputs=[upload_audio])                      
+                         def s2t(record_file,upload_file):
+                            result=[]
+                            from a2f import speech_recognition
+                            if record_file:
+                                speech_text1, speech_language=speech_recognition(record_file, speech_AI['whisper'])
+                                print(type(speech_text1))
+                                speech_text_list = speech_text1[0]
+                                speech_text_str = " ".join(speech_text_list)
+                              
+                            if upload_file:
+                               speech_text2, speech_language=speech_recognition(upload_file,speech_AI['whisper'])
+                            #result.extend(speech_text1,speech_text2)   
+                            return  speech_text_str 
+                            
+                         
+                        
                          with gr.Tabs(elem_id="上传图像"):
                                 with gr.TabItem('Upload image'):
                                         with gr.Row():
@@ -532,6 +571,12 @@ if __name__ == "__main__":
                             with gr.Column(scale=2):
                                 result_text = gr.Chatbot(label=f'Multi-round conversation History,当前模型：{LLM_MODEL}', value=[("", "Hi, What do you want to know ?")]).style(height=CHATBOT_HEIGHT)
                                 history = gr.State([])
+                                
+               send_record_button.click(fn=s2t, inputs=[record_audio,upload_audio], outputs=[input_text,chat_txt])                       
+               asr_button.click(fn=load_speech_model,inputs=[asr_select],outputs=[loads_flag])        
+               asr.click(fn=s2t, inputs=[record_audio,upload_audio], outputs=[input_text,chat_txt])                    
+               tts.click(fn=t2s, inputs=[input_text], outputs=[upload_audio])        
+                        
                cs=[]                 
                cs.extend(list_methods)  
                cs.extend([zh_select, visual_glm,device_input, quant, loads_flag])
@@ -568,10 +613,11 @@ if __name__ == "__main__":
                prompt_input.submit(fn=visual_chat,inputs=[prompt_input, visual_temperature, visual_top_p, image_prompt,
                                                          result_text,record_audio,upload_audio],
                                         outputs=[prompt_input, result_text])
-               clear_button.click(fn=clear_fn, inputs=clear_button, outputs=[prompt_input, result_text, image_prompt])
-               image_prompt.upload(fn=clear_fn2, inputs=clear_button, outputs=[result_text])
-               image_prompt.clear(fn=clear_fn2, inputs=clear_button, outputs=[result_text])
-        
+               #clear_button.click(fn=clear_fn, inputs=clear_button, outputs=[prompt_input, result_text, image_prompt])
+               image_prompt.upload(fn=clear_fn_image, inputs=clear_button, outputs=[result_text])
+               clear_button.click(lambda: ("","","","",""), None, [prompt_input,result_text,txt, input_text,chat_txt])
+               image_prompt.clear(fn=clear_fn_image, inputs=clear_button, outputs=[result_text])
+              # upload_audio.clear(fn=clear_fn_image, inputs=clear_button, outputs=[result_text])
           auto_opentab_delay(7589)
           block.queue(concurrency_count=CONCURRENT_COUNT).launch(server_name='0.0.0.0', server_port=7589,debug=True, share=False)
      

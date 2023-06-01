@@ -53,13 +53,15 @@ Through continuous creativity and accumulation, we will integrate and learn from
 
 ### <div align="left"> 🔥 [Update notice, frequent updates, Welcome fork] </div>
 
+- 🔥next week，2023/6/6, A detailed demo video for v1.1  
+- 🔥Official latest model integration test for Tag2text version 2 in early June
 - One-click fine-tuning button function, adding: visualglm
 - Voice text processing link GPT, joining chatglm
-- Official latest model integration test for Tag2text version 2 in early June
 - Generating class models will be added and tested in the near future
 - One-click fine-tuning button function, adding: SAM
 
 ### <div align="left">⭐[News list] </div>
+	-【2023/5/31】  Fixed the already issue, add tts demo, the Linux platform is tested through all open features
 	-【2023/5/23】  add web demo:Add VisualGLM ,chatgpt from [Academic-gpt](https://github.com/binary-husky/gpt_academic)
 	-【2023/5/7】   add web demo:At present, the function of text generation, detection and segmentation of images or image folders on the website has been tested normally, and the program does not need to be restarted, and the last model loading configuration is remembered, and it will be continuously optimized in the future.
 	-【2023/5/4】   add  semantic segmentatio label, add args(--color-flag --save-mask )
