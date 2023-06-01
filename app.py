@@ -474,9 +474,9 @@ if __name__ == "__main__":
                          with gr.Row():
                                     with gr.Row():
                                         record_audio = gr.Audio(label="record your voice", source="microphone").style(width=120)
-                                        with gr.Column():
-                                            with gr.Row():
-                                               send_record_button = gr.Button('声音转文本到输入框里同步')
+                                        # with gr.Column():
+                                        #     with gr.Row():
+                                        #        send_record_button = gr.Button('声音转文本到输入框里同步[同asr修复中]')
                                               
                          with gr.Tabs(elem_id="Process_audio"):
                                 with gr.TabItem('Upload OR TTS[近期更新—未连GPT]'):
@@ -572,7 +572,7 @@ if __name__ == "__main__":
                                 result_text = gr.Chatbot(label=f'Multi-round conversation History,当前模型：{LLM_MODEL}', value=[("", "Hi, What do you want to know ?")]).style(height=CHATBOT_HEIGHT)
                                 history = gr.State([])
                                 
-               send_record_button.click(fn=s2t, inputs=[record_audio,upload_audio], outputs=[input_text,chat_txt])                       
+              # send_record_button.click(fn=s2t, inputs=[record_audio,upload_audio], outputs=[input_text,chat_txt])                       
                asr_button.click(fn=load_speech_model,inputs=[asr_select],outputs=[loads_flag])        
                asr.click(fn=s2t, inputs=[record_audio,upload_audio], outputs=[input_text,chat_txt])                    
                tts.click(fn=t2s, inputs=[input_text], outputs=[upload_audio])        
