@@ -38,7 +38,6 @@ category_colors={}
 # 初始对应类别编号
 class_ids = []
 models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None,'sd': None,'chat_glm': None}
-#global memory_model
 
 def auto_opentab_delay(port=7585):
                import threading, webbrowser, time

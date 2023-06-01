@@ -421,7 +421,7 @@ if __name__ == "__main__":
                                                 'Det': gr.inputs.Checkbox(label='Grounded',default=False), 
                                                 'Tag2text': gr.inputs.Checkbox(label='Tag2text',default=False)
                                 }
-                                visualglm=gr.inputs.Checkbox(label='VisualGLM',default=False),
+                                visualglm=gr.inputs.Checkbox(label='VisualGLM',default=False)
                                 chatgpt=gr.inputs.Checkbox(label='ChatGPT(目前为网络服务自动挂载)',default=True)
                                     
                                 loads_model_button=gr.Button('热重载模型',variant="primary")
