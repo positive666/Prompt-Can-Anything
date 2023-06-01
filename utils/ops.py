@@ -557,7 +557,7 @@ def check_version(current='0.0.0', minimum='0.0.0', name='version ', pinned=Fals
     # Check version vs. required version
     current, minimum = (pkg.parse_version(x) for x in (current, minimum))
     result = (current == minimum) if pinned else (current >= minimum)  # bool
-    warning_message = f'WARNING ⚠️ {name}{minimum} required by YOLOv5, but {name}{current} is currently installed'  # string
+    warning_message = f'WARNING ⚠️ {name}{minimum} required by Prompt Can Anythings, but {name}{current} is currently installed'  # string
     if hard:
         assert result, emojis(warning_message)  # assert min requirements met
     if verbose and not result:
@@ -583,7 +583,7 @@ def check_requirements(requirements=ROOT / 'requirements.txt', exclude=(), insta
         try:
             pkg.require(r)
         except Exception:  # DistributionNotFound or VersionConflict if requirements not met
-            s = f"{prefix} {r} not found and is required by YOLOv5"
+            s = f"{prefix} {r} not found and is required by Prompt can Anythings"
             if install and AUTOINSTALL:  # check environment variable
                 LOGGER.info(f"{s}, attempting auto-update...")
                 try:
@@ -669,18 +669,6 @@ def check_file(file, suffix=''):
         assert len(files), f'File not found: {file}'  # assert file was found
         assert len(files) == 1, f"Multiple files match '{file}', specify exact path: {files}"  # assert unique
         return files[0]  # return file
-
-
-
-
-def check_class_names(names):
-    # Check class names. Map imagenet class codes to human-readable names if required. Convert lists to dicts.
-    if isinstance(names, list):  # names is a list
-        names = dict(enumerate(names))  # convert to dict
-    if isinstance(names[0], str) and names[0].startswith('n0'):  # imagenet class codes, i.e. 'n01440764'
-        map = yaml_load(ROOT / 'yolo/data/datasets/ImageNet.yaml')['map']  # human-readable names
-        names = {k: map[v] for k, v in names.items()}
-    return names
 
 def check_dataset(data, autodownload=True):
     # Download, check and/or unzip dataset if not found locally

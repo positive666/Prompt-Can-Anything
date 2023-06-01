@@ -12,8 +12,7 @@ from PIL import Image,ImageDraw,ImageFont
 from utils.ops import (LOGGER, Profile, check_file, check_img_size, check_imshow, check_requirements, colorstr, cv2,
                      dilate_mask, increment_path, non_max_suppression ,print_args, scale_boxes, xyxy2xywh,save_format)
 from utils.plot import Annotator, save_one_box,show_box,show_mask,save_mask_data,Draw_img
-from ChatGPT.GPT import Chatbot
-from ChatGPT.config.private import API_KEY,PROXIES
+
 
 from utils.torch_utils import select_device
 from utils.conf import SAM_MODEL_TYPE,GROUNED_MODEL_TYPE,Tag2Text_Model_Path,NUM_WORKS

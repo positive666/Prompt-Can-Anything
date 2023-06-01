@@ -378,7 +378,7 @@ def visual_chat(prompt_input, temperature, top_p, image_prompt, result_text,reco
 
 if __name__ == "__main__":
          
-          #check_requirements(exclude=('tensorboard', 'thop'))
+          check_requirements(exclude=('tensorboard', 'thop'))
           voice_dir='voice_dir'
           if not os.path.exists(voice_dir):
                 os.mkdir(voice_dir)
@@ -413,7 +413,7 @@ if __name__ == "__main__":
                                 methods_options={'Lama': gr.inputs.Checkbox(label='Lama model[近期更新测试中]',default=False), 
                                                 'Sam': gr.inputs.Checkbox(label='Sam[当前仅支持检测器的BOX输入]',default=False),
                                                 'Det': gr.inputs.Checkbox(label='Grounded[可输入文本的检测器]',default=False), 
-                                                'Tag2text': gr.inputs.Checkbox(label='Tag2text[图文了解]',default=False)
+                                                'Tag2text': gr.inputs.Checkbox(label='Tag2text[图文理解]',default=False)
                                 }
                                 
                                 visual_glm=gr.inputs.Checkbox(label='VisualGLM',default=False)
