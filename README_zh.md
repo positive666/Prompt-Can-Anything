@@ -73,6 +73,8 @@
 
 ### <div align="left">⭐ [更新列表]</div>
 
+-  【2023/6/5】 修复whisper asr的bug，内部可选模型，但是考虑显存不建议超过small,上传百度云一个介绍。
+
 - 【2023/5/31】添加Web演示：修复已知问题BUG，添加TTS模块（临时版本），LINUX系统上测试通过了所有开放的功能，补充一些说明和测试。（修改重载：每次勾选加载模型和释放模型后，因为太多的本地化的大模型，如果部署本地GPT显卡必须要20G+，但目前机制无法动态释放调节释放多个模型显存，这个按钮只能帮助你选择、组合串联cv模型的使用方式了）
 
 - 【2023/5/29】添加Web演示：加入了学术chatgpt部分功能，感谢他们的工作，其次添加了一键生成VisualGLM-6B数据集标注功能，后续可一键微调
@@ -184,6 +186,8 @@ pip install --upgrade diffusers[torch]
       
 
 ## 🏃Demo
+
+ [视频Demo介绍 ](https://pan.baidu.com/s/1AllUjuOVhzJh7abe71iCxg?pwd=c6v）
 
 1. 自动标注的测试样例
 

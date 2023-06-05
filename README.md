@@ -185,7 +185,7 @@ For PyAudio, it may not be successfully installed through pip on Linux platforms
 
 **🏃Demo**
 
-[this is  a Video Demo]: 链接：https://pan.baidu.com/s/1AllUjuOVhzJh7abe71iCxg?pwd=c6v6
+see [Video demo online on baidu clound ](https://pan.baidu.com/s/1AllUjuOVhzJh7abe71iCxg?pwd=c6v）
 
 
 
