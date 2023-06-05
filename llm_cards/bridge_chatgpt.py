@@ -18,7 +18,7 @@ import logging
 import traceback
 import requests
 import importlib
-
+from config_private import A2F_URL,Avatar_instance_A
 # config_private.py放自己的秘密如API和代理网址
 # 读取时首先看是否存在私密的config_private配置文件（不受git管控），如果有，则覆盖原config文件
 from utils.toolbox import get_conf, update_ui, is_any_api_key, select_api_key, what_keys, clip_history, trimmed_format_exc
@@ -106,7 +106,7 @@ def predict_no_ui_long_connection(inputs, llm_kwargs, history=[], sys_prompt="",
     return result
 
 
-def predict(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_prompt='', stream = True, additional_fn=None,clear_info=False):
+def predict(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_prompt='', stream = True, additional_fn=None):
     """
     发送至chatGPT，流式获取输出。
     用于基础的对话功能。
@@ -116,6 +116,19 @@ def predict(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_promp
     chatbot 为WebUI中显示的对话列表，修改它，然后yeild出去，可以直接修改对话界面内容
     additional_fn代表点击的哪个按钮，按钮见functional.py
     """
+    
+    omniverse_state = llm_kwargs.get('omniverse', False)
+    record_file=llm_kwargs.get('record_audio', False)
+    asr=llm_kwargs.get('asr', False)
+    if record_file and asr:
+        import whisper
+        from a2f import speech_recognition
+        
+        speech_text, speech_language=speech_recognition(record_file,whisper.load_model("small",
+                                download_root="weights") ,False)                             
+        inputs=speech_text  
+        print('result:',inputs)   
+     
     if is_any_api_key(inputs):
         chatbot._cookies['api_key'] = inputs
         chatbot.append(("输入已识别为openai的api_key", what_keys(inputs)))
@@ -195,7 +208,6 @@ def predict(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_promp
                     # 如果这里抛出异常，一般是文本过长，详情见get_full_error的输出
                     gpt_replying_buffer = gpt_replying_buffer + json.loads(chunk_decoded[6:])['choices'][0]["delta"]["content"]
                     history[-1] = gpt_replying_buffer
-                    
                 
                     chatbot[-1] = (history[-2], history[-1])
                     yield from update_ui(chatbot=chatbot, history=history, msg=status_text) # 刷新界面
@@ -228,7 +240,33 @@ def predict(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_promp
                         chatbot[-1] = (chatbot[-1][0], f"[Local Message] 异常 \n\n{tb_str} \n\n{regular_txt_to_markdown(chunk_decoded)}")
                     yield from update_ui(chatbot=chatbot, history=history, msg="Json异常" + error_msg) # 刷新界面
                     return
+        print("检查：",chatbot[-1])
+        if omniverse_state:
+            import asyncio       
+            asyncio.run(tts_a2f(chatbot[-1][-1]))
 
+
+
+async def tts_a2f(text):
+    import edge_tts
+    import soundfile as sf
+    import numpy as np
+    from  audio2face_streaming_utils import push_audio_track_stream
+    generate_wave = edge_tts.Communicate(text, voice='zh-CN-YunxiNeural', rate='-5%', volume='+1%')
+    await generate_wave.save('./voice_dir/send_frame.wav')  
+                                       
+    try:
+        audio_data, samplerate = sf.read('./voice_dir/send_frame.wav', dtype="float32")
+        print('xxx')
+        if len(audio_data.shape) > 1:
+            audio_data = np.average(audio_data, axis=1)
+        print("send a2f app....")    
+        push_audio_track_stream(A2F_URL, audio_data, samplerate , Avatar_instance_A) 
+
+        return "SEND DONE"
+    except Exception as e:
+        print(f"检查是否开启omniverse!!!")  
+        
 def generate_payload(inputs, llm_kwargs, history, system_prompt, stream):
     """
     整合所有信息，选择LLM模型，生成http请求，为发送请求做准备

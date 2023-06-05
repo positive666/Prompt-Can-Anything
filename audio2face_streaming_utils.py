@@ -15,9 +15,9 @@ import time
 import numpy as np
 import soundfile
 
-import utils.audio2face_pb2
-import utils.audio2face_pb2_grpc
 
+import audio2face_pb2_grpc
+import audio2face_pb2
 
 def push_audio_track(url, audio_data, samplerate, instance_name):
     """
@@ -61,12 +61,12 @@ def push_audio_track_stream(url, audio_data, samplerate, instance_name):
     All messages are packed into a Python generator and passed to PushAudioStream()
     """
     print(type(audio_data))
+    
     chunk_size = samplerate // 10  # ADJUST
     sleep_between_chunks = 0.01  # ADJUST
     block_until_playback_is_finished = True  # ADJUST
     #print(type(audio_data))
     with grpc.insecure_channel(url) as channel:
-        print("Channel creadted")
         stub = audio2face_pb2_grpc.Audio2FaceStub(channel)
 
         def make_generator():

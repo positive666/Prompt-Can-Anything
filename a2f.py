@@ -8,7 +8,7 @@ import ffmpeg
 from pydub import AudioSegment
 from pydub.silence import split_on_silence
 import soundfile
-from utils.audio2face_streaming_utils import push_audio_track_stream,push_audio_track,push_stream
+from audio2face_streaming_utils import push_audio_track_stream,push_audio_track,push_stream
 from numba import jit
 import pyaudio
 import wave
@@ -60,7 +60,6 @@ def speech_recognition(inputs, model,stream_model=False):
     if not stream_model:
           audio,sr= soundfile.read(inputs, dtype='float32')
     else:  
-          print('numpy')
           sr,audio=inputs
     chunk_size=sr*30
     for i in range(0, len(audio), chunk_size):                 
@@ -147,9 +146,14 @@ def send_stream(whisper_modelm):
      # push_audio_track_stream(a2f_url, audio_data, RATE , Avatar_instance_A) 
 
 if __name__ == "__main__":
-      whisper_model = whisper.load_model("small",download_root="weights")
-      speech_text, speech_language= speech_recognition('voice_dir/temp.wav',whisper_model)
-      print(speech_text)
-      print(type(speech_text))
+        audio_data, samplerate = soundfile.read("voice_dir/temp.wav", dtype="float32")
+        if len(audio_data.shape) > 1:
+          audio_data = np.average(audio_data, axis=1)
+        push_audio_track_stream(a2f_url, audio_data, samplerate , Avatar_instance_A) 
+                                                
+    #   whisper_model = whisper.load_model("small",download_root="weights")
+    #   speech_text, speech_language= speech_recognition('voice_dir/temp.wav',whisper_model)
+    #   print(speech_text)
+    #   print(type(speech_text))
      # chatbot=Chatbot(api_key=API_KEY,proxy=PROXIES,engine="gpt-3.5-turbo")
       #send_stream(whisper_model)

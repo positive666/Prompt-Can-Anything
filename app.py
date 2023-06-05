@@ -13,14 +13,13 @@ from utils.ops import (LOGGER, Profile, check_file, check_requirements, colorstr
                      dilate_mask, increment_path , scale_boxes, xyxy2xywh,save_format)
 from utils.plot import Annotator, save_one_box,show_box,show_mask,save_mask_data,Draw_img
 from config_private import *
-#from llm_cards.bridge_chatgpt import predict
 from llm_cards.bridge_all import predict
 from utils.toolbox import format_io, find_free_port, on_file_uploaded, on_report_generated, get_conf, ArgsGeneralWrapper, DummyWith
 
 from utils.torch_utils import select_device
 from config_private import SAM_MODEL_TYPE,GROUNED_MODEL_TYPE,Tag2Text_Model_Path
 from utils import VID_FORMATS,IMG_FORMATS,write_categories
-sys.path.append("VisualGLM")
+sys.path.append("VisualGLM_6B")
 from VisualGLM_6B.chatglm import  *
 from a2f import *
 #import xml.etree.cElementTree as ET
@@ -32,15 +31,12 @@ import asyncio
 import concurrent.futures
 from utils.colorful import *
 
-
-
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  #  root directory
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))  # add ROOT to PATH
 ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
+
 global categories
 categories = {}
 global category_colors
@@ -67,7 +63,7 @@ async def load_speech_model(whisper=None):
             
         elif not whisper:
           LOGGER.info('free  memory')
-          models_config['visual_glm']=None  
+          models_config['whisper']=None  
         else:    
           LOGGER.info('pass')         
         #await asyncio.sleep(0.01) 
@@ -470,17 +466,19 @@ if __name__ == "__main__":
                          
                          with gr.Accordion('语音服务模型配置', open=True):
                                             with gr.Row():
-                                                asr_select = gr.inputs.Checkbox(label='use ASR',default=False).style(height=10,width=10)
+                                                asr_select = gr.inputs.Checkbox(label='use ASR[本地加载ASR,需要加载按钮]',default=False).style(height=5,width=5)
+                                                asr_gpt = gr.inputs.Checkbox(label='use ASR with gpt [发送GPT无需加载按钮]',default=False).style(height=5,width=5)
                                                 asr_button = gr.Button('loads ASR').style(height=10,width=10)     
                     with gr.Column(variant='panel',scale=15):      
                          with gr.Row():
                                     with gr.Row():
                                         record_audio = gr.Audio(label="record your voice", source="microphone",type='filepath').style(width=120)
-                                        send_record_button = gr.Button('声音转文本到输入框里同步[修复中]')
-                                     
+                                        with gr.Row():
+                                            omnviverse_switch = gr.inputs.Checkbox(label='Omniverse a2f app',default=False)
+                                            audio_to_face=gr.Button('send Audio2Face once aswer', variant='primary') 
                                               
                          with gr.Tabs(elem_id="Process_audio"):
-                                with gr.TabItem('Upload OR TTS[近期更新—未连GPT]'):
+                                with gr.TabItem('Upload OR TTS'):
                                         
                                         with gr.Column(variant='panel'):
                                             with gr.Row():
@@ -489,23 +487,33 @@ if __name__ == "__main__":
                                             with gr.Row():
                                                 asr = gr.Button('Generate text[时间太长的内容可能前端不稳定]',elem_id="text_generate", variant='primary')
                                                 tts = gr.Button('Generate audio',elem_id="audio_generate", variant='primary')   
-                                                #with gr.Row():
-                                                audio_chat=gr.Button('send_chat["X"暂时不支持]', variant='primary')   
-                                              
-                                                              
-                        #  if sys.platform!='win32':
-                        #             from utils.text2speech import T2S
-                        #             tts_model=T2S()
-                        #             t2s=tst.test   
-                         import edge_tts
-                         def t2s(text):
-                                    asyncio.run(t2s_inference(text))
+                                                  
+                         def t2s(result_text,text,chat_flag=True,omnviverse=False):
+                                    if (result_text) or chat_flag:
+                                        text=str(result_text[-1][-1])
+                                        print(text)
+                                    asyncio.run(t2s_inference(text,omnviverse))
                                     return voice_dir+"/temp.wav"
-                         async def t2s_inference(text):
-                                    generate_wave = edge_tts.Communicate(text, voice='zh-CN-YunxiNeural', rate='-5%', volume='+1%')
-                                    await generate_wave.save(voice_dir+"/temp.wav")   
+                         async def t2s_inference(text,omnviverse):
+                                        import edge_tts
+                                        if text is not None:
+                                            generate_wave = edge_tts.Communicate(text, voice='zh-CN-YunxiNeural', rate='-5%', volume='+1%')
+                                            text=[]
+                                            await generate_wave.save(voice_dir+"/temp.wav") 
+                                            if omnviverse: 
+                                                
+                                                try:
+                                                    audio_data, samplerate = soundfile.read(voice_dir+"/temp.wav", dtype="float32")
+                                                    if len(audio_data.shape) > 1:
+                                                        audio_data = np.average(audio_data, axis=1)
+                                                    push_audio_track_stream(a2f_url, audio_data, samplerate , Avatar_instance_A) 
+                                                
+                                                    print("send a2f app....")
+                                                    return "SEND DONE"
+                                                except Exception as e:
+                                                    print(f"检查是否开启omniverse{e}")
+                                                    
                          def s2t(speech_file,stream_mode=False):
-                            #global speech_AI
                             from a2f import speech_recognition
                             speech_text, speech_language=speech_recognition(speech_file, speech_AI['whisper'],stream_mode)                             #
                             return  speech_text  
@@ -552,7 +560,7 @@ if __name__ == "__main__":
                          gallery = gr.Gallery(label="Generated images",show_label=False,elem_id="gallery",).style(preview=True, grid=2, object_fit="scale-down")
                          with gr.Row():
                             output_text = gr.Textbox(label="图像理解",lines=2)
-                            zh_select=gr.inputs.Checkbox(label='翻译【勾选后需要重新一键重载模型】',default=False)
+                            zh_select=gr.inputs.Checkbox(label='翻译Tag2Text【选后需一键重载模型】',default=False)
                             with gr.Column():
                                 output_classes= gr.Textbox(label="Class_numbers:auto generate classes numbers, color flag or save_txt must be ture ")
                                 output_tag= gr.outputs.Textbox(label="Tag")
@@ -564,11 +572,10 @@ if __name__ == "__main__":
                             with gr.Column(scale=2):
                                 result_text = gr.Chatbot(label=f'Multi-round conversation History,当前模型：{LLM_MODEL}', value=[("", "Hi, What do you want to know ?")]).style(height=CHATBOT_HEIGHT)
                                 history = gr.State([])
-                                
-               send_record_button.click(fn=s2t, inputs=[record_audio], outputs=[input_text])                       
+               audio_to_face.click(fn=t2s, inputs=[result_text,input_text,gr.State(True),omnviverse_switch], outputs=[upload_audio] )                                 
                asr_button.click(fn=load_speech_model,inputs=[asr_select],outputs=[loads_flag])        
                asr.click(fn=s2t, inputs=[upload_audio], outputs=[input_text])                    
-               tts.click(fn=t2s, inputs=[input_text], outputs=[upload_audio])        
+               tts.click(fn=t2s, inputs=[result_text,input_text], outputs=[upload_audio])        
                         
                cs=[]                 
                cs.extend(list_methods)  
@@ -576,12 +583,10 @@ if __name__ == "__main__":
                loads_model_button.click(fn=load_auto_backend_models,inputs=cs,outputs=[loads_flag])                     
                inputs.append(zh_select)
                outputs = [gallery, output_text, output_tag,output_classes]             
-               input_combo = [cookies, max_length_sl,md_dropdown,chat_txt,txt,top_p, temperature, result_text, history,system_prompt,plugin_advanced_arg]   
-               # = [cookies, max_length_sl,md_dropdown,input_text,txt,top_p, temperature, result_text, history,system_prompt,plugin_advanced_arg]      
+               input_combo = [cookies, max_length_sl,md_dropdown,chat_txt,txt,top_p, temperature, result_text, history,system_prompt,plugin_advanced_arg,omnviverse_switch,record_audio,asr_gpt]        
                output_combo = [cookies, result_text, history, status]
                predict_args = dict(fn=ArgsGeneralWrapper(predict), inputs=input_combo, outputs=output_combo)  
-               print(predict_args)
-               #predict_args = dict(fn=ArgsGeneralWrapper(predict), inputs=input_combo, outputs=output_combo)  
+           
                run_button.click(fn=Auto_run, inputs=inputs, outputs=outputs)
                 # 提交按钮、重置按钮
                cancel_handles.append(chat_txt.submit(**predict_args))
