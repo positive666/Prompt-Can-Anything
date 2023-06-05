@@ -42,7 +42,7 @@
 
 ​	   作者AI相关所有知识储备和工程经验总结给本地大模型（这部分是最终开发功能，计划中）
 
-
+<img src="asset/v1.15.png" alt="structure" style="zoom: 33%;" />
 
 <details open>
 <summary>⭐ 研究 🚀 项目 🔥 灵感（筹备中）</summary>
@@ -187,7 +187,8 @@ pip install --upgrade diffusers[torch]
 
 ## 🏃Demo
 
- [视频Demo介绍 ](https://pan.baidu.com/s/1AllUjuOVhzJh7abe71iCxg?pwd=c6v）
+ [视频Demo介绍 ](https://pan.baidu.com/s/1AllUjuOVhzJh7abe71iCxg?pwd=c6v）  
+ [ Video demo 2 ] (https://pan.baidu.com/s/1jdP9mgUhyfLh_hz1W3pkeQ?pwd=c6v6)
 
 1. 自动标注的测试样例
 

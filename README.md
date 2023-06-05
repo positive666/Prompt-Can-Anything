@@ -34,11 +34,13 @@ Complete a role design interaction through a 3D Engine combined with multimodal 
 
 Complete a role design interaction through the Saldtalker open source project and multimodal tasks such as GPT.
 
+
+
  4.  🔥🔥🚀 Unlimited potential “Anything”
 
 Through continuous creativity and accumulation, we will integrate and learn from SOTA AI. We will record each integrated model and provide a detailed explanation and summary in the article. The author will summarize all the AI-related knowledge reserves and engineering experience for the local large model (this part is the final development function and is planned).
 
-
+<img src="asset/v1.15.png" alt="structure" style="zoom: 33%;" />
 
 
 <details open >
@@ -61,7 +63,7 @@ Through continuous creativity and accumulation, we will integrate and learn from
 - One-click fine-tuning button function, adding: SAM
 
 ### <div align="left">⭐[News list] </div>
-	-【2023/6/5】   a vide demo and plan,fix asr bug
+	-【2023/6/5】   v1.15 a vide demo and plan,fix asr bug ,chatgpt with asr and tts 
 	-【2023/5/31】  Fixed the already issue, add tts demo, the Linux platform is tested through all open features
 	-【2023/5/23】  add web demo:Add VisualGLM ,chatgpt from [Academic-gpt](https://github.com/binary-husky/gpt_academic)
 	-【2023/5/7】   add web demo:At present, the function of text generation, detection and segmentation of images or image folders on the website has been tested normally, and the program does not need to be restarted, and the last model loading configuration is remembered, and it will be continuously optimized in the future.
@@ -185,7 +187,8 @@ For PyAudio, it may not be successfully installed through pip on Linux platforms
 
 **🏃Demo**
 
-see [Video demo online on baidu clound ](https://pan.baidu.com/s/1AllUjuOVhzJh7abe71iCxg?pwd=c6v）
+ [Video demo 1 online on baidu clound ](https://pan.baidu.com/s/1AllUjuOVhzJh7abe71iCxg?pwd=c6v）   
+ [ Video demo 2 ] (https://pan.baidu.com/s/1jdP9mgUhyfLh_hz1W3pkeQ?pwd=c6v6)
 
 
 
