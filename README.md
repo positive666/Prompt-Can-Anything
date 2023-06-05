@@ -61,6 +61,7 @@ Through continuous creativity and accumulation, we will integrate and learn from
 - One-click fine-tuning button function, adding: SAM
 
 ### <div align="left">⭐[News list] </div>
+	-【2023/6/5】   a vide demo and plan,fix asr bug
 	-【2023/5/31】  Fixed the already issue, add tts demo, the Linux platform is tested through all open features
 	-【2023/5/23】  add web demo:Add VisualGLM ,chatgpt from [Academic-gpt](https://github.com/binary-husky/gpt_academic)
 	-【2023/5/7】   add web demo:At present, the function of text generation, detection and segmentation of images or image folders on the website has been tested normally, and the program does not need to be restarted, and the last model loading configuration is remembered, and it will be continuously optimized in the future.
@@ -183,6 +184,10 @@ For PyAudio, it may not be successfully installed through pip on Linux platforms
 2. Configure privacy files and parameters in config_private.py. After downloading the model, configure the path in the “MODEL_xxxx_PATH” variable. If using ChatGPT, configure its proxy and API key. (If there are networking issues with other services such as TTS during use on the web UI, first turn off the VPN connection and only open it when using ChatGPT).
 
 **🏃Demo**
+
+[this is  a Video Demo]: 链接：https://pan.baidu.com/s/1AllUjuOVhzJh7abe71iCxg?pwd=c6v6
+
+
 
 1. Auto-label
 

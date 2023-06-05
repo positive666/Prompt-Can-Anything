@@ -454,7 +454,7 @@ if __name__ == "__main__":
                                 'Save Mask': gr.inputs.Checkbox(label='Save Mask',default=False),  
                                 'Save Caption': gr.inputs.Checkbox(label='Save Caption',default=False), 
                                 'Batch Process': gr.inputs.Checkbox(label='Batch Process[暂不支持]',default=False), 
-                                'Color Flag': gr.inputs.Checkbox(label='Color Flag:must check[Save txt]',default=False)
+                                'Color Flag': gr.inputs.Checkbox(label='Color Flag[标识语义]',default=False)
                             }
                          inputxs.extend(list(save_options.values()))
                          dir_inputs =gr.inputs.Textbox(label='加载本地图像文件夹路径',default='train_imgs')
@@ -466,7 +466,7 @@ if __name__ == "__main__":
                                 temperature = gr.Slider(minimum=-0, maximum=2.0, value=1.0, step=0.01, interactive=True, label="Temperature",)
                          with gr.Accordion('VisualGLM模型配置', open=False):
                               visual_temperature = gr.Slider(maximum=1, value=0.8, minimum=0, label='VisualGLMTemperature')
-                              visual_top_p = gr.Slider(maximum=1, value=0.4, minimum=0, label='VisualGLM Top_P')
+                              visual_top_p = gr.Slider(maximum=1, value=0.4, minimum=0, label='VisualGLM top_P')
                          
                          with gr.Accordion('语音服务模型配置', open=True):
                                             with gr.Row():
@@ -580,6 +580,7 @@ if __name__ == "__main__":
                # = [cookies, max_length_sl,md_dropdown,input_text,txt,top_p, temperature, result_text, history,system_prompt,plugin_advanced_arg]      
                output_combo = [cookies, result_text, history, status]
                predict_args = dict(fn=ArgsGeneralWrapper(predict), inputs=input_combo, outputs=output_combo)  
+               print(predict_args)
                #predict_args = dict(fn=ArgsGeneralWrapper(predict), inputs=input_combo, outputs=output_combo)  
                run_button.click(fn=Auto_run, inputs=inputs, outputs=outputs)
                 # 提交按钮、重置按钮
@@ -607,11 +608,11 @@ if __name__ == "__main__":
                prompt_input.submit(fn=visual_chat,inputs=[prompt_input, visual_temperature, visual_top_p, image_prompt,
                                                          result_text,record_audio,upload_audio],
                                         outputs=[prompt_input, result_text])
-               #clear_button.click(fn=clear_fn, inputs=clear_button, outputs=[prompt_input, result_text, image_prompt])
+               #upload_audio.upload(fn=clear_fn_image, inputs=clear_button, outputs=[result_text])
                image_prompt.upload(fn=clear_fn_image, inputs=clear_button, outputs=[result_text])
                clear_button.click(lambda: ("","","","",""), None, [prompt_input,result_text,txt, input_text,chat_txt])
                image_prompt.clear(fn=clear_fn_image, inputs=clear_button, outputs=[result_text])
-              # upload_audio.clear(fn=clear_fn_image, inputs=clear_button, outputs=[result_text])
+              # upload_audio.clear(fn=clear_fn_image, inputs=clear_button, outputs=[upload_audio])
           auto_opentab_delay(7589)
           block.queue(concurrency_count=CONCURRENT_COUNT).launch(server_name='0.0.0.0', server_port=7589,debug=True, share=False)
      
