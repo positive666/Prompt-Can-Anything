@@ -1,5 +1,5 @@
 # [step 1]>> 例如： API_KEY = "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" （此key无效）
-API_KEY ="sk-ebkg6Xy15JfPYkhMdXEIT3Blbkxxx"
+API_KEY ="sk-B8jefFQfIFtWjaaFtxNjT3Blbkxxxxx"
 
 # [step 2]>> 改为True应用代理，如果直接在海外服务器部署，此处不修改
 USE_PROXY = True
@@ -145,3 +145,7 @@ GROUNED_MODEL_TYPE= {'S': "../Grounded-Segment-Anything-main/groundingdino_swint
 SAM_MODEL_TYPE= {'vit_h': "F:\\sam_vit_h_4b8939.pth"  ,'vit_l':None,'vit_b':None}
 Tag2Text_Model_Path='F:\\tag2text_swin_14m.pth'#'weights/tag2text/tag2text_swin_14m.pth'
 LAMA_MODEL_PATH='F:\\Inpaint-Anything\\big-lama'
+
+# Omniverse  配置
+A2F_URL = 'localhost:50051'
+Avatar_instance_A='/World/audio2face/PlayerStreaming'

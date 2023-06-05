@@ -404,7 +404,7 @@ if __name__ == "__main__":
           cancel_handles = []
           
           with gr.Blocks(title="Prompt-Can-Anythings",reload=True, theme=adjust_theme(), analytics_enabled=False,full_width=True,css=advanced_css) as block:
-               gr.HTML( f"<h1 align=\"center\"> Prompt-Can-Anythings_v1.1 (周更迭代中~)</h1>")
+               gr.HTML( f"<h1 align=\"center\"> Prompt-Can-Anythings_v1.15 (周更迭代中~)</h1>")
                cookies = gr.State({'api_key': API_KEY, 'llm_model': LLM_MODEL})
                with gr.Row().style(equal_height=False):
                     with gr.Column(scale=1):
@@ -467,7 +467,7 @@ if __name__ == "__main__":
                          with gr.Accordion('语音服务模型配置', open=True):
                                             with gr.Row():
                                                 asr_select = gr.inputs.Checkbox(label='use ASR[本地加载ASR,需要加载按钮]',default=False).style(height=5,width=5)
-                                                asr_gpt = gr.inputs.Checkbox(label='use ASR with gpt [发送GPT无需加载按钮]',default=False).style(height=5,width=5)
+                                                asr_gpt = gr.inputs.Checkbox(label='ASR gpt [发送GPT无需加载按钮]',default=False).style(height=5,width=5)
                                                 asr_button = gr.Button('loads ASR').style(height=10,width=10)     
                     with gr.Column(variant='panel',scale=15):      
                          with gr.Row():
@@ -485,13 +485,13 @@ if __name__ == "__main__":
                                                 upload_audio = gr.Audio(label="Input audio(./wav/.mp3)", source="upload",type='filepath').style(height=60,width=120)
                                                 input_text = gr.Textbox(label="Generating audio from text", lines=2, placeholder="please enter some text here, we genreate the audio from  TTS.")
                                             with gr.Row():
-                                                asr = gr.Button('Generate text[时间太长的内容可能前端不稳定]',elem_id="text_generate", variant='primary')
+                                                asr = gr.Button('Generate text[太长内容可能前端不稳定]',elem_id="text_generate", variant='primary')
                                                 tts = gr.Button('Generate audio',elem_id="audio_generate", variant='primary')   
                                                   
-                         def t2s(result_text,text,chat_flag=True,omnviverse=False):
-                                    if (result_text) or chat_flag:
-                                        text=str(result_text[-1][-1])
-                                        print(text)
+                         def t2s(text,chat_flag=True,omnviverse=False):
+                                    # if not text or chat_flag:
+                                    #     text=str(result_text[-1][-1])
+                                    #     print(text)
                                     asyncio.run(t2s_inference(text,omnviverse))
                                     return voice_dir+"/temp.wav"
                          async def t2s_inference(text,omnviverse):
@@ -575,7 +575,7 @@ if __name__ == "__main__":
                audio_to_face.click(fn=t2s, inputs=[result_text,input_text,gr.State(True),omnviverse_switch], outputs=[upload_audio] )                                 
                asr_button.click(fn=load_speech_model,inputs=[asr_select],outputs=[loads_flag])        
                asr.click(fn=s2t, inputs=[upload_audio], outputs=[input_text])                    
-               tts.click(fn=t2s, inputs=[result_text,input_text], outputs=[upload_audio])        
+               tts.click(fn=t2s, inputs=[input_text], outputs=[upload_audio])        
                         
                cs=[]                 
                cs.extend(list_methods)  
@@ -618,8 +618,8 @@ if __name__ == "__main__":
                clear_button.click(lambda: ("","","","",""), None, [prompt_input,result_text,txt, input_text,chat_txt])
                image_prompt.clear(fn=clear_fn_image, inputs=clear_button, outputs=[result_text])
               # upload_audio.clear(fn=clear_fn_image, inputs=clear_button, outputs=[upload_audio])
-          auto_opentab_delay(7589)
-          block.queue(concurrency_count=CONCURRENT_COUNT).launch(server_name='0.0.0.0', server_port=7589,debug=True, share=False)
+          auto_opentab_delay(7900)
+          block.queue(concurrency_count=CONCURRENT_COUNT).launch(server_name='0.0.0.0', server_port=7900,debug=True, share=False)
      
 
      
