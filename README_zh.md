@@ -110,10 +110,19 @@ gir clone https://github.com/positive666/Prompt-Can-Anything
 cd Prompt-Can-Anything
 ```
 
-安装环境：
+安装基本环境：
 
-```bash
-pip install -e .
+```
+pip install -r requirements
+或者
+pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
+```
+
+安装Ground检测器（编译）：
+
+```
+cd  model_cards
+python setup.py install
 ```
 
 安装清华视觉GLM（可选，最好用LINUX系统，window后面测试后补充安装方案）：
@@ -121,6 +130,14 @@ pip install -e .
 ```bash
 git submodule update --init --recursive
 cd  VisualGLM_6B && pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
+```
+
+安装LAMA模型（可选还未发布）：
+
+​    这个环境对Python版本要求比较苛刻，可能需要按照下面txt的版本手动覆盖安装
+
+```
+ pip install -r model_cards/lama/requirements.txt 
 ```
 
 安装扩散器（可选）：
@@ -131,7 +148,19 @@ pip install --upgrade diffusers[torch]
 
 更多内容，可以查看requirements, “pip install < your missing packages>”, 如果出现安装版本问题，请仔细看requirements的版本
 
-对于pyaudio，在Linux平台可能通过pip并不一定成功，进入这里[pyaudio-wheels · PyPI](https://pypi.org/project/pyaudio-wheels/#files)，选择对应你Python的版本，下载后pip安装whl，后续会详细补充。
+Linux环境问题：对于pyaudio
+
+方法一：在Linux平台可能通过pip并不一定成功，进入这里[pyaudio-wheels · PyPI](https://pypi.org/project/pyaudio-wheels/#files)，选择对应你Python的版本，下载后pip安装whl，后续会详细补充。
+
+方法二：
+
+```
+sudo apt-get install portaudio19-dev
+sudo apt-get install python3-all-dev
+pip install pyaudio
+```
+
+Windows安装问题：待解决整理
 
 运行
 

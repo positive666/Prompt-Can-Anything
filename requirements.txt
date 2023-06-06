@@ -1,12 +1,13 @@
-torch
+torch>1.10.0
 torchvision
 transformers
+tensorboard
 addict
 yapf
 timm
 numpy==1.23
 opencv-python
-supervision==0.4.0
+supervision
 pycocotools
 urllib3==1.25.11 
 tqdm
@@ -21,11 +22,24 @@ setuptools
 termcolor
 nltk
 gradio>=3.28.0
+airscale
 omegaconf
 #cpython #windows 
 mdtex2html
+scipy
+easydict
+sklearn
 soundfile
 pyaudio
 ffmpeg
-#TTS #option LINUX 
+tiktoken
+SwissArmyTransformer>=0.3.6 #安不上这个版本就用加阿里云镜像源
+##语音合成 传输OMNIVERSE
+keyboard
 edge-tts
+whisper
+## 微调VisualGLM
+bitsandbytes
+#gligen
+einops
+clip

@@ -19,14 +19,13 @@ from utils.toolbox import format_io, find_free_port, on_file_uploaded, on_report
 from utils.torch_utils import select_device
 from config_private import SAM_MODEL_TYPE,GROUNED_MODEL_TYPE,Tag2Text_Model_Path
 from utils import VID_FORMATS,IMG_FORMATS,write_categories
-sys.path.append("VisualGLM_6B")
+VisualGLM_dir=f"VisualGLM_6B"
+sys.path.append(VisualGLM_dir)
 from VisualGLM_6B.chatglm import  *
 from a2f import *
-#import xml.etree.cElementTree as ET
 import gradio as gr
-#from gradio.inputs import File
 import random
-import threading 
+import multiprocessing as mp
 import asyncio
 import concurrent.futures
 from utils.colorful import *
@@ -45,7 +44,7 @@ category_colors={}
 class_ids = []
 global speech_AI
 speech_AI={'whisper':None }
-
+NUM_WORKERS=1
 global models_config
 models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None,'sd': None, 
                  'visual_glm': None , 'trans_zh': None,'gligen': None}
@@ -53,6 +52,91 @@ models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None,'sd
 from llm_cards.core_functional import get_core_functions
 functional = get_core_functions()
 JSON_DATASETS=[]
+
+
+def train_visualGLM(name,model_size,mode,train_iters,resume_data,
+        max_source_length,max_target_length,lora_rank,layer_range_s,layer_range_e,pre_seq_len,
+       train_data,valid_data,distributed_backend,lr_decay_style,warmup,
+       checkpoint_activations,save_interval,eval_interval,save_path,
+       split,eval_iters,eval_batch_size ,zero_stage,
+       lr,batch_size,accumulation_steps,method_type):
+    
+    model_args=[max_source_length,max_target_length,lora_rank,layer_range_s,layer_range_e,pre_seq_len]
+    gpt_option=[name,int(model_size),mode,int(train_iters),resume_data, #23 
+       train_data,valid_data,distributed_backend,lr_decay_style,warmup, 
+       checkpoint_activations,int(save_interval),int(eval_interval),save_path,
+       int(split),int(eval_iters),int(eval_batch_size),int(zero_stage),
+       lr,int(batch_size),int(accumulation_steps)]
+    
+    processes = []
+    for i in range(NUM_WORKERS):
+         p = mp.Process(target=start_finetuning_process, args=(gpt_option,model_args,method_type))
+         p.start()
+         processes.append(p)
+
+    for p in processes:
+        p.join()
+    return 'OK'    
+
+def start_finetuning_process(gpt_option,model_args,method_type):
+    print('fine subprocess start')
+    script_path = os.path.abspath(__file__)
+    script_dir = os.path.dirname(script_path)
+    print(script_dir+'/'+VisualGLM_dir)
+    main_dir = os.path.dirname(script_dir)
+  
+    model_args = f'--max_source_length {model_args[0]} --max_target_length {model_args[1]} --lora_rank {model_args[2]} --layer_range {model_args[3]}  {model_args[4]} --pre_seq_len {model_args[5]}'
+    options_nccl = 'NCCL_DEBUG=info NCCL_IB_DISABLE=0 NCCL_NET_GDR_LEVEL=2'
+    host_file_path = 'hostfile_single'
+   
+    gpt_option_prefix=f" \
+       --experiment-name finetune-{gpt_option[0]} \
+       --model-parallel-size {gpt_option[1]} \
+       --mode {gpt_option[2]} \
+       --train-iters {gpt_option[3]} \
+       --resume-dataloader \
+        {model_args} \
+       --train-data {gpt_option[5]} \
+       --valid-data {gpt_option[6]} \
+       --distributed-backend {gpt_option[7]} \
+       --lr-decay-style {gpt_option[8]}\
+       --warmup {gpt_option[9]} \
+       --checkpoint-activations \
+       --save-interval {gpt_option[11]} \
+       --eval-interval {gpt_option[12]} \
+       --save {gpt_option[13]} \
+       --split {gpt_option[14]}\
+       --eval-iters {gpt_option[15]} \
+       --eval-batch-size {gpt_option[16]}\
+       --zero-stage {gpt_option[17]} \
+       --lr {gpt_option[18]} \
+       --batch-size {gpt_option[19]} "
+    lora=f"  \
+       --skip-init  \
+       --fp16  \
+       --use_lora "
+    qlora=f"--gradient-accumulation-steps {gpt_option[20]} \
+       --skip-init \
+       --fp16 \
+       --use_qlora"
+    ptune=f"  \
+       --skip-init  \
+       --fp16  \
+       --use_ptuning"  
+    if method_type=='use_qlora':
+        gpt_options=gpt_option_prefix+qlora
+    elif method_type=='use_lora':
+        gpt_options=gpt_option_prefix+lora
+    elif method_type=='use_ptuning':
+        gpt_options=gpt_option_prefix+ptune
+    else:    
+        LOGGER.info("没有选择！！！")   
+        return   
+      
+    run_cmd = f'{options_nccl} deepspeed --master_port 16666 --hostfile {host_file_path} {VisualGLM_dir}/finetune_visualglm.py {gpt_options} '
+    # if CONDA_ENVS:
+    #     os.system(f"conda activate {CONDA_ENVS}")
+    os.system(run_cmd)
 
 async def load_speech_model(whisper=None):
         import whisper 
@@ -94,7 +178,6 @@ def auto_opentab_delay(port=7586):
             else: webbrowser.open_new_tab(f"http://localhost:{port}")
         threading.Thread(target=open, name="open-browser", daemon=True).start()
         #threading.Thread(target=auto_update, name="self-upgrade", daemon=True).start()
-        #threading.Thread(target=warm_up_modules, name="warm-up", daemon=True).start()
 
 
 async def load_auto_backend_models(lama, sam, det, tag2text, trans_zh, visual_glm,device=0, quant=4, bar=None): 
@@ -203,15 +286,13 @@ def Auto_run(
         zh_select=False,
         record_audio=None,
         up_audio=None,
-        process_name=0,
-        
+        process_name=0,    
         ):  
             
             global models_config
             global category_colors
             global JSON_DATASETS
-           # load_auto_backend_models(lama,sam,det,tag2text,zh_select,device,quant)
-            #LOGGER.info (f'proceess ID：{process_name},loads model list ：{models_config.keys()}')            
+        
             cls_index = -1        # 设置默认值为 -1
             if img_input:
                 source =img_input
@@ -365,7 +446,7 @@ def Auto_run(
             if save_xml:           
                 LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}/xmls")
             if save_caption:
-               with open(f'{save_dir}/caption/dataset.json', 'a',encoding='utf-8') as f: 
+               with open(f'{save_dir}/captions/dataset.json', 'a',encoding='utf-8') as f: 
                     json.dump(JSON_DATASETS,f,ensure_ascii=False) 
                     f.write('\n')
                     LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}/captions")
@@ -374,9 +455,6 @@ def Auto_run(
             LOGGER.info('Done...')
 
             return [[img_rgb],caption,prompt,len(categories)]
-
-
-
 
 
 def visual_chat(prompt_input, temperature, top_p, image_prompt, result_text,record_audio,upload_audio,omniverse=False):
@@ -474,13 +552,49 @@ if __name__ == "__main__":
                                             with gr.Row():
                                                 asr_select = gr.inputs.Checkbox(label='use ASR[本地加载ASR,需要加载按钮]',default=False).style(height=5,width=5)
                                                 asr_gpt = gr.inputs.Checkbox(label='ASR gpt [发送GPT无需加载按钮]',default=False).style(height=5,width=5)
-                                                asr_button = gr.Button('loads ASR').style(height=10,width=10)     
+                                                asr_button = gr.Button('Loads ASR').style(height=5,width=5)  
+                        
+                         with gr.Accordion('ViusalGLM训练配置', open=False):
+                                with gr.Row():
+                                    train_methods=gr.Dropdown(AVAIL_METHOD_FINETUNE,value=METHOD_FINETUNE, label="更换微调方法").style(container=False)
+                                    visualglm_args=[                              
+                                    gr.inputs.Textbox(label="Experiment_Name", default="visualglm-6b"),
+                                    gr.inputs.Number(label="Model Parallel Size", default=1),
+                                    gr.inputs.Textbox(label="mode", default='finetune'),
+                                    gr.Slider(minimum=1, maximum=3000, value=300, step=1, interactive=True, label="train-iters"),
+                                    gr.inputs.Checkbox(label="resume dataloader", default=True),
+                                    gr.Slider(minimum=16, maximum=256, value=64, step=1, interactive=True, label="max_source_length"),
+                                    gr.Slider(minimum=16, maximum=1024, value=256, step=1, interactive=True, label="max_target_length"),
+                                    gr.Slider(minimum=1, maximum=100, value=10, step=1, interactive=True, label="lora_rank"),
+                                    gr.Slider(minimum=0, maximum=256, value=0, step=1, interactive=True, label="layer_range_start"),
+                                    gr.Slider(minimum=0, maximum=20, value=14, step=1, interactive=True, label="layer_range_end"),
+                                    gr.Slider(minimum=1, maximum=60, value=4, step=1, interactive=True, label="pre_seq_len"),          
+                                    gr.inputs.Textbox(label="Train Data", default="VisualGLM/fewshot-data/dataset.json"),
+                                    gr.inputs.Textbox(label="Eval Data", default="VisualGLM/fewshot-data/dataset.json"),
+                                    gr.inputs.Textbox(label="distributed backend", default="nccl"),
+                                    gr.inputs.Dropdown(label="lr decay style ", choices=["cosine", "linear"], default="cosine"),
+                                    gr.inputs.Number(label="warmup", default=0.02),
+                                    gr.inputs.Checkbox(label="checkpoint-activations", default=True) ,
+                                    gr.inputs.Number(label="Save Interval", default=300),
+                                    gr.inputs.Number(label="Eval Interval", default=10000),
+                                    gr.inputs.Textbox(label="Save Directory", default="./checkpoints"),
+                                    gr.inputs.Number(label="split", default=1),
+                                    gr.inputs.Number(label="Eval Iters", default=10),
+                                    gr.inputs.Number(label="Eval Batch Size", default=8),
+                                    gr.inputs.Textbox(label='Zero Stage',default=1),
+                                    gr.inputs.Number(label="lr", default=0.0001),
+                                    gr.inputs.Number(label="batch size", default=4),
+                                    gr.inputs.Number(label="gradient accumulation steps", default=4),
+                                    ]
+                         
+                         fine_tune=gr.Button('Finetune VisualGLM').style(height=5,width=5)           
+                                             
                     with gr.Column(variant='panel',scale=15):      
                          with gr.Row():
                                     with gr.Row():
                                         record_audio = gr.Audio(label="record your voice", source="microphone",type='filepath').style(width=120)
                                         with gr.Row():
-                                            omniverse_switch = gr.inputs.Checkbox(label='Omniverse a2f app',default=False)
+                                            omniverse_switch = gr.inputs.Checkbox(label='Omniverse A2F',default=False)
                                             audio_to_face=gr.Button('send Audio2Face once aswer', variant='primary') 
                                               
                          with gr.Tabs(elem_id="Process_audio"):
@@ -495,9 +609,6 @@ if __name__ == "__main__":
                                                 tts = gr.Button('Generate audio',elem_id="audio_generate", variant='primary')   
                                                   
                          def t2s(text,chat_flag=True,omnviverse=False):
-                                    # if not text or chat_flag:
-                                    #     text=str(result_text[-1][-1])
-                                    #     print(text)
                                     asyncio.run(t2s_inference(text,omnviverse))
                                     return voice_dir+"/temp.wav"
                          async def t2s_inference(text,omniverse):
@@ -535,14 +646,15 @@ if __name__ == "__main__":
 
                          with gr.Row():
                                 run_button = gr.Button('Run CV_Task',variant="primary")
-                                clear_button= gr.Button("清除", variant="secondary")
+                                clear_button= gr.Button("清除文本", variant="secondary")
                                 status = gr.Markdown(f"Tip: 按Enter提交, 按Shift+Enter换行。当前模型: {LLM_MODEL} \n ")
                          with gr.Row():
-
                                 resetBtn = gr.Button("重置", variant="secondary"); resetBtn.style(size="sm")
                                 stopBtn2 = gr.Button("停止", variant="secondary"); stopBtn2.style(size="sm")
-                             
-                         chat_txt=gr.Textbox(lines=3,show_label=False, placeholder="question").style(container=False)
+                         with gr.Tabs(elem_id="Chatbox"): 
+                            with gr.TabItem('对话区'):   
+                                with gr.Row():  
+                                    chat_txt=gr.Textbox(lines=3,show_label=False, placeholder="question").style(container=False)
                          with gr.Accordion("备选输入区", open=True, visible=False) as area_input_secondary:
                             with gr.Row():
                                 txt = gr.Textbox(show_label=False, placeholder="Input question here.", label="输入区2").style(container=False)
@@ -581,8 +693,9 @@ if __name__ == "__main__":
                audio_to_face.click(fn=t2s, inputs=[result_text,input_text,gr.State(True),omniverse_switch], outputs=[upload_audio] )                                 
                asr_button.click(fn=load_speech_model,inputs=[asr_select],outputs=[loads_flag])        
                asr.click(fn=s2t, inputs=[upload_audio], outputs=[input_text])                    
-               tts.click(fn=t2s, inputs=[input_text], outputs=[upload_audio])        
-                        
+               tts.click(fn=t2s, inputs=[input_text], outputs=[upload_audio])   
+               visualglm_args.append(train_methods)   
+               fine_tune.click(fn=train_visualGLM,inputs=visualglm_args,outputs=[txt])         
                cs=[]                 
                cs.extend(list_methods)  
                cs.extend([zh_select, visual_glm,device_input, quant, loads_flag])
@@ -618,14 +731,14 @@ if __name__ == "__main__":
                                 outputs=[txt, result_text])
                prompt_input.submit(fn=visual_chat,inputs=[chat_txt, visual_temperature, visual_top_p, image_prompt,
                                                          result_text,record_audio,upload_audio,omniverse_switch],
-                                        outputs=[txt, result_text])
+                                        outputs=[txt,result_text])
                #upload_audio.upload(fn=clear_fn_image, inputs=clear_button, outputs=[result_text])
                image_prompt.upload(fn=clear_fn_image, inputs=clear_button, outputs=[result_text])
                clear_button.click(lambda: ("","","","",""), None, [prompt_input,result_text,txt, input_text,chat_txt])
                image_prompt.clear(fn=clear_fn_image, inputs=clear_button, outputs=[result_text])
               # upload_audio.clear(fn=clear_fn_image, inputs=clear_button, outputs=[upload_audio])
-          auto_opentab_delay(7896)
-          block.queue(concurrency_count=CONCURRENT_COUNT).launch(server_name='0.0.0.0', server_port=7896,debug=True, share=False)
+          auto_opentab_delay(7900)
+          block.queue(concurrency_count=CONCURRENT_COUNT).launch(server_name='0.0.0.0', server_port=7900,debug=True, share=False)
      
 
      

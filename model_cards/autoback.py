@@ -20,38 +20,32 @@ import torch.nn.functional as F
 from PIL import Image
 
 import sys
-#Grounding
-
 
 sys.path.append("model_cards")
 sys.path.append('model_cards/Tag2Text')
 sys.path.append('model_cards/lama')
 sys.path.append('model_cards/gligen')
-import  model_cards.groundingdino.datasets.transforms as T
+
+import model_cards.groundingdino.datasets.transforms as T
+from model_cards.groundingdino.util.utils import clean_state_dict, get_phrases_from_posmap
+from model_cards.groundingdino.util import box_ops
+from model_cards.groundingdino.util.slconfig import SLConfig
+
 from model_cards.Tag2Text import inference 
 from Tag2Text.models import tag2text
 import torchvision.transforms as TS
-from config_private import LAMA_MODEL_PATH
+from utils.conf import LAMA_MODEL_PATH
 # segment anything
 from model_cards.segment_anything import build_sam, SamPredictor 
 
-# lama 
-from model_cards.lama.saicinpainting.evaluation.utils import move_to_device
-from model_cards.lama.saicinpainting.training.trainers import load_checkpoint
-from model_cards.lama.saicinpainting.evaluation.data import pad_tensor_to_modulo
-
-
- 
 import numpy as np
 import matplotlib.pyplot as plt
 from utils import check_requirements,check_suffix,IMAGENET_MEAN,IMAGENET_STD
 from utils.downloads import is_url,LOGGER,attempt_download
 from torchvision.ops import nms as NMS
 from utils.plot import *
-# gligen
-#from model_cards.gligen.gligen_inference import run,load_ckpt
-Model_CARDS=['lama','segment-anything','grounded-DINO','Tag2Text','gligen']
 
+Model_CARDS=['lama','segment-anything','grounded-DINO','Tag2Text','gligen']
 def preprocess_image(img):
 
     # Convert image from BGR to RGB format using OpenCV library
@@ -69,6 +63,7 @@ def preprocess_image(img):
     img_tensor,_ = transform(img_array,None)
 
     return  img_tensor
+               
 
 class Ensemble(nn.ModuleList):
     # Ensemble of models
@@ -145,19 +140,23 @@ class AutoBackend(nn.Module):
         
         w = str(weights[0] if isinstance(weights, list) else weights)
         nn_module=isinstance(weights,torch.nn.Module)
-        pt, jit, onnx, xml, engine, coreml, saved_model, pb, tflite, edgetpu, tfjs, paddle, triton = self._model_type(w)
+        if  isinstance(weights, dict):
+            pt=weights 
+        else:
+            pt, jit, onnx, xml, engine, coreml, saved_model, pb, tflite, edgetpu, tfjs, paddle, triton = self._model_type(w)
        # w = attempt_download(w)  # download if not local
-        fp16 &= pt or jit or onnx or engine  or nn_module # FP16
-        nhwc = coreml or saved_model or pb or tflite or edgetpu  # BHWC formats (vs torch BCWH)
+            fp16 &= pt or jit or onnx or engine  or nn_module # FP16
+            nhwc = coreml or saved_model or pb or tflite or edgetpu  # BHWC formats (vs torch BCWH)
         self.model,metadata=None,None 
         cuda = torch.cuda.is_available() and self.device.type != 'cpu'  # use CUDA
         
         if pt or weights is None :  # PyTorch
             if methods == "grounded-DINO":
-                
+               #Grounding
                from model_cards.groundingdino.models import build_model
-               from model_cards.groundingdino.util.slconfig import SLConfig
-               from model_cards.groundingdino.util.utils import clean_state_dict
+               
+              
+        
                config_args=SLConfig.fromfile(args_config)
                config_args.device=self.device
                model=build_model(config_args)
@@ -172,6 +171,10 @@ class AutoBackend(nn.Module):
                 self.model = SamPredictor(build_sam(checkpoint=w).to(self.device))
                 
             elif methods == 'lama':
+                # lama 
+                
+                from model_cards.lama.saicinpainting.training.trainers import load_checkpoint
+                
                 from omegaconf import OmegaConf
                 print('---init lama------') 
                 self.predict_config = OmegaConf.load(args_config)
@@ -195,7 +198,16 @@ class AutoBackend(nn.Module):
                 self.model.freeze()
                 if not self.predict_config .get('refine', False):
                     self.model.to(self.device)
-                
+            elif methods== 'gligen':
+                # gligen
+                from model_cards.gligen.gligen_inference import run,load_ckpt
+                gligen_models={'model': None, 'autoencoder': None, 'text_encoder':None,
+               'diffusion':None, 'config': None}
+                # - - - - - prepare models - - - - - # 
+                gligen_models['model'],gligen_models['autoencoder'],gligen_models['text_encoder'],
+                gligen_models['diffusion'],gligen_models['config']= load_ckpt(weights["ckpt"])
+                self.model=gligen_models
+                print('load gligen done')
             elif methods == 'tag2text':
                 print('----Init Tag2Text----')
                  # initialize Tag2Text
@@ -239,15 +251,36 @@ class AutoBackend(nn.Module):
         self.__dict__.update(locals())  # assign all variables to self
 
     @torch.no_grad()
-    def forward(self, im, augment=False, visualize=False,prompt= None ,box_threshold=0.3,text_threshold=0.25, iou_threshold=0.5,boexes_filt=None,with_logits=True):
+    def forward(self, im, augment=False, visualize=False,prompt= None ,box_threshold=0.3,text_threshold=0.25, iou_threshold=0.5,with_logits=True):
         #  inference
-            H,W=im.shape[0],im.shape[1]
+            #H,W=im.shape[0],im.shape[1]
             if self.fp16 and im.dtype != torch.float16:
                 im = im.half()  # to FP16     
             if self.flag=="grounded-DINO":
-                    from model_cards.groundingdino.util.utils import  get_phrases_from_posmap 
-                    caption=prompt
-                    input_tensor=preprocess_image(im).to("cuda:0")
+                return self.grounded_inference(im,prompt,box_threshold,text_threshold,iou_threshold)           
+            elif self.flag == "segment-anything":
+                return self.sam_inference(im,prompt)
+            elif self.flag=="tag2text":            
+                return self.tag2text_inference(im,prompt)
+            elif self.flag=='lama':
+                return self.lama_inference(im,prompt)
+            elif self.flga== 'gligen':
+                return self.gligen_inference(config=None, starting_noise=None,negative_prompt=None,
+                    batch_size=5,guidance_scale=7.5,no_plms=None)
+            elif self.onnx:  # ONNX Runtime
+                im = im.cpu().numpy()  # torch to numpy
+                y = self.session.run(self.output_names, {self.session.get_inputs()[0].name: im})
+                if isinstance(y, (list, tuple)):
+                    return self.from_numpy(y[0]) if len(y) == 1 else [self.from_numpy(x) for x in y]
+                else:
+                    return self.from_numpy(y)
+    def gligen_inference(config=None, starting_noise=None,negative_prompt=None,
+                    batch_size=5,guidance_scale=None,no_plms=None)   :
+         print('d')
+    def grounded_inference(self,im,caption,box_threshold,text_threshold,iou_threshold):
+                    
+                    H,W=im.shape[0],im.shape[1]
+                    input_tensor=preprocess_image(im).to(self.device)
                     caption = caption.lower()
                     caption = caption.strip()
                     if not caption.endswith("."):
@@ -285,9 +318,9 @@ class AutoBackend(nn.Module):
                     pred_phrases=[pred_phrases[i] for i in id_nms]
                     return [boxes_filt, torch.Tensor(scores), pred_phrases]
                 
-            elif self.flag == "segment-anything":
-                    
-                   # im=cv2.cvtColor(im,cv2.COLOR_BAYER_BG2RGB)
+    def sam_inference(self,im,prompt):
+        
+                    H,W=im.shape[0],im.shape[1]   
                     self.model.set_image(im)
                     boxes = self.model.transform.apply_boxes_torch(prompt, (H,W)).to(self.device) 
                     masks, _, _ = self.model.predict_torch(
@@ -297,16 +330,16 @@ class AutoBackend(nn.Module):
                     multimask_output = False,
                 )
                     return masks
-            elif self.flag=="tag2text":
-                    print('tag2text inference output')
+    def tag2text_inference(self,im,prompt):     
+              
                     raw_image = cv2.resize(im, (self.size, self.size))
                     raw_image=Image.fromarray(raw_image)
                     raw_image  = self.transform(raw_image).unsqueeze(0).to(self.device)
-                    return inference.inference(raw_image , self.model, prompt)
-
-            elif self.flag=='lama':
+                    return inference.inference(raw_image , self.model, prompt)    
+    def lama_inference(self,im,mask) :
+                from model_cards.lama.saicinpainting.evaluation.data import pad_tensor_to_modulo
+                from model_cards.lama.saicinpainting.evaluation.utils import move_to_device
                 
-                mask=prompt
                 assert len(mask.shape) == 2
                 if np.max(mask) == 1:
                         mask = mask * 255
@@ -330,17 +363,7 @@ class AutoBackend(nn.Module):
                     cur_res = cur_res[:orig_height, :orig_width]
 
                 cur_res = np.clip(cur_res * 255, 0, 255).astype('uint8')
-                return cur_res
-                            
-            elif self.onnx:  # ONNX Runtime
-                im = im.cpu().numpy()  # torch to numpy
-                y = self.session.run(self.output_names, {self.session.get_inputs()[0].name: im})
-                if isinstance(y, (list, tuple)):
-                    return self.from_numpy(y[0]) if len(y) == 1 else [self.from_numpy(x) for x in y]
-                else:
-                    return self.from_numpy(y)
-          
-   
+                return cur_res       
     @staticmethod
     def _model_type(p='path/to/model.pt'):
     # Return model type from model path, i.e. path='path/to/model.onnx' -> type=onnx

@@ -9,7 +9,6 @@ from pydub import AudioSegment
 from pydub.silence import split_on_silence
 import soundfile
 from audio2face_streaming_utils import push_audio_track_stream,push_audio_track,push_stream
-from numba import jit
 import pyaudio
 import wave
 import keyboard

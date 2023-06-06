@@ -99,25 +99,59 @@ gir clone https://github.com/positive666/Prompt-Can-Anything
 cd Prompt-Can-Anything
 ```
 
-**Install environment:**
+**Install environment **
 
-```bash
-pip install -e .
+Installation of basic environment:
+
 ```
-Install VisualGLM（Optional, Recommond Linux）
+pip install -r requiremens  
+or  
+pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
+```
+
+Installation of Ground detector (compiling):
+
+```
+cd model_cards
+python setup.py install
+```
+
+Installation of Tsinghua Vision GLM (optional, better to use LINUX system, installation plan will be updated after testing on Windows):
 
 ```bash
 git submodule update --init --recursive
-cd  VisualGLM_6B && pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
+cd VisualGLM_6B && pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
 ```
 
-Install diffusers（Optional）
+Installation of LAMA model (optional, not yet released):
+
+This environment has a relatively strict requirement for the Python version, you may need to manually override the installation by version specified in the txt below:
+
+```
+pip install -r model_cards/lama/requirements.txt
+```
+
+Installation of diffuser (optional):
 
 ```bash
 pip install --upgrade diffusers[torch]
 ```
 
-#### Notice
+For more content, you can check requirements, “pip install < your missing packages>”, if there is an installation version issue, please carefully look at the requirement version.
+
+Linux environment issue: for pyaudio
+
+Method 1: pip may not be successful on the Linux platform, go to this page[pyaudio-wheels · PyPI](https://pypi.org/project/pyaudio-wheels/#files), select the version corresponding to your Python version, download it and pip install the whl file. Detailed instructions will be provided in the future.
+
+Method 2:
+
+```
+sudo apt-get install portaudio19-dev
+sudo apt-get install python3-all-dev
+pip install pyaudio
+```
+
+Windows installation issue: to be resolved and sorted out.Notice
 
 For more content, you can check the requirements, “pip install < your missing packages>”, and if there are version installation issues, please check the version carefully in the requirements.
 
