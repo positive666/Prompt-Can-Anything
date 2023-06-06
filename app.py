@@ -615,10 +615,10 @@ if __name__ == "__main__":
                #VisualGLM         
                run_button_2.click(fn=visual_chat,inputs=[chat_txt, visual_temperature, visual_top_p, image_prompt,
                                                          result_text,record_audio,upload_audio,omniverse_switch],
-                                outputs=[prompt_input, result_text])
+                                outputs=[txt, result_text])
                prompt_input.submit(fn=visual_chat,inputs=[chat_txt, visual_temperature, visual_top_p, image_prompt,
                                                          result_text,record_audio,upload_audio,omniverse_switch],
-                                        outputs=[prompt_input, result_text])
+                                        outputs=[txt, result_text])
                #upload_audio.upload(fn=clear_fn_image, inputs=clear_button, outputs=[result_text])
                image_prompt.upload(fn=clear_fn_image, inputs=clear_button, outputs=[result_text])
                clear_button.click(lambda: ("","","","",""), None, [prompt_input,result_text,txt, input_text,chat_txt])
