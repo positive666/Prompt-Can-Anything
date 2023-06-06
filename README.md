@@ -139,9 +139,13 @@ pip install --upgrade diffusers[torch]
 
 For more content, you can check requirements, “pip install < your missing packages>”, if there is an installation version issue, please carefully look at the requirement version.
 
-Linux environment issue: for pyaudio
+**Linux environment issue**:
 
-Method 1: pip may not be successful on the Linux platform, go to this page[pyaudio-wheels · PyPI](https://pypi.org/project/pyaudio-wheels/#files), select the version corresponding to your Python version, download it and pip install the whl file. Detailed instructions will be provided in the future.
+1. for pyaudio
+
+Method 1:
+
+ pip may not be successful on the Linux platform, go to this page[pyaudio-wheels · PyPI](https://pypi.org/project/pyaudio-wheels/#files), select the version corresponding to your Python version, download it and pip install the whl file. Detailed instructions will be provided in the future.
 
 Method 2:
 
@@ -151,11 +155,19 @@ sudo apt-get install python3-all-dev
 pip install pyaudio
 ```
 
-Windows installation issue: to be resolved and sorted out.Notice
+2. use qlora fine tune question
+
+   ```
+   pip install  bitsandbytes  -i https://mirrors.aliyun.com/pypi/simple
+   ```
+
+**Windows installation issue**
+
+​			to be resolved and sorted out.Notice
 
 For more content, you can check the requirements, “pip install < your missing packages>”, and if there are version installation issues, please check the version carefully in the requirements.
 
-For PyAudio, it may not be successfully installed through pip on Linux platforms, so please go here [pyaudio-wheels · PyPI](https://pypi.org/project/pyaudio-wheels/#files), select the version that corresponds to your Python version, and install the WHL with pip after downloading. Additional details will be provided later.
+
 
 **Run**	
 

@@ -148,7 +148,9 @@ pip install --upgrade diffusers[torch]
 
 更多内容，可以查看requirements, “pip install < your missing packages>”, 如果出现安装版本问题，请仔细看requirements的版本
 
-Linux环境问题：对于pyaudio
+**Linux环境问题**
+
+1. 对于pyaudio
 
 方法一：在Linux平台可能通过pip并不一定成功，进入这里[pyaudio-wheels · PyPI](https://pypi.org/project/pyaudio-wheels/#files)，选择对应你Python的版本，下载后pip安装whl，后续会详细补充。
 
@@ -160,7 +162,22 @@ sudo apt-get install python3-all-dev
 pip install pyaudio
 ```
 
-Windows安装问题：待解决整理
+2.使用qlora微调int4模型问题：
+
+```
+git clone https://github.com/timdettmers/bitsandbytes.git
+cd bitsandbytes
+
+# CUDA_VERSIONS in {110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 120}
+# make argument in {cuda110, cuda11x, cuda12x}
+# if you do not know what CUDA you have, try looking at the output of: python -m bitsandbytes
+CUDA_VERSION=117 make cuda11x
+python setup.py install
+```
+
+**Windows安装问题**
+
+待解决整理
 
 运行
 
