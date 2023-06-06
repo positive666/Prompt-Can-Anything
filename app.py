@@ -105,7 +105,7 @@ async def load_auto_backend_models(lama, sam, det, tag2text, trans_zh, visual_gl
         await asyncio.sleep(0.01) 
     except Exception as e:
         LOGGER.info("An error occurred: ", e)
-        return '第一次可能会出现问题,请再次点击加载按钮，也可以检查后台'
+        return 'windows可能会出现问题,请再次点击加载按钮，也可以检查后台'
     return 'Loads Done !'
    
 
@@ -129,7 +129,6 @@ def load_auto_backend_model(lama,sam,det,tag2text,trans_zh,visual_glm,device,qua
            
     device = select_device(device)    
     if tag2text and not models_config['tag2text']:
-                #progress.update(5) # 更新进度条
                 models_config['tag2text'] = AutoBackend("tag2text",weights=Tag2Text_Model_Path,device=device)
                
     elif not tag2text  :
@@ -377,21 +376,28 @@ def Auto_run(
             return [[img_rgb],caption,prompt,len(categories)]
 
 
-def visual_chat(prompt_input, temperature, top_p, image_prompt, result_text,record_audio,upload_audio):
+
+
+
+def visual_chat(prompt_input, temperature, top_p, image_prompt, result_text,record_audio,upload_audio,omniverse=False):
   
     global models_config
+    print(f"是否连接omniverse:{omniverse}")
     if models_config['visual_glm']:
           if image_prompt and  prompt_input:
-              
-              return(models_config['visual_glm'].request_model(prompt_input, temperature, top_p, image_prompt, result_text))
-             
+
+                __, result_text=(models_config['visual_glm'].request_model(prompt_input, temperature, top_p, image_prompt, result_text))
+                if omniverse: 
+                        from llm_cards.bridge_chatgpt import tts_a2f       
+                        asyncio.run(tts_a2f(result_text[-1][-1]))
+                return "",result_text
           else :
                LOGGER.info("请检查你的输入格式和glm模型的参数配置！！！")
     else:                
           return result_text,"没有加载部署的VisualGLM模型!!!"
 
 def clear_fn_image(value):
-    return [("", "Hi, What do you want to know ?")]
+    return [("", "Hi, What do you want to know ?或者你想从图像中知道什么?")]
 
 if __name__ == "__main__":
          
@@ -404,7 +410,7 @@ if __name__ == "__main__":
           cancel_handles = []
           
           with gr.Blocks(title="Prompt-Can-Anythings",reload=True, theme=adjust_theme(), analytics_enabled=False,full_width=True,css=advanced_css) as block:
-               gr.HTML( f"<h1 align=\"center\"> Prompt-Can-Anythings_v1.15 (周更迭代中~)</h1>")
+               gr.HTML( f"<h1 align=\"center\"> Prompt-Can-Anythings_v1.15 (周更迭代中)</h1>")
                cookies = gr.State({'api_key': API_KEY, 'llm_model': LLM_MODEL})
                with gr.Row().style(equal_height=False):
                     with gr.Column(scale=1):
@@ -474,7 +480,7 @@ if __name__ == "__main__":
                                     with gr.Row():
                                         record_audio = gr.Audio(label="record your voice", source="microphone",type='filepath').style(width=120)
                                         with gr.Row():
-                                            omnviverse_switch = gr.inputs.Checkbox(label='Omniverse a2f app',default=False)
+                                            omniverse_switch = gr.inputs.Checkbox(label='Omniverse a2f app',default=False)
                                             audio_to_face=gr.Button('send Audio2Face once aswer', variant='primary') 
                                               
                          with gr.Tabs(elem_id="Process_audio"):
@@ -494,21 +500,19 @@ if __name__ == "__main__":
                                     #     print(text)
                                     asyncio.run(t2s_inference(text,omnviverse))
                                     return voice_dir+"/temp.wav"
-                         async def t2s_inference(text,omnviverse):
+                         async def t2s_inference(text,omniverse):
                                         import edge_tts
                                         if text is not None:
                                             generate_wave = edge_tts.Communicate(text, voice='zh-CN-YunxiNeural', rate='-5%', volume='+1%')
                                             text=[]
                                             await generate_wave.save(voice_dir+"/temp.wav") 
-                                            if omnviverse: 
+                                            if omniverse: 
                                                 
                                                 try:
                                                     audio_data, samplerate = soundfile.read(voice_dir+"/temp.wav", dtype="float32")
                                                     if len(audio_data.shape) > 1:
                                                         audio_data = np.average(audio_data, axis=1)
                                                     push_audio_track_stream(a2f_url, audio_data, samplerate , Avatar_instance_A) 
-                                                
-                                                    print("send a2f app....")
                                                     return "SEND DONE"
                                                 except Exception as e:
                                                     print(f"检查是否开启omniverse{e}")
@@ -524,13 +528,13 @@ if __name__ == "__main__":
                                             image_prompt = gr.Image(label="Source image", source="upload", type="filepath").style(height=200,width=180)
                                       
                          prompt_input=gr.inputs.Textbox(lines=2, label="prompt with image/仅与图像相关提示词 : (Optional,注意在使用每一个功能前请考虑在这个框里的TEXT提示词要不要先清空)")
-                         run_button = gr.Button('Run CV_Task',variant="primary")
+                         
                        
                          inputs = [dir_inputs,image_prompt,prompt_input,box_threshold,iou_threshold,text_threshold,device_input,quant]
                          inputs.extend(inputxs)
 
                          with gr.Row():
-                                run_button_2 = gr.Button('VisualGLM',variant="primary")
+                                run_button = gr.Button('Run CV_Task',variant="primary")
                                 clear_button= gr.Button("清除", variant="secondary")
                                 status = gr.Markdown(f"Tip: 按Enter提交, 按Shift+Enter换行。当前模型: {LLM_MODEL} \n ")
                          with gr.Row():
@@ -542,7 +546,9 @@ if __name__ == "__main__":
                          with gr.Accordion("备选输入区", open=True, visible=False) as area_input_secondary:
                             with gr.Row():
                                 txt = gr.Textbox(show_label=False, placeholder="Input question here.", label="输入区2").style(container=False)
-                         run_button_chat = gr.Button('Chat_Sumbit',variant="primary")
+                         with gr.Row():
+                            run_button_chat = gr.Button('Chat_Sumbit',variant="primary")
+                            run_button_2 = gr.Button('VisualGLM',variant="primary")
                          with gr.Accordion("学术ChatGPT基础功能", open=True) as area_basic_fn:
                               with gr.Row():
                                 for k in functional:
@@ -572,7 +578,7 @@ if __name__ == "__main__":
                             with gr.Column(scale=2):
                                 result_text = gr.Chatbot(label=f'Multi-round conversation History,当前模型：{LLM_MODEL}', value=[("", "Hi, What do you want to know ?")]).style(height=CHATBOT_HEIGHT)
                                 history = gr.State([])
-               audio_to_face.click(fn=t2s, inputs=[result_text,input_text,gr.State(True),omnviverse_switch], outputs=[upload_audio] )                                 
+               audio_to_face.click(fn=t2s, inputs=[result_text,input_text,gr.State(True),omniverse_switch], outputs=[upload_audio] )                                 
                asr_button.click(fn=load_speech_model,inputs=[asr_select],outputs=[loads_flag])        
                asr.click(fn=s2t, inputs=[upload_audio], outputs=[input_text])                    
                tts.click(fn=t2s, inputs=[input_text], outputs=[upload_audio])        
@@ -583,7 +589,7 @@ if __name__ == "__main__":
                loads_model_button.click(fn=load_auto_backend_models,inputs=cs,outputs=[loads_flag])                     
                inputs.append(zh_select)
                outputs = [gallery, output_text, output_tag,output_classes]             
-               input_combo = [cookies, max_length_sl,md_dropdown,chat_txt,txt,top_p, temperature, result_text, history,system_prompt,plugin_advanced_arg,omnviverse_switch,record_audio,asr_gpt]        
+               input_combo = [cookies, max_length_sl,md_dropdown,chat_txt,txt,top_p, temperature, result_text, history,system_prompt,plugin_advanced_arg,omniverse_switch,record_audio,asr_gpt]        
                output_combo = [cookies, result_text, history, status]
                predict_args = dict(fn=ArgsGeneralWrapper(predict), inputs=input_combo, outputs=output_combo)  
            
@@ -603,23 +609,23 @@ if __name__ == "__main__":
                     cancel_handles.append(functional[k]["Button"].click(**dict_args))
 
                def on_md_dropdown_changed(k):
-                    return {result_text: gr.update(label="当前模型："+k)}
+                    return {result_text: gr.update(label="当前模型"+k)}
                md_dropdown.select(on_md_dropdown_changed, [md_dropdown], [result_text])
                
                #VisualGLM         
-               run_button_2.click(fn=visual_chat,inputs=[prompt_input, visual_temperature, visual_top_p, image_prompt,
-                                                         result_text,record_audio,upload_audio],
+               run_button_2.click(fn=visual_chat,inputs=[chat_txt, visual_temperature, visual_top_p, image_prompt,
+                                                         result_text,record_audio,upload_audio,omniverse_switch],
                                 outputs=[prompt_input, result_text])
-               prompt_input.submit(fn=visual_chat,inputs=[prompt_input, visual_temperature, visual_top_p, image_prompt,
-                                                         result_text,record_audio,upload_audio],
+               prompt_input.submit(fn=visual_chat,inputs=[chat_txt, visual_temperature, visual_top_p, image_prompt,
+                                                         result_text,record_audio,upload_audio,omniverse_switch],
                                         outputs=[prompt_input, result_text])
                #upload_audio.upload(fn=clear_fn_image, inputs=clear_button, outputs=[result_text])
                image_prompt.upload(fn=clear_fn_image, inputs=clear_button, outputs=[result_text])
                clear_button.click(lambda: ("","","","",""), None, [prompt_input,result_text,txt, input_text,chat_txt])
                image_prompt.clear(fn=clear_fn_image, inputs=clear_button, outputs=[result_text])
               # upload_audio.clear(fn=clear_fn_image, inputs=clear_button, outputs=[upload_audio])
-          auto_opentab_delay(7900)
-          block.queue(concurrency_count=CONCURRENT_COUNT).launch(server_name='0.0.0.0', server_port=7900,debug=True, share=False)
+          auto_opentab_delay(7896)
+          block.queue(concurrency_count=CONCURRENT_COUNT).launch(server_name='0.0.0.0', server_port=7896,debug=True, share=False)
      
 
      

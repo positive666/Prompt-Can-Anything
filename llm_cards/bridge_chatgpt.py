@@ -127,7 +127,7 @@ def predict(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_promp
         speech_text, speech_language=speech_recognition(record_file,whisper.load_model("small",
                                 download_root="weights") ,False)                             
         inputs=speech_text  
-        print('result:',inputs)   
+        #print('result:',inputs)   
      
     if is_any_api_key(inputs):
         chatbot._cookies['api_key'] = inputs
