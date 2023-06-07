@@ -49,17 +49,17 @@
 
 在研究层面上，零样本迁移比较学习是热门的研究趋势，我希望尽可能理解正在应用的项目的模型设计细节，这样我们想将文本、图像和音频相结合设计一个强大的对齐backbone。
 
-在项目层面上，Tensorrt加速基本模型或者其他的模型转换方式可以提高效率。
+在项目层面上，可考虑Tensorrt加速基本模型或者其他的模型转换方式可以提高效率。
 
 </details>
 
-### <div align="left">🔥 [更新预告，更新频繁，感兴趣关注]</div>
+### <div align="left">🔥 [6月更新预告，更新频繁，感兴趣关注]</div>
 
--  下周会出一个介绍本项目和当前进度的v1.1版本的视频
+-  下周会出一个介绍本项目和当前进度的v1.1版本的视频  【Done】
 
--  一键微调按钮功能，添加：visualglm
+-  一键微调按钮功能，添加：visualglm  【Done】
 
--  语音文本处理链接gpt，加入chatglm
+-  语音文本处理链接gpt，加入chatglm    【Done】
 - 6月初Tag2text 第二版官方最新模型集成测试
 
 -  近期会加入生成类模型并完成测试
@@ -72,6 +72,8 @@
 </details>
 
 ### <div align="left">⭐ [更新列表]</div>
+
+-  【2023/6/6】 v1.15版本:修复了已知的环境安装问题和补充说明，特殊的模型独立了调用，不需要可以不用安装依赖了；添加了一键微调VisualGLM的功能，考虑机器配置和显存慎用；
 
 -  【2023/6/5】 修复whisper asr的bug，内部可选模型，但是考虑显存不建议超过small,上传百度云一个介绍。
 
@@ -89,7 +91,7 @@
 
 - [VisualGLM-6B](https://github.com/THUDM/VisualGLM-6B.git) : Visual ChatGlm. 
 
-- [Segment Anything](https://github.com/facebookresearch/segment-anything)：强大的分割模型。但它需要提示（如盒子/点）来生成蒙版。
+- [Segment Anything](https://github.com/facebookresearch/segment-anything)：强大的分割模型。但它需要提示（如包围框/点/掩码、文本）来生成蒙版。
 
 - [Grounding DINO](https://github.com/IDEA-Research/GroundingDINO)：强大的零样本泛化检测器，能够使用自由格式文本生成高质量框和标签。
 
@@ -106,7 +108,7 @@
 （强烈建议使用Linux，Windows可能在编译Grounded-DINO Deformable和配置Visualglm时候算子时出现问题，参见[Grounding DINO](https://github.com/IDEA-Research/GroundingDINO)）
 
 ```bash
-gir clone https://github.com/positive666/Prompt-Can-Anything
+git clone https://github.com/positive666/Prompt-Can-Anything
 cd Prompt-Can-Anything
 ```
 

@@ -556,7 +556,7 @@ if __name__ == "__main__":
                         
                          with gr.Accordion('ViusalGLM训练配置', open=False):
                                 with gr.Row():
-                                    train_methods=gr.Dropdown(AVAIL_METHOD_FINETUNE,value=METHOD_FINETUNE, label="更换微调方法").style(container=False)
+                                    train_methods=gr.Dropdown(AVAIL_METHOD_FINETUNE,value=METHOD_FINETUNE, label="微调方法").style(container=False)
                                     visualglm_args=[                              
                                     gr.inputs.Textbox(label="Experiment_Name", default="visualglm-6b"),
                                     gr.inputs.Number(label="Model Parallel Size", default=1),
@@ -569,8 +569,8 @@ if __name__ == "__main__":
                                     gr.Slider(minimum=0, maximum=256, value=0, step=1, interactive=True, label="layer_range_start"),
                                     gr.Slider(minimum=0, maximum=20, value=14, step=1, interactive=True, label="layer_range_end"),
                                     gr.Slider(minimum=1, maximum=60, value=4, step=1, interactive=True, label="pre_seq_len"),          
-                                    gr.inputs.Textbox(label="Train Data", default="VisualGLM/fewshot-data/dataset.json"),
-                                    gr.inputs.Textbox(label="Eval Data", default="VisualGLM/fewshot-data/dataset.json"),
+                                    gr.inputs.Textbox(label="Train Data", default="fewshot-data/dataset.json"),
+                                    gr.inputs.Textbox(label="Eval Data", default="fewshot-data/dataset.json"),
                                     gr.inputs.Textbox(label="distributed backend", default="nccl"),
                                     gr.inputs.Dropdown(label="lr decay style ", choices=["cosine", "linear"], default="cosine"),
                                     gr.inputs.Number(label="warmup", default=0.02),

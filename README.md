@@ -55,14 +55,16 @@ Through continuous creativity and accumulation, we will integrate and learn from
 
 ### <div align="left"> 🔥 [Update notice, frequent updates, Welcome fork] </div>
 
+- 🔥 v1.2  coming soon
 - 🔥next week，2023/6/6, A detailed demo video for v1.1  
 - 🔥Official latest model integration test for Tag2text version 2 in early June
-- One-click fine-tuning button function, adding: visualglm
-- Voice text processing link GPT, joining chatglm
+- One-click fine-tuning button function, adding: visualglm 
+- Voice text processing link GPT, joining chatglm   
 - Generating class models will be added and tested in the near future
 - One-click fine-tuning button function, adding: SAM
 
 ### <div align="left">⭐[News list] </div>
+	-【2023/6/5】   v1.15:environment installation problems and supplementary instructions, special models are called independently, and no need to install dependencies; Added the function of one-click fine-tuning of VisualGLM, considering machine configuration and video memory with caution
 	-【2023/6/5】   v1.15 a vide demo and plan,fix asr bug ,chatgpt with asr and tts 
 	-【2023/5/31】  Fixed the already issue, add tts demo, the Linux platform is tested through all open features
 	-【2023/5/23】  add web demo:Add VisualGLM ,chatgpt from [Academic-gpt](https://github.com/binary-husky/gpt_academic)
@@ -76,7 +78,7 @@ Through continuous creativity and accumulation, we will integrate and learn from
 
 - [VisualGLM-6B](https://github.com/THUDM/VisualGLM-6B) : Visual ChatGlm. 
 
-- [Segment Anything](https://github.com/facebookresearch/segment-anything) : Strong segmentation model. But it needs prompts (like boxes/points) to generate masks. 
+- [Segment Anything](https://github.com/facebookresearch/segment-anything) : Strong segmentation model. But it needs prompts (like boxes/points/text) to generate masks. 
 
 - [Grounding DINO](https://github.com/IDEA-Research/GroundingDINO) :  Strong zero-shot detector which is capable of to generate high quality boxes and labels with free-form text. 
 
@@ -95,7 +97,7 @@ First, Make sure you have a basic gpu deep learning environment.
  (Linux is recommended, Windows may have problems compiling Grounded-DINO Deformable- transformer operator, see [Grounding DINO](https://github.com/IDEA-Research/GroundingDINO) )
 
 ```bash
-gir clone https://github.com/positive666/Prompt-Can-Anything
+git clone https://github.com/positive666/Prompt-Can-Anything
 cd Prompt-Can-Anything
 ```
 

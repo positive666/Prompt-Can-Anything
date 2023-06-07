@@ -33,7 +33,7 @@ soundfile
 pyaudio
 ffmpeg
 tiktoken
-SwissArmyTransformer
+#SwissArmyTransformer>=0.3.6
 ##语音合成 传输OMNIVERSE
 edge-tts
 whisper
