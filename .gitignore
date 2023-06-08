@@ -136,6 +136,9 @@ dmypy.json
 # checkpoint
 *.pth
 outputs/
+checkpoints/
+gfpan/
+results/
 
 .idea/
 weights/

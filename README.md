@@ -32,13 +32,13 @@ Integrate diversified GPT, mainly using the port of chatgpt, and use the open-so
 
 Complete a role design interaction through a 3D Engine combined with multimodal tasks such as GPT;
 
-Complete a role design interaction through the Saldtalker open source project and multimodal tasks such as GPT.
+Complete a role design interaction through the Sadtalker open source project and multimodal tasks such as GPT.
 
 
 
  4.  🔥🔥🚀 Unlimited potential “Anything”
 
-Through continuous creativity and accumulation, we will integrate and learn from SOTA AI. We will record each integrated model and provide a detailed explanation and summary in the article. The author will summarize all the AI-related knowledge reserves and engineering experience for the local large model (this part is the final development function and is planned).
+Through continuous creativity and accumulation, we will integrate and learn from Sota AI. We will record each integrated model and provide a detailed explanation and summary in the article. The author will summarize all the AI-related knowledge reserves and engineering experience for the local large model (this part is the final development function and is planned).
 
 <img src="asset/v1.15.png" alt="structure" style="zoom: 33%;" />
 
@@ -64,7 +64,8 @@ Through continuous creativity and accumulation, we will integrate and learn from
 - One-click fine-tuning button function, adding: SAM
 
 ### <div align="left">⭐[News list] </div>
-	-【2023/6/5】   v1.15:environment installation problems and supplementary instructions, special models are called independently, and no need to install dependencies; Added the function of one-click fine-tuning of VisualGLM, considering machine configuration and video memory with caution
+	-【2023/6/7】   v1.15:add submodule SadTalker,update UI
+	-【2023/6/6】   v1.15:environment installation problems and supplementary instructions, special models are called independently, and no need to install dependencies; Added the function of one-click fine-tuning of VisualGLM, considering machine configuration and video memory with caution
 	-【2023/6/5】   v1.15 a vide demo and plan,fix asr bug ,chatgpt with asr and tts 
 	-【2023/5/31】  Fixed the already issue, add tts demo, the Linux platform is tested through all open features
 	-【2023/5/23】  add web demo:Add VisualGLM ,chatgpt from [Academic-gpt](https://github.com/binary-husky/gpt_academic)
@@ -76,7 +77,7 @@ Through continuous creativity and accumulation, we will integrate and learn from
 
 ## Preliminary-Works
 
-- [VisualGLM-6B](https://github.com/THUDM/VisualGLM-6B) : Visual ChatGlm. 
+- [VisualGLM-6B](https://github.com/THUDM/VisualGLM-6B) : Visual ChatGlm(6B) 
 
 - [Segment Anything](https://github.com/facebookresearch/segment-anything) : Strong segmentation model. But it needs prompts (like boxes/points/text) to generate masks. 
 
@@ -85,7 +86,7 @@ Through continuous creativity and accumulation, we will integrate and learn from
 - [Stable-Diffusion](https://github.com/CompVis/stable-diffusion) :  Amazing strong text-to-image diffusion model.
 
 - [Tag2text](https://github.com/xinyu1205/Tag2Text) : Efficient and controllable vision-language model which can simultaneously output superior image captioning and image tagging.
-  
+- [SadTalker](https://github.com/OpenTalker/SadTalker): Learning Realistic 3D Motion Coefficients for Stylized Audio-Driven Single Image Talking Face Animation
 - [lama](https://github.com/advimman/lama) :  Resolution-robust large mask Inpainting with Fourier Convolutions
 
   
@@ -103,7 +104,7 @@ cd Prompt-Can-Anything
 
 **Install environment **
 
-Installation of basic environment:
+Installation of basic environment
 
 ```
 pip install -r requiremens  
@@ -111,19 +112,28 @@ or
 pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
 ```
 
-Installation of Ground detector (compiling):
+Installation of Ground detector (compiling)
 
-```
+```bash
 cd model_cards
 python setup.py install
 ```
 
-Installation of Tsinghua Vision GLM (optional, better to use LINUX system, installation plan will be updated after testing on Windows):
+Installation of Tsinghua VisualGLM (optional, better to use LINUX system, installation plan will be updated after testing on Windows)
 
 ```bash
 git submodule update --init --recursive
 cd VisualGLM_6B && pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
 ```
+
+Install SadTalker (optional )
+
+```bash
+git clone https://github.com/Winfredy/SadTalker.git
+cd  SadTalker && pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
+```
+
+​		Tips:create two directories, checkpoints and gfpgan, and place them in the root directory. Download the extracted weights from the official website and put them into two folders,
 
 Installation of LAMA model (optional, not yet released):
 
@@ -287,8 +297,8 @@ For more content, you can check the requirements, “pip install < your missing 
 - [x] Release demo and code.
 - [x] web ui  demo 
 - [x] Support ChatGPT/VISUALGLM/ASR/TTS
-- [ ]   YOCO labeling fine-tuning of VISUALGLM demo[next week]
-- [ ] 3D && 2D avatar [next week]
+- [x]   YOCO labeling fine-tuning of VISUALGLM demo[next week]
+- [x] 3D && 2D avatar 
 - [ ] Complete the planned AI combination “Annison”
 - [ ] Fine-tune the segmentation and ground detectors of SAM, and expand the input control of SAM
 - [ ] Release training methods
@@ -299,6 +309,7 @@ For more content, you can check the requirements, “pip install < your missing 
 - [Segment Anything](https://github.com/facebookresearch/segment-anything)
 - [Grounding DINO](https://github.com/IDEA-Research/GroundingDINO)
 - [Tag2text](https://github.com/xinyu1205/Tag2Text) 
+- [SadTalker](https://github.com/OpenTalker/SadTalker)
 - [lama](https://github.com/advimman/lama) 
 - [ VisualGLM-6B](https://github.com/THUDM/VisualGLM-6B.git)
 

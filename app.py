@@ -30,6 +30,10 @@ import asyncio
 import concurrent.futures
 from utils.colorful import *
 
+
+from llm_cards.core_functional import get_core_functions
+functional = get_core_functions()
+
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  #  root directory
 if str(ROOT) not in sys.path:
@@ -49,11 +53,33 @@ global models_config
 models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None,'sd': None, 
                  'visual_glm': None , 'trans_zh': None,'gligen': None}
 
-from llm_cards.core_functional import get_core_functions
-functional = get_core_functions()
+
 JSON_DATASETS=[]
 
-
+async def sadtalker_demo(checkpoint_path,config_path,source_image,
+                            driven_audio,
+                            preprocess_type,
+                            is_still_mode,
+                            enhancer,
+                            batch_size,                            
+                            size_of_image,
+                            pose_style,
+                            exp_weight):
+        sys.path.append('SadTalker')
+        from SadTalker.app import SadTalker
+    
+        sadtaker_model=SadTalker(checkpoint_path, config_path, lazy_load=True)
+        output = await asyncio.to_thread(sadtaker_model.test, source_image,
+                            driven_audio,
+                            preprocess_type,
+                            is_still_mode,
+                            enhancer,
+                            batch_size,                            
+                            size_of_image,
+                            pose_style,
+                            exp_weight)
+        return output
+         
 def train_visualGLM(name,model_size,mode,train_iters,resume_data,
         max_source_length,max_target_length,lora_rank,layer_range_s,layer_range_e,pre_seq_len,
        train_data,valid_data,distributed_backend,lr_decay_style,warmup,
@@ -73,7 +99,6 @@ def train_visualGLM(name,model_size,mode,train_iters,resume_data,
          p = mp.Process(target=start_finetuning_process, args=(gpt_option,model_args,method_type))
          p.start()
          processes.append(p)
-
     for p in processes:
         p.join()
     return 'OK'    
@@ -130,12 +155,10 @@ def start_finetuning_process(gpt_option,model_args,method_type):
     elif method_type=='use_ptuning':
         gpt_options=gpt_option_prefix+ptune
     else:    
-        LOGGER.info("没有选择！！！")   
+        LOGGER.info("没有选择训练方法！！！")   
         return   
       
     run_cmd = f'{options_nccl} deepspeed --master_port 16666 --hostfile {host_file_path} {VisualGLM_dir}/finetune_visualglm.py {gpt_options} '
-    # if CONDA_ENVS:
-    #     os.system(f"conda activate {CONDA_ENVS}")
     os.system(run_cmd)
 
 async def load_speech_model(whisper=None):
@@ -150,7 +173,6 @@ async def load_speech_model(whisper=None):
           models_config['whisper']=None  
         else:    
           LOGGER.info('pass')         
-        #await asyncio.sleep(0.01) 
         return '语音识别记载完成'
            
 def save_text2img_data(prompt,label,img_name):
@@ -178,7 +200,6 @@ def auto_opentab_delay(port=7586):
             else: webbrowser.open_new_tab(f"http://localhost:{port}")
         threading.Thread(target=open, name="open-browser", daemon=True).start()
         #threading.Thread(target=auto_update, name="self-upgrade", daemon=True).start()
-
 
 async def load_auto_backend_models(lama, sam, det, tag2text, trans_zh, visual_glm,device=0, quant=4, bar=None): 
     try:    
@@ -223,7 +244,6 @@ def load_auto_backend_model(lama,sam,det,tag2text,trans_zh,visual_glm,device,qua
     if det and not models_config['grounded']:
             models_config['grounded'] = AutoBackend("grounded-DINO",weights=GROUNED_MODEL_TYPE['S'], device=device,
             args_config= 'model_cards/groundingdino/config/GroundingDINO_SwinT_OGC.py')
-            #progress.tqdm.write(f"{i+2}/{len(models_config)}")
     elif not det  :
             models_config['grounded'] =None 
     else :
@@ -231,7 +251,6 @@ def load_auto_backend_model(lama,sam,det,tag2text,trans_zh,visual_glm,device,qua
             
     if sam and not models_config['sam']:
             models_config['sam']= AutoBackend("segment-anything",weights=SAM_MODEL_TYPE['vit_h'] ,device=device)
-            #progress.tqdm.write(f"{i+3}/{len(models_config)}")
     elif not sam :
             models_config['sam'] =None      
     else:
@@ -492,22 +511,24 @@ if __name__ == "__main__":
                cookies = gr.State({'api_key': API_KEY, 'llm_model': LLM_MODEL})
                with gr.Row().style(equal_height=False):
                     with gr.Column(scale=1):
-                         with gr.Accordion('模型参数和GPU配置', open=False):
-                            box_threshold=gr.inputs.Number(label='Confidence Threshold', default=0.3)
-                            iou_threshold=gr.inputs.Number(label='Iou Threshold', default=0.5)
-                            text_threshold=gr.inputs.Number(label='Text Threshold', default=0.25)
-                            device_input=gr.inputs.Textbox(label='device',default='0')
-                            quant=gr.inputs.Number(label='quant levels',default=4)                     
-                         with gr.Accordion('others Options(标注输出格式设置)', open=False):
-                            option_inputs  = {
-                            'Save Conf': gr.inputs.Checkbox(label='Save Conf',default=False),
-                            'Save img': gr.inputs.Checkbox(label='Save img',default=False),
-                            'Visualize': gr.inputs.Checkbox(label='Visualize',default=False),
-                            'Project': gr.inputs.Textbox(label='Project:save dir_path',default='runs/detect'),
-                            'Name': gr.inputs.Textbox(label='Name',default='exp'),
-                            'Exist Ok': gr.inputs.Checkbox(label='Exist Ok',default=False)
-                            }   
-                           
+                         with gr.Accordion('视觉模型配置', open=False):             
+                            with gr.TabItem('本地模型配置'):
+                                    box_threshold=gr.inputs.Number(label='Confidence Threshold', default=0.3)
+                                    iou_threshold=gr.inputs.Number(label='Iou Threshold', default=0.5)
+                                    text_threshold=gr.inputs.Number(label='Text Threshold', default=0.25)
+                                    device_input=gr.inputs.Textbox(label='device',default='0')
+                                    quant=gr.inputs.Number(label='quant levels',default=4)   
+                                                      
+                            with gr.TabItem('其他【不需要修改】'):
+                                    option_inputs  = {
+                                    'Save Conf': gr.inputs.Checkbox(label='Save Conf',default=False),
+                                    'Save img': gr.inputs.Checkbox(label='Save img',default=False),
+                                    'Visualize': gr.inputs.Checkbox(label='Visualize',default=False),
+                                    'Project': gr.inputs.Textbox(label='Project:save dir_path',default='runs/detect'),
+                                    'Name': gr.inputs.Textbox(label='Name',default='exp'),
+                                    'Exist Ok': gr.inputs.Checkbox(label='Exist Ok',default=False)
+                                    }   
+                            
                          inputxs.extend(list(option_inputs.values()))
                          with gr.Accordion('Method_Options:free combo', open=True):                
                                    
@@ -586,28 +607,51 @@ if __name__ == "__main__":
                                     gr.inputs.Number(label="batch size", default=4),
                                     gr.inputs.Number(label="gradient accumulation steps", default=4),
                                     ]
-                         
-                         fine_tune=gr.Button('Finetune VisualGLM').style(height=5,width=5)           
-                                             
+                         fine_tune=gr.Button('Finetune VisualGLM').style(height=5,width=5)   
+                                    
+                         with gr.Accordion('sadtakler配置', open=False):
+                            with gr.Tabs(elem_id="sadtalker_checkbox"):
+                                with gr.TabItem('Settings'):
+                                    gr.Markdown("need help? please visit our [[best practice page](https://github.com/OpenTalker/SadTalker/blob/main/docs/best_practice.md)] for more detials")
+                                    with gr.Column(variant='panel'):
+                                            # width = gr.Slider(minimum=64, elem_id="img2img_width", maximum=2048, step=8, label="Manually Crop Width", value=512) # img2img_width
+                                            # height = gr.Slider(minimum=64, elem_id="img2img_height", maximum=2048, step=8, label="Manually Crop Height", value=512) # img2img_width
+                                            with gr.Row():
+                                                pose_style = gr.Slider(minimum=0, maximum=46, step=1, label="Pose style", value=0) #
+                                                exp_weight = gr.Slider(minimum=0, maximum=3, step=0.1, label="expression scale", value=1) # 
+                                            with gr.Row():
+                                                sadtalker_path=gr.inputs.Textbox(label="checkpoint path", default="checkpoints") 
+                                                sadtalker_config=gr.inputs.Textbox(label="config path", default="SadTalker/src/config")
+                                            with gr.Row():
+                                                size_of_image = gr.Radio([256, 512], value=256, label='face model resolution', info="use 256/512 model?") # 
+                                                preprocess_type = gr.Radio(['crop', 'resize','full', 'extcrop', 'extfull'], value='crop', label='preprocess', info="How to handle input image?")
+                                            
+                                            with gr.Row():
+                                                is_still_mode = gr.Checkbox(label="Still Mode (fewer hand motion, works with preprocess `full`)")
+                                                batch_size = gr.Slider(label="batch size in generation", step=1, maximum=10, value=2)
+                                                enhancer = gr.Checkbox(label="GFPGAN as Face enhancer")
+                                               
+                                            sadtalker_submit = gr.Button('Generate_video', elem_id="sadtalker_generate", variant='primary')
+                                       
                     with gr.Column(variant='panel',scale=15):      
-                         with gr.Row():
-                                    with gr.Row():
-                                        record_audio = gr.Audio(label="record your voice", source="microphone",type='filepath').style(width=120)
-                                        with gr.Row():
-                                            omniverse_switch = gr.inputs.Checkbox(label='Omniverse A2F',default=False)
-                                            audio_to_face=gr.Button('send Audio2Face once aswer', variant='primary') 
-                                              
+                       
                          with gr.Tabs(elem_id="Process_audio"):
                                 with gr.TabItem('Upload OR TTS'):
                                         
                                         with gr.Column(variant='panel'):
+                                            record_audio = gr.Audio(label="record your voice", source="microphone",type='filepath')
                                             with gr.Row():
-                                                upload_audio = gr.Audio(label="Input audio(./wav/.mp3)", source="upload",type='filepath').style(height=60,width=120)
+                                                upload_audio = gr.Audio(label="Input audio(./wav/.mp3)", source="upload",type='filepath').style(height=20,width=120)
                                                 input_text = gr.Textbox(label="Generating audio from text", lines=2, placeholder="please enter some text here, we genreate the audio from  TTS.")
+                                               
                                             with gr.Row():
                                                 asr = gr.Button('Generate text[太长内容可能前端不稳定]',elem_id="text_generate", variant='primary')
                                                 tts = gr.Button('Generate audio',elem_id="audio_generate", variant='primary')   
-                                                  
+                                with gr.TabItem('Omniverse App'):   
+                                        with gr.Row():
+                                            omniverse_switch = gr.inputs.Checkbox(label='Omniverse A2F',default=False)
+                                            audio_to_face=gr.Button('send a Audio to Omniverse ', variant='primary')  
+                                               
                          def t2s(text,chat_flag=True,omnviverse=False):
                                     asyncio.run(t2s_inference(text,omnviverse))
                                     return voice_dir+"/temp.wav"
@@ -672,24 +716,37 @@ if __name__ == "__main__":
                                 plugin_advanced_arg = gr.Textbox(show_label=True, label="高级参数输入区", visible=False, 
                                                                  placeholder="这里是特殊函数插件的高级参数输入区").style(container=False)
 
-                         video_output = gr.Video(type="auto")                                   
+                                                          
                     with gr.Column(scale=20):
-                     
-                         gallery = gr.Gallery(label="Generated images",show_label=False,elem_id="gallery",).style(preview=True, grid=2, object_fit="scale-down")
-                         with gr.Row():
-                            output_text = gr.Textbox(label="图像理解",lines=2)
-                            zh_select=gr.inputs.Checkbox(label='翻译Tag2Text【选后需一键重载模型】',default=False)
-                            with gr.Column():
-                                output_classes= gr.Textbox(label="Class_numbers:auto generate classes numbers, color flag or save_txt must be ture ")
-                                output_tag= gr.outputs.Textbox(label="Tag")
+                         with gr.Accordion('输出区', open=True):
+                            with gr.TabItem('图像输出'):   
+                                gallery = gr.Gallery(label="Generated images",show_label=False,elem_id="gallery",).style(preview=True, grid=2, object_fit="scale-down")
+                            with gr.TabItem('视频输出'):  
+                                video_output = gr.Video(label="Generated video", format="mp4").style(width=600)
+                         with gr.TabItem('图文理解'):  
+                            with gr.Row(): 
+                                output_text = gr.Textbox(label="tag2text",lines=2)
+                                with gr.Row():
+                                        output_tag= gr.outputs.Textbox(label="Tag").style(height=1)  
+                            with gr.Row():
+                               
+                                zh_select=gr.inputs.Checkbox(label='英译中 Tag2Text【选后需重载模型】',default=False).style(width=1) 
+                                with gr.Row():
+                                    output_classes= gr.Textbox(label="Class Numbers ",lines=1,
+                                            placeholder="generate classes numbers,color flag or save_txt must be ture/你必须启动存储txt的功能，这个是全局的").style(conatiner=False,width=1)
+                                        
+                    
                          with gr.Row():
                             with gr.Accordion("备选输入区", open=True, visible=False) as area_input_secondary:
                                  system_prompt = gr.Textbox(show_label=True, placeholder=f"Chat Prompt", label="下方输入对话支持图像和文本", value="AI assistant.")
                                             
                          with gr.Row():
                             with gr.Column(scale=2):
-                                result_text = gr.Chatbot(label=f'Multi-round conversation History,当前模型：{LLM_MODEL}', value=[("", "Hi, What do you want to know ?")]).style(height=CHATBOT_HEIGHT)
+                                result_text = gr.Chatbot(label=f'当前模型：{LLM_MODEL}', value=[("", "Hi, What do you want to know ?")]).style(height=CHATBOT_HEIGHT)
                                 history = gr.State([])
+               
+               sadtalker_submit.click(fn=sadtalker_demo,inputs=[sadtalker_path,sadtalker_config,image_prompt,upload_audio, preprocess_type,is_still_mode,enhancer,
+                    batch_size,  size_of_image,pose_style,exp_weight],outputs=[video_output])
                audio_to_face.click(fn=t2s, inputs=[result_text,input_text,gr.State(True),omniverse_switch], outputs=[upload_audio] )                                 
                asr_button.click(fn=load_speech_model,inputs=[asr_select],outputs=[loads_flag])        
                asr.click(fn=s2t, inputs=[upload_audio], outputs=[input_text])                    

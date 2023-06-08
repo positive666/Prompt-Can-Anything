@@ -73,6 +73,8 @@
 
 ### <div align="left">⭐ [更新列表]</div>
 
+-  【2023/6/7】 v1.15 :加入子项目SadTalker，更新UP界面
+
 -  【2023/6/6】 v1.15版本:修复了已知的环境安装问题和补充说明，特殊的模型独立了调用，不需要可以不用安装依赖了；添加了一键微调VisualGLM的功能，考虑机器配置和显存慎用；
 
 -  【2023/6/5】 修复whisper asr的bug，内部可选模型，但是考虑显存不建议超过small,上传百度云一个介绍。
@@ -98,6 +100,8 @@
 - [Stable-Diffusion](https://github.com/CompVis/stable-diffusion)：文本-图像扩散模型。
 
 - [Tag2text](https://github.com/xinyu1205/Tag2Text)：高效可控的视觉-语言模型，可以同时输出优越的图像字幕和图像标记。
+
+- [SadTalker](https://github.com/OpenTalker/SadTalker):单图声音驱动人脸的方法
 
 - [lama](https://github.com/advimman/lama)：分辨率鲁棒的大屏蔽填充与傅立叶卷积
 
@@ -127,12 +131,21 @@ cd  model_cards
 python setup.py install
 ```
 
-安装清华视觉GLM（可选，最好用LINUX系统，window后面测试后补充安装方案）：
+安装清华视觉VisualGLM（可选，最好用LINUX系统，window后面测试后补充安装方案）：
 
 ```bash
 git submodule update --init --recursive
 cd  VisualGLM_6B && pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
 ```
+
+安装SadTalker(optional )
+
+```bash
+git clone https://github.com/Winfredy/SadTalker.git
+cd  SadTalker && pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
+```
+
+​			Tips:创建checkpoints 和gfpgan两个目录，放置在根目录下。从官网下载解压的权重分别放进两个文件夹!!
 
 安装LAMA模型（可选还未发布）：
 
@@ -167,14 +180,7 @@ pip install pyaudio
 2.使用qlora微调int4模型问题：
 
 ```
-git clone https://github.com/timdettmers/bitsandbytes.git
-cd bitsandbytes
-
-# CUDA_VERSIONS in {110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 120}
-# make argument in {cuda110, cuda11x, cuda12x}
-# if you do not know what CUDA you have, try looking at the output of: python -m bitsandbytes
-CUDA_VERSION=117 make cuda11x
-python setup.py install
+pip install  bitsandbytes  -i https://mirrors.aliyun.com/pypi/simple
 ```
 
 **Windows安装问题**
@@ -289,8 +295,8 @@ python setup.py install
 - [x] 释放初版
 - [x] web ui 界面调整 
 - [x] 支持chatgpt/VISUALGLM/ASR/TTS
-- [ ] Yoco一键标注微调VISUALGLM Demo
-- [ ] 3d &&2d avatvor
+- [x] Yoco一键标注微调VISUALGLM Demo
+- [x] 3d &&2d avatvor
 - [ ] 完成计划的AI结合体“安尼森”
 - [ ] 微调sam分割器 and ground检测器 ,拓展SAM的输入控制
 - [ ] 释放训练方法.
@@ -302,6 +308,7 @@ python setup.py install
 - [Segment Anything](https://github.com/facebookresearch/segment-anything)
 - [Grounding DINO](https://github.com/IDEA-Research/GroundingDINO)
 - [Tag2text](https://github.com/xinyu1205/Tag2Text) 
+- [SadTalker](https://github.com/OpenTalker/SadTalker)
 - [lama](https://github.com/advimman/lama) 
 - [VisualGLM-6B](https://github.com/THUDM/VisualGLM-6B.git) 
 
