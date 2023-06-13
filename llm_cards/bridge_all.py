@@ -307,7 +307,7 @@ def predict_no_ui_long_connection(inputs, llm_kwargs, history, sys_prompt, obser
         return res
 
 
-def predict(inputs, llm_kwargs, *args, **kwargs):
+def predict_all(inputs, llm_kwargs, *args, **kwargs):
     """
     发送至LLM，流式获取输出。
     用于基础的对话功能。
@@ -317,7 +317,8 @@ def predict(inputs, llm_kwargs, *args, **kwargs):
     chatbot 为WebUI中显示的对话列表，修改它，然后yeild出去，可以直接修改对话界面内容
     additional_fn代表点击的哪个按钮，按钮见functional.py
     """
-
+    print('quantize:',llm_kwargs['quantize'])
     method = model_info[llm_kwargs['llm_model']]["fn_with_ui"]
+    
     yield from method(inputs, llm_kwargs, *args, **kwargs)
 

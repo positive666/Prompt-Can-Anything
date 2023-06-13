@@ -13,25 +13,23 @@ from utils.ops import (LOGGER, Profile, check_file, check_requirements, colorstr
                      dilate_mask, increment_path , scale_boxes, xyxy2xywh,save_format)
 from utils.plot import Annotator, save_one_box,show_box,show_mask,save_mask_data,Draw_img
 from config_private import *
-from llm_cards.bridge_all import predict
+from llm_cards.bridge_all import predict_all 
+from llm_cards.core_functional import get_core_functions
 from utils.toolbox import format_io, find_free_port, on_file_uploaded, on_report_generated, get_conf, ArgsGeneralWrapper, DummyWith
 
 from utils.torch_utils import select_device
-from config_private import SAM_MODEL_TYPE,GROUNED_MODEL_TYPE,Tag2Text_Model_Path
 from utils import VID_FORMATS,IMG_FORMATS,write_categories
 VisualGLM_dir=f"VisualGLM_6B"
 sys.path.append(VisualGLM_dir)
-from VisualGLM_6B.chatglm import  *
-from a2f import *
+
 import gradio as gr
 import random
+import json
 import multiprocessing as mp
 import asyncio
 import concurrent.futures
 from utils.colorful import *
 
-
-from llm_cards.core_functional import get_core_functions
 functional = get_core_functions()
 
 FILE = Path(__file__).resolve()
@@ -47,13 +45,12 @@ category_colors={}
 # 初始对应类别编号
 class_ids = []
 global speech_AI
-speech_AI={'whisper':None }
-NUM_WORKERS=1
+speech_AI={'asr':{'whisper':None},'tts':{'tts_VITS':None,'tts_edge':None}} ## speech 
 global models_config
-models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None,'sd': None, 
+models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None,'sd': None,    ## cv with text
                  'visual_glm': None , 'trans_zh': None,'gligen': None}
 
-
+NUM_WORKERS=1
 JSON_DATASETS=[]
 
 async def sadtalker_demo(checkpoint_path,config_path,source_image,
@@ -161,25 +158,37 @@ def start_finetuning_process(gpt_option,model_args,method_type):
     run_cmd = f'{options_nccl} deepspeed --master_port 16666 --hostfile {host_file_path} {VisualGLM_dir}/finetune_visualglm.py {gpt_options} '
     os.system(run_cmd)
 
-async def load_speech_model(whisper=None):
+async def load_speech_model(asr_method,tts_method):
         import whisper 
         global speech_AI
-        if whisper:
-            speech_AI['whisper'] =  whisper.load_model("small",download_root="weights")
+        if asr_method=='whisper' :
+            speech_AI['asr']['whisper']=  whisper.load_model("small",download_root="weights")
             LOGGER.info('loads whisper')
             
-        elif not whisper:
-          LOGGER.info('free  memory')
-          models_config['whisper']=None  
+        elif not asr_method and speech_AI['asr']['whisper']:
+            LOGGER.info('free  memory')
+            speech_AI['asr']['whisper']=None  
         else:    
-          LOGGER.info('pass')         
+            LOGGER.info('pass')  
+          
+        if tts_method =="VITS":
+             print('调试中，很快更新')
+        #          speech_AI['tts']['VITS'] =  
+        #    LOGGER.info('loads whisper')
+            
+        elif not tts_method:
+            LOGGER.info('pass')
+        #   models_config['whisper']=None  
+   
         return '语音识别记载完成'
-           
-def save_text2img_data(prompt,label,img_name):
+
+               
+def save_text2img_data(prompt,label,img_name,zh_select):
     global JSON_DATASETS
-    if not prompt:
+    if not prompt :
         prompt=f"这张图片的背景里有什么内容?"
-        
+    if not zh_select:
+        prompt=f'What contents are present in the background of this picture?'
     example = {
         "img": f"{img_name}",
         "prompt": prompt,
@@ -222,7 +231,7 @@ def load_auto_backend_model(lama,sam,det,tag2text,trans_zh,visual_glm,device,qua
     global models_config    
  
     if visual_glm and not models_config['visual_glm']:
-         
+          from VisualGLM_6B.chatglm import  VisualGLM
           models_config['visual_glm']=VisualGLM(gpu_device=int(device),quant=int(quant))
           LOGGER.info(f'GPU{int(device)}———量化VisualGLM模型:int{int(quant)}')
     elif not visual_glm:
@@ -361,7 +370,7 @@ def Auto_run(
                         if zh_select and prompt :
                             caption=models_config['trans_zh'](caption, max_length=1000, clean_up_tokenization_spaces=True)[0]["generated_text"]
                         if save_caption:
-                            save_text2img_data(None, caption,name_p)
+                            save_text2img_data(None, caption,name_p,zh_select)
                             #save_format(label_format="txt",save_path=f'{save_dir}/captions',img_name=name_p, results=caption)
                       
                     if det:
@@ -563,18 +572,20 @@ if __name__ == "__main__":
                             md_dropdown = gr.Dropdown(AVAIL_LLM_MODELS, value=LLM_MODEL, label="更换LLM模型/请求源 [暂时仅支持chatgpt]").style(container=False)
                             max_length_sl = gr.Slider(minimum=256, maximum=4096, value=512, step=1, interactive=True, label="Local LLM MaxLength")
                             with gr.Row():
+                                quant_chatglm= gr.Dropdown(MODEL_QUANTIZE,value=None,label="llm quantize[chatglm] ").style(container=False)
                                 top_p = gr.Slider(minimum=-0, maximum=1.0, value=1.0, step=0.01,interactive=True, label="nucleus sampling",)
                                 temperature = gr.Slider(minimum=-0, maximum=2.0, value=1.0, step=0.01, interactive=True, label="Temperature",)
                          with gr.Accordion('VisualGLM模型配置', open=False):
                               visual_temperature = gr.Slider(maximum=1, value=0.8, minimum=0, label='VisualGLMTemperature')
                               visual_top_p = gr.Slider(maximum=1, value=0.4, minimum=0, label='VisualGLM top_P')
                          
-                         with gr.Accordion('语音服务模型配置', open=True):
+                         with gr.Accordion('语音模型配置', open=False):
                                             with gr.Row():
-                                                asr_select = gr.inputs.Checkbox(label='use ASR[本地加载ASR,需要加载按钮]',default=False).style(height=5,width=5)
-                                                asr_gpt = gr.inputs.Checkbox(label='ASR gpt [发送GPT无需加载按钮]',default=False).style(height=5,width=5)
-                                                asr_button = gr.Button('Loads ASR').style(height=5,width=5)  
-                        
+                                                asr_select = gr.Dropdown(ASR_METHOD,value='whisper', label="语音识别方法").style(container=False)
+                                                tts_select = gr.Dropdown(TTS_METHOD,value='VITS', label="语音合成方法").style(container=False)
+                                                asr_gpt = gr.inputs.Checkbox(label='ASR gpt [无需加载按钮]',default=False).style(height=1,width=1)
+                                                asr_button = gr.Button('Loads SPEECH_AI').style(height=5,width=5)  
+
                          with gr.Accordion('ViusalGLM训练配置', open=False):
                                 with gr.Row():
                                     train_methods=gr.Dropdown(AVAIL_METHOD_FINETUNE,value=METHOD_FINETUNE, label="微调方法").style(container=False)
@@ -645,36 +656,26 @@ if __name__ == "__main__":
                                                 input_text = gr.Textbox(label="Generating audio from text", lines=2, placeholder="please enter some text here, we genreate the audio from  TTS.")
                                                
                                             with gr.Row():
-                                                asr = gr.Button('Generate text[太长内容可能前端不稳定]',elem_id="text_generate", variant='primary')
+                                                asr = gr.Button('Generate text',elem_id="text_generate", variant='primary')
                                                 tts = gr.Button('Generate audio',elem_id="audio_generate", variant='primary')   
                                 with gr.TabItem('Omniverse App'):   
                                         with gr.Row():
                                             omniverse_switch = gr.inputs.Checkbox(label='Omniverse A2F',default=False)
-                                            audio_to_face=gr.Button('send a Audio to Omniverse ', variant='primary')  
+                                            #audio_to_face=gr.Button('send a Audio to Omniverse ', variant='primary')  
                                                
-                         def t2s(text,chat_flag=True,omnviverse=False):
-                                    asyncio.run(t2s_inference(text,omnviverse))
-                                    return voice_dir+"/temp.wav"
-                         async def t2s_inference(text,omniverse):
-                                        import edge_tts
-                                        if text is not None:
-                                            generate_wave = edge_tts.Communicate(text, voice='zh-CN-YunxiNeural', rate='-5%', volume='+1%')
-                                            text=[]
-                                            await generate_wave.save(voice_dir+"/temp.wav") 
-                                            if omniverse: 
-                                                
-                                                try:
-                                                    audio_data, samplerate = soundfile.read(voice_dir+"/temp.wav", dtype="float32")
-                                                    if len(audio_data.shape) > 1:
-                                                        audio_data = np.average(audio_data, axis=1)
-                                                    push_audio_track_stream(a2f_url, audio_data, samplerate , Avatar_instance_A) 
-                                                    return "SEND DONE"
-                                                except Exception as e:
-                                                    print(f"检查是否开启omniverse{e}")
+                         def t2s(text,method):
+                                    from a2f import tts_send2
+                                    send_dir=f'{voice_dir}/send_a2f.wav'
+                                    if method=='VITS':
+                                        print('更新中，暂不支持')
+                                    elif method=='edge_tts'  :  
+                                        #send_dir=f'{voice_dir}/send_a2f.wav'
+                                        asyncio.run(tts_send2(text,False,send_dir))
+                                    return  send_dir
                                                     
                          def s2t(speech_file,stream_mode=False):
                             from a2f import speech_recognition
-                            speech_text, speech_language=speech_recognition(speech_file, speech_AI['whisper'],stream_mode)                             #
+                            speech_text, speech_language=speech_recognition(speech_file, speech_AI['asr']['whisper'],stream_mode)                             #
                             return  speech_text  
                         
                          with gr.Tabs(elem_id="上传图像"):
@@ -735,34 +736,39 @@ if __name__ == "__main__":
                                     output_classes= gr.Textbox(label="Class Numbers ",lines=1,
                                             placeholder="generate classes numbers,color flag or save_txt must be ture/你必须启动存储txt的功能，这个是全局的").style(conatiner=False,width=1)
                                         
-                    
                          with gr.Row():
                             with gr.Accordion("备选输入区", open=True, visible=False) as area_input_secondary:
                                  system_prompt = gr.Textbox(show_label=True, placeholder=f"Chat Prompt", label="下方输入对话支持图像和文本", value="AI assistant.")
                                             
                          with gr.Row():
                             with gr.Column(scale=2):
-                                result_text = gr.Chatbot(label=f'当前模型：{LLM_MODEL}', value=[("", "Hi, What do you want to know ?")]).style(height=CHATBOT_HEIGHT)
+                                result_text = gr.Chatbot(label=f'当前模型:{LLM_MODEL}', value=[("", "Hi, What do you want to know ?")]).style(height=CHATBOT_HEIGHT)
                                 history = gr.State([])
                
                sadtalker_submit.click(fn=sadtalker_demo,inputs=[sadtalker_path,sadtalker_config,image_prompt,upload_audio, preprocess_type,is_still_mode,enhancer,
                     batch_size,  size_of_image,pose_style,exp_weight],outputs=[video_output])
-               audio_to_face.click(fn=t2s, inputs=[result_text,input_text,gr.State(True),omniverse_switch], outputs=[upload_audio] )                                 
-               asr_button.click(fn=load_speech_model,inputs=[asr_select],outputs=[loads_flag])        
+               #audio_to_face.click(fn=t2s, inputs=[result_text,input_text,gr.State(True),omniverse_switch], outputs=[upload_audio] )                                 
+               asr_button.click(fn=load_speech_model,inputs=[asr_select,tts_select],outputs=[loads_flag])        
                asr.click(fn=s2t, inputs=[upload_audio], outputs=[input_text])                    
-               tts.click(fn=t2s, inputs=[input_text], outputs=[upload_audio])   
+               tts.click(fn=t2s, inputs=[input_text,tts_select], outputs=[upload_audio])   
                visualglm_args.append(train_methods)   
-               fine_tune.click(fn=train_visualGLM,inputs=visualglm_args,outputs=[txt])         
+               fine_tune.click(fn=train_visualGLM,inputs=visualglm_args,outputs=[txt])     
+               # visualGLM inputs    
                cs=[]                 
                cs.extend(list_methods)  
                cs.extend([zh_select, visual_glm,device_input, quant, loads_flag])
                loads_model_button.click(fn=load_auto_backend_models,inputs=cs,outputs=[loads_flag])                     
                inputs.append(zh_select)
+               
+               def on_md_dropdown_changed(k):
+                    return {result_text: gr.update(label="当前模型："+k)}
+               md_dropdown.select(on_md_dropdown_changed, [md_dropdown],[result_text])
+               
                outputs = [gallery, output_text, output_tag,output_classes]             
-               input_combo = [cookies, max_length_sl,md_dropdown,chat_txt,txt,top_p, temperature, result_text, history,system_prompt,plugin_advanced_arg,omniverse_switch,record_audio,asr_gpt]        
+               input_combo = [cookies, max_length_sl, md_dropdown,chat_txt,txt,top_p, temperature, result_text, history,system_prompt,plugin_advanced_arg,omniverse_switch,record_audio,asr_gpt,quant_chatglm]        
                output_combo = [cookies, result_text, history, status]
-               predict_args = dict(fn=ArgsGeneralWrapper(predict), inputs=input_combo, outputs=output_combo)  
-           
+               predict_args = dict(fn=ArgsGeneralWrapper(predict_all), inputs=input_combo, outputs=output_combo)  
+              
                run_button.click(fn=Auto_run, inputs=inputs, outputs=outputs)
                 # 提交按钮、重置按钮
                cancel_handles.append(chat_txt.submit(**predict_args))
@@ -774,15 +780,11 @@ if __name__ == "__main__":
               
                for k in functional:
                     if ("Visible" in functional[k]) and (not functional[k]["Visible"]): continue
-                    dict_args=dict(fn=ArgsGeneralWrapper(predict), inputs=[*input_combo, gr.State(True),gr.State(k)], outputs=output_combo)
+                    dict_args=dict(fn=ArgsGeneralWrapper(predict_all), inputs=[*input_combo, gr.State(True),gr.State(k)], outputs=output_combo)
                     
                     cancel_handles.append(functional[k]["Button"].click(**dict_args))
-
-               def on_md_dropdown_changed(k):
-                    return {result_text: gr.update(label="当前模型"+k)}
-               md_dropdown.select(on_md_dropdown_changed, [md_dropdown], [result_text])
                
-               #VisualGLM         
+               #VisualGLM run         
                run_button_2.click(fn=visual_chat,inputs=[chat_txt, visual_temperature, visual_top_p, image_prompt,
                                                          result_text,record_audio,upload_audio,omniverse_switch],
                                 outputs=[txt, result_text])
@@ -793,9 +795,13 @@ if __name__ == "__main__":
                image_prompt.upload(fn=clear_fn_image, inputs=clear_button, outputs=[result_text])
                clear_button.click(lambda: ("","","","",""), None, [prompt_input,result_text,txt, input_text,chat_txt])
                image_prompt.clear(fn=clear_fn_image, inputs=clear_button, outputs=[result_text])
+            #    def on_md_dropdown_changed(k):
+            #         cookies = gr.State({'api_key': API_KEY, 'llm_model': LLM_MODEL})
+            #         return {result_text: gr.update(label="当前模型："+k)}
+            #    md_dropdown.select(on_md_dropdown_changed, [md_dropdown],[result_text])
               # upload_audio.clear(fn=clear_fn_image, inputs=clear_button, outputs=[upload_audio])
-          auto_opentab_delay(7900)
-          block.queue(concurrency_count=CONCURRENT_COUNT).launch(server_name='0.0.0.0', server_port=7900,debug=True, share=False)
+          auto_opentab_delay(7901)
+          block.queue(concurrency_count=CONCURRENT_COUNT).launch(server_name='0.0.0.0', server_port=7901,debug=True, share=False)
      
 
      

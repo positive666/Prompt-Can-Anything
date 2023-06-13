@@ -60,7 +60,7 @@ def push_audio_track_stream(url, audio_data, samplerate, instance_name):
      * audio_data: bytes, containing audio data for an audio chunk, where each sample is encoded as 4 bytes (float32)
     All messages are packed into a Python generator and passed to PushAudioStream()
     """
-    print(type(audio_data))
+    #print(type(audio_data))
     
     chunk_size = samplerate // 10  # ADJUST
     sleep_between_chunks = 0.01  # ADJUST

@@ -1,5 +1,5 @@
 # [step 1]>> 例如： API_KEY = "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" （此key无效）
-API_KEY ="sk-B8jefFQfIFtWjaaFtxNjT3Bxxxxxxo"
+API_KEY ="sk-B8jefFQfIFtWjaaFtxNjxxxxxxxxxxxxxxxxxxx"
 
 # [step 2]>> 改为True应用代理，如果直接在海外服务器部署，此处不修改
 USE_PROXY = True
@@ -51,7 +51,7 @@ AVAIL_LLM_MODELS = ["gpt-3.5-turbo", "api2d-gpt-3.5-turbo", "gpt-4", "api2d-gpt-
 # P.S. 其他可用的模型还包括 ["newbing-free", "jittorllms_rwkv", "jittorllms_pangualpha", "jittorllms_llama"]
 
 # 本地LLM模型如ChatGLM的执行方式 CPU/GPU
-LOCAL_MODEL_DEVICE = "cpu" # 可选 "cuda"
+LOCAL_MODEL_DEVICE = "cuda" # 可选 "cuda"
 
 # 设置gradio的并行线程数（不需要修改）
 CONCURRENT_COUNT = 100
@@ -83,6 +83,8 @@ your bing cookies here
 SLACK_CLAUDE_BOT_ID = ''   
 SLACK_CLAUDE_USER_TOKEN = ''
 
+MODEL_QUANTIZE=['None','4','8']
+
 # 填写你自己的模型地址，按照下面格式
 GROUNED_MODEL_TYPE= {'S': "../Grounded-Segment-Anything-main/groundingdino_swint_ogc.pth",'L':None}
 SAM_MODEL_TYPE= {'vit_h': "F:\\sam_vit_h_4b8939.pth"  ,'vit_l':None,'vit_b':None}
@@ -95,3 +97,6 @@ Avatar_instance_A='/World/audio2face/PlayerStreaming'
 
 METHOD_FINETUNE = "use_qlora" # 可选 ↓↓↓
 AVAIL_METHOD_FINETUNE = ["use_qlora","use_lora","use_ptuning"]
+
+TTS_METHOD=["VITS","edge_tts"]
+ASR_METHOD=["whisper"]

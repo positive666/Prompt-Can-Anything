@@ -18,7 +18,8 @@ import requests
 from llm_cards.bridge_chatgpt import predict
 from config_private import API_KEY
 import uuid
-
+import re 
+import asyncio
 
 
 # 按秒截取音频
@@ -127,7 +128,7 @@ def mic_audio():
      wf.close()
      #return frames
 
-def send_stream(whisper_modelm):
+def send_stream(whisper_model):
      
      while True:
           if keyboard.is_pressed('q'):
@@ -144,15 +145,206 @@ def send_stream(whisper_modelm):
      #   audio_data = np.average(audio_data, axis=1)
      # push_audio_track_stream(a2f_url, audio_data, RATE , Avatar_instance_A) 
 
-if __name__ == "__main__":
-        audio_data, samplerate = soundfile.read("voice_dir/temp.wav", dtype="float32")
+import edge_tts
+import threading
+async def tts_send(text,onmiverse=False,send_file='voice_dir/send_a2f.wav'):
+        if text is not None:
+            sentences = re.split(r'[！？。: ]', text)
+            sentences = [s.strip() for s in sentences if s.strip()]
+            sentences_len=len(sentences)
+            audio_chunks = {}
+            async def process_sentences():
+                tasks = []
+                for i, sentence in enumerate(sentences):
+                    if len(sentence) > 0:
+                    # 提交任务到协程池
+                        task = asyncio.create_task(speak(sentence, i % sentences_len))
+                        tasks.append(task) 
+                await asyncio.gather(*tasks) 
+                       
+            async def speak(sentence, worker_id):
+                    # 合成语音
+                print(worker_id)
+         
+                audio_stream =edge_tts.Communicate(sentence, voice='zh-CN-YunxiNeural', rate='+1%', volume='+1%').stream()
+                async for package in audio_stream:
+                    if package['type'] == 'audio':
+                        # 获取音频数据的字节流(chunk)
+                        audio_chunk = package['data']
+                        # 将音频数据添加到字典中
+                        if worker_id not in audio_chunks:
+                            audio_chunks[worker_id] = []
+                        audio_chunks[worker_id].append(audio_chunk)  
+                            
+            await process_sentences()
+            # 将每个协程合成的音频数据拼接起来
+            
+            audio_data = b''
+            for i in range(sentences_len):
+                if i in audio_chunks:
+                     for chunk in audio_chunks[i]:
+                         audio_data += chunk
+            with open(f'{send_file}', 'wb') as f:
+                  f.write(audio_data)  
+            if onmiverse:
+                audio_data, samplerate = soundfile.read(f'{send_file}', dtype="float32")                
+                if len(audio_data.shape) > 1:
+                    audio_data = np.average(audio_data, axis=1)
+                push_audio_track_stream(a2f_url, audio_data, samplerate, Avatar_instance_A)  
+                
+                
+                
+import queue
+async def tts_a2f(text):
+    import edge_tts
+    import soundfile as sf
+    import numpy as np
+    from  audio2face_streaming_utils import push_audio_track_stream
+    generate_wave = edge_tts.Communicate(text, voice='zh-CN-YunxiNeural', rate='-5%', volume='+1%')
+    await generate_wave.save('./voice_dir/send_frame.wav')  
+                                       
+    try:
+        audio_data, samplerate = sf.read('./voice_dir/send_frame.wav', dtype="float32")
         if len(audio_data.shape) > 1:
-          audio_data = np.average(audio_data, axis=1)
+            audio_data = np.average(audio_data, axis=1)
+        print("send a2f app....")    
         push_audio_track_stream(a2f_url, audio_data, samplerate , Avatar_instance_A) 
-                                                
-    #   whisper_model = whisper.load_model("small",download_root="weights")
-    #   speech_text, speech_language= speech_recognition('voice_dir/temp.wav',whisper_model)
-    #   print(speech_text)
-    #   print(type(speech_text))
-     # chatbot=Chatbot(api_key=API_KEY,proxy=PROXIES,engine="gpt-3.5-turbo")
-      #send_stream(whisper_model)
+
+        return "SEND DONE"
+    except Exception as e:
+        print(f"检查是否开启omniverse!!!")              
+                
+async def tts_send2(text,onmiverse=False, send_file='voice_dir/send_a2f.wav'):
+    # 处理句子列表
+    sentences = re.split(r'[！？。,]', text)
+    sentences = [s.strip() for s in sentences if s.strip()]
+
+    # 将所有句子合并成一段长文本，并合成语音
+    whole_text = "".join(sentences)
+    audio_stream = edge_tts.Communicate(whole_text, voice='zh-CN-YunxiNeural', rate='+1%', volume='+1%').stream()
+    
+    # 将音频数据添加到队列中
+    audio_queue = queue.Queue()
+    async for package in audio_stream:
+        if package['type'] == 'audio':
+            audio_chunk = package['data']
+            audio_queue.put(audio_chunk)
+
+    # 将队列中的音频数据拼接成一段完整的音频
+    audio_data = b''
+    while not audio_queue.empty():
+        audio_data += audio_queue.get()
+    
+    # 将合成结果保存为 WAV 文件或者发送到服务器
+    with open(f'{send_file}', 'wb') as f:
+        f.write(audio_data)
+    if onmiverse:
+        audio_data, samplerate = soundfile.read(f'{send_file}', dtype="float32")                
+        if len(audio_data.shape) > 1:
+            audio_data = np.average(audio_data, axis=1)
+        push_audio_track_stream(a2f_url, audio_data, samplerate, Avatar_instance_A)
+
+
+import grpc
+import audio2face_pb2
+import audio2face_pb2_grpc
+def send_grpc(marker):
+
+    audio_data,sr= soundfile.read("send_a2f.wav", dtype='float32')
+                                                        
+    if len(audio_data.shape) > 1:
+        audio_data = np.average(audio_data, axis=1)
+                                                            
+    yield audio2face_pb2.PushAudioStreamRequest(start_marker=marker) 
+    for i in range(len(audio_data) // sr//10 + 1):                  
+        chunk = audio_data[i * sr//10: i * sr//10 + sr//10]
+        yield audio2face_pb2.PushAudioStreamRequest(audio_data=chunk.astype(np.float32).tobytes())  
+        
+def send_stream():
+                
+ 
+    global audio_name
+    global max_buffer 
+    #global a2switch
+    #global receive_flag
+    global marker
+    global send_ob
+    send_ob=Avatar_instance_A
+    #block_until_playback_is_finished = True  # ADJUST
+    samplerate=44100
+    audio_name="wangguan"
+    #while True:
+    with grpc.insecure_channel(a2f_url) as channel:
+        stub= audio2face_pb2_grpc.Audio2FaceStub(channel)
+        print("Channel start created success")
+        while True:
+      #
+            print("------------------Channel restart created-------------------")
+            marker = audio2face_pb2.PushAudioRequestStart(
+                        samplerate=samplerate,
+                        instance_name=send_ob,
+                        block_until_playback_is_finished=True,
+                    )
+             
+            def create_generator(a2switch): 
+                                
+                global send_ob 
+                global audio_name
+                global marker
+                global predictor                   
+                global receive_flag
+                global max_buffer
+                #global a2switch
+                infer_buffer=[]
+                while True:
+                        
+                        if a2switch: 
+                            print("Send last audio!!!!!!!!!!!!!!")    
+                            a2switch=False                                
+                            send_grpc(marker)
+                
+                        elif (receive_flag) and len(max_buffer):
+                                                    
+                            send_buffer=[]  
+                            send_buffer=max_buffer[:len(max_buffer)]
+                            del max_buffer[:len(send_buffer)]
+                                                    
+                            infer_buffer.extend(send_buffer)
+                                                    
+                            wf = wave.open('send_a2f.wav', 'wb')   
+                            wf.setnchannels(CHANNELS)
+                            wf.setsampwidth(p.get_sample_size(FORMAT))
+                            wf.setframerate(RATE) 
+                            wf.writeframes(b''.join(send_buffer))  
+                            wf.close()
+                                                                                                            
+                            audio_data,sr= soundfile.read('send_a2f.wav', dtype='float32')
+                                                        
+                            if len(audio_data.shape) > 1:
+                                audio_data = np.average(audio_data, axis=1)
+                                                            
+                            yield audio2face_pb2.PushAudioStreamRequest(start_marker=marker) 
+                            for i in range(len(audio_data) // sr//10 + 1):
+                                
+                                chunk = audio_data[i * sr//10: i * sr//10 + sr//10]
+                                yield audio2face_pb2.PushAudioStreamRequest(audio_data=chunk.astype(np.float32).tobytes())
+                                                          
+                        else: 
+                            print("【INFO 】 waiting buffer ...")
+                            continue
+
+if __name__ == "__main__":
+    
+    text = "这里是一段较长的文本，需要拆分成多个句子来进行语音合成！句子也可以用问号来结尾吗？\
+    当然可以。我要实现一个人工智能,这里是一段较长的文本，需要拆分成多个句子来进行语音合成！句子也可以用问号来结尾吗？当然可以。我要实现一个人工智能，但是我需要很多时间和精力完成\
+        这里是一段较长的文本，需要拆分成多个句子来进行语音合成！句子也可以用问号来结尾吗？当然可以。我要实现一个人工智能，但是我需要很多时间和精力完成"
+    # 启动主程序
+    t1=time.time()
+    asyncio.run(tts_send(text))
+   
+    
+    print(time.time()-t1)
+  #  t1 = threading.Thread(target=send_stream)
+    t1=time.time()
+    #asyncio.run(tts_a2f(text))
+    print(time.time()-t1)

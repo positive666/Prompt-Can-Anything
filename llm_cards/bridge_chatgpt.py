@@ -18,12 +18,12 @@ import logging
 import traceback
 import requests
 import importlib
-from config_private import A2F_URL,Avatar_instance_A
+
 # config_private.py放自己的秘密如API和代理网址
 # 读取时首先看是否存在私密的config_private配置文件（不受git管控），如果有，则覆盖原config文件
 from utils.toolbox import get_conf, update_ui, is_any_api_key, select_api_key, what_keys, clip_history, trimmed_format_exc
-proxies, API_KEY, TIMEOUT_SECONDS, MAX_RETRY = \
-    get_conf('proxies', 'API_KEY', 'TIMEOUT_SECONDS', 'MAX_RETRY')
+proxies, API_KEY, TIMEOUT_SECONDS, MAX_RETRY,A2F_URL,Avatar_instance_A = \
+    get_conf('proxies', 'API_KEY', 'TIMEOUT_SECONDS', 'MAX_RETRY','A2F_URL','Avatar_instance_A')
 
 timeout_bot_msg = '[Local Message] Request timeout. Network error. Please check proxy settings in config.py.' + \
                   '网络错误，检查代理服务器是否可用，以及代理设置的格式是否正确，格式须是[协议]://[地址]:[端口]，缺一不可。'
@@ -123,11 +123,10 @@ def predict(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_promp
     if record_file and asr:
         import whisper
         from a2f import speech_recognition
-        
-        speech_text, speech_language=speech_recognition(record_file,whisper.load_model("small",
+        speech_text,speech_language=speech_recognition(record_file,whisper.load_model("small",
                                 download_root="weights") ,False)                             
         inputs=speech_text  
-        #print('result:',inputs)   
+        print('result:',inputs)   
      
     if is_any_api_key(inputs):
         chatbot._cookies['api_key'] = inputs
@@ -240,33 +239,14 @@ def predict(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_promp
                         chatbot[-1] = (chatbot[-1][0], f"[Local Message] 异常 \n\n{tb_str} \n\n{regular_txt_to_markdown(chunk_decoded)}")
                     yield from update_ui(chatbot=chatbot, history=history, msg="Json异常" + error_msg) # 刷新界面
                     return
-        print("检查：",chatbot[-1])
         if omniverse_state:
-            import asyncio       
+            t0=time.time()
+            from a2f import tts_a2f
+            import asyncio     
             asyncio.run(tts_a2f(chatbot[-1][-1]))
+            print("xx:",time.time()-t0)
 
-
-
-async def tts_a2f(text):
-    import edge_tts
-    import soundfile as sf
-    import numpy as np
-    from  audio2face_streaming_utils import push_audio_track_stream
-    generate_wave = edge_tts.Communicate(text, voice='zh-CN-YunxiNeural', rate='-5%', volume='+1%')
-    await generate_wave.save('./voice_dir/send_frame.wav')  
-                                       
-    try:
-        audio_data, samplerate = sf.read('./voice_dir/send_frame.wav', dtype="float32")
-        print('xxx')
-        if len(audio_data.shape) > 1:
-            audio_data = np.average(audio_data, axis=1)
-        print("send a2f app....")    
-        push_audio_track_stream(A2F_URL, audio_data, samplerate , Avatar_instance_A) 
-
-        return "SEND DONE"
-    except Exception as e:
-        print(f"检查是否开启omniverse!!!")  
-        
+    
 def generate_payload(inputs, llm_kwargs, history, system_prompt, stream):
     """
     整合所有信息，选择LLM模型，生成http请求，为发送请求做准备

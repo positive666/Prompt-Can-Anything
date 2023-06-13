@@ -5,18 +5,21 @@ import threading
 import importlib
 from utils.toolbox import update_ui, get_conf
 from multiprocessing import Process, Pipe
-
+import multiprocessing as mp
+import torch 
 load_message = "ChatGLM尚未加载，加载需要一段时间。注意，取决于`config.py`的配置，ChatGLM消耗大量的内存（CPU）或显存（GPU），也许会导致低配计算机卡死 ……"
 
 #################################################################################
 class GetGLMHandle(Process):
-    def __init__(self):
+    def __init__(self,quantize='None'):
         super().__init__(daemon=True)
         self.parent, self.child = Pipe()
         self.chatglm_model = None
         self.chatglm_tokenizer = None
         self.info = ""
+        mp.set_start_method('spawn')
         self.success = True
+        self.quantize=quantize
         self.check_dependency()
         self.start()
         self.threadLock = threading.Lock()
@@ -36,16 +39,22 @@ class GetGLMHandle(Process):
     def run(self):
         # 子进程执行
         # 第一次运行，加载参数
+        torch.cuda.init()
         retry = 0
+       
+
         while True:
             try:
                 if self.chatglm_model is None:
-                    self.chatglm_tokenizer = AutoTokenizer.from_pretrained("THUDM/chatglm-6b", trust_remote_code=True)
+                    self.chatglm_tokenizer = AutoTokenizer.from_pretrained("THUDM/chatglm-6b", trust_remote_code=True,cache_dir='weights')
                     device, = get_conf('LOCAL_MODEL_DEVICE')
                     if device=='cpu':
-                        self.chatglm_model = AutoModel.from_pretrained("THUDM/chatglm-6b", trust_remote_code=True).float()
+                        self.chatglm_model = AutoModel.from_pretrained("THUDM/chatglm-6b", trust_remote_code=True,cache_dir='weights').float()
                     else:
-                        self.chatglm_model = AutoModel.from_pretrained("THUDM/chatglm-6b", trust_remote_code=True).half().cuda()
+                        if int(self.quantize)==8 or int(self.quantize)==4:
+                            self.chatglm_model = AutoModel.from_pretrained("THUDM/chatglm-6b", trust_remote_code=True,cache_dir='weights').quantize(int(self.quantize)).half().cuda()
+                        else :
+                            self.chatglm_model = AutoModel.from_pretrained("THUDM/chatglm-6b", trust_remote_code=True,cache_dir='weights').half().cuda()   
                     self.chatglm_model = self.chatglm_model.eval()
                     break
                 else:
@@ -86,6 +95,7 @@ class GetGLMHandle(Process):
         self.threadLock.release()
     
 global glm_handle
+
 glm_handle = None
 #################################################################################
 def predict_no_ui_long_connection(inputs, llm_kwargs, history=[], sys_prompt="", observe_window=[], console_slience=False):
@@ -125,10 +135,22 @@ def predict(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_promp
         函数的说明请见 request_llm/bridge_all.py
     """
     chatbot.append((inputs, ""))
-
+    omniverse_state = llm_kwargs.get('omniverse', False)
+    record_file=llm_kwargs.get('record_audio', False)
+    asr=llm_kwargs.get('asr', False)
+    if record_file and asr:
+        import whisper
+        from a2f import speech_recognition
+        speech_text,speech_language=speech_recognition(record_file,whisper.load_model("small",
+                                download_root="weights") ,False)                             
+        inputs=speech_text  
+        print('asr result:',inputs)   
+    
     global glm_handle
+    quantize=llm_kwargs.get('quantize', False)  
+    print(f'准备进行量化{quantize}')
     if glm_handle is None:
-        glm_handle = GetGLMHandle()
+        glm_handle = GetGLMHandle(quantize=quantize)
         chatbot[-1] = (inputs, load_message + "\n\n" + glm_handle.info)
         yield from update_ui(chatbot=chatbot, history=[])
         if not glm_handle.success: 

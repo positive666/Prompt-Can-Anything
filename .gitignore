@@ -87,8 +87,7 @@ ipython_config.py
 ChatGPT/config
 # pyenv
 .python-version
-#gptkey
-config_private.py
+
 # pipenv
 #   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
 #   However, in case of collaboration, if having platform-specific dependencies or dependencies
@@ -143,3 +142,5 @@ results/
 .idea/
 weights/
 voice_dir/
+
+config_private.py
