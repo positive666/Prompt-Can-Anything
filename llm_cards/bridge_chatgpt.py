@@ -105,7 +105,10 @@ def predict_no_ui_long_connection(inputs, llm_kwargs, history=[], sys_prompt="",
         raise ConnectionAbortedError("正常结束，但显示Token不足，导致输出不完整，请削减单次输入的文本量。")
     return result
 
-
+global asr_handle
+import shutil
+import os
+asr_handle = None
 def predict(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_prompt='', stream = True, additional_fn=None):
     """
     发送至chatGPT，流式获取输出。
@@ -116,16 +119,44 @@ def predict(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_promp
     chatbot 为WebUI中显示的对话列表，修改它，然后yeild出去，可以直接修改对话界面内容
     additional_fn代表点击的哪个按钮，按钮见functional.py
     """
-    
+      
     omniverse_state = llm_kwargs.get('omniverse', False)
-    record_file=llm_kwargs.get('record_audio', False)
+    src_file=llm_kwargs.get('record_audio', False)
+    # print(src_file)   
+    # # 将指定文件移动到当前目录
+    # #shutil.move(record_file, r'voice_dir/')
+    # dst_file = "audio-0-100.wav"
+
+    # # 判断要移动的文件是否存在
+    # if os.path.exists(src_file):
+    #     # 移动文件
+    #     shutil.move(src_file, dst_file)
+    #     print(f"{src_file} 已成功移动并改名为 {dst_file}")
+    # else:
+    #     print(f"{src_file} 不存在")
     asr=llm_kwargs.get('asr', False)
-    if record_file and asr:
+   # speech_text=''
+    if  asr:
+        
+        global asr_handle     
         import whisper
-        from a2f import speech_recognition
-        speech_text,speech_language=speech_recognition(record_file,whisper.load_model("small",
-                                download_root="weights") ,False)                             
-        inputs=speech_text  
+        from a2f import speech_recognition,mic_audio
+        if asr_handle is  None:
+            print('loads asf model..')
+            asr_handle=whisper.load_model("small",
+                                 download_root="weights")
+        
+        result = asr_handle.transcribe(src_file)
+        #print(result["text"])
+        # print("asr加载完毕,开始录音")
+        # while True:
+        #        # result_txt="你好我没有正确识别到结果"
+
+        #         if keyboard.is_pressed('q'):  
+        #             mic_audio('voice_dir/send_asr.wav')
+        #speech_text,__=speech_recognition('voice_dir/send_asr.wav',asr_handle,False) 
+        #             break
+        inputs=result["text"]
         print('result:',inputs)   
      
     if is_any_api_key(inputs):
@@ -244,7 +275,7 @@ def predict(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_promp
             from a2f import tts_a2f
             import asyncio     
             asyncio.run(tts_a2f(chatbot[-1][-1]))
-            print("xx:",time.time()-t0)
+            #print("xx:",time.time()-t0)
 
     
 def generate_payload(inputs, llm_kwargs, history, system_prompt, stream):

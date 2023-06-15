@@ -11,7 +11,7 @@ import soundfile
 from audio2face_streaming_utils import push_audio_track_stream,push_audio_track,push_stream
 import pyaudio
 import wave
-import keyboard
+
 import time
 import whisper 
 import requests
@@ -53,37 +53,56 @@ def crop_wav(path, crop_len):
             save_path = os.path.join(path, os.path.basename(wave_path)[:-4], str(uuid.uuid1()) + '.wav')
             get_part_wav(sound, start_time, start_time + crop_len, save_path)
 
+from concurrent.futures import ThreadPoolExecutor
+def process_chunk(model, chunk, detect_language):
+    # make log-Mel spectrogram and move to the same device as the model
+    mel = whisper.log_mel_spectrogram(chunk).to(model.device)
 
-def speech_recognition(inputs, model,stream_model=False):
-    # whisper
-    all_result=''
-    if not stream_model:
-          audio,sr= soundfile.read(inputs, dtype='float32')
-    else:  
-          sr,audio=inputs
-    chunk_size=sr*30
-    for i in range(0, len(audio), chunk_size):                 
-        chunk_end = min(i + chunk_size, len(audio))
-        chunk = whisper.pad_or_trim(audio[i:chunk_end])
-    # load audio and pad/trim it to fit 30 seconds
-   # audio = whisper.load_audio(speech_file)
-    
-       # chunk= whisper.pad_or_trim(chunk)
-
-          # make log-Mel spectrogram and move to the same device as the model
-        mel = whisper.log_mel_spectrogram(chunk).to(model.device)
-
-          # detect the spoken language
+    # detect the spoken language
+    speech_language = 'zh'
+    if detect_language :
         _, probs = model.detect_language(mel)
         speech_language = max(probs, key=probs.get)
 
-          # decode the audio
-        options = whisper.DecodingOptions()
-        result = whisper.decode(model, mel, options)
+    # decode the audio
+    options = whisper.DecodingOptions()
+    result = whisper.decode(model, mel, options)
 
-    # print the recognized text
-        print(result.text)
-        all_result+=result.text
+    return result.text, speech_language
+
+def speech_recognition(inputs, model,stream_model=False,detect_language=False):
+    # whisper
+    all_result=''
+    speech_language='zh'
+    executor = ThreadPoolExecutor()
+    results = []
+    audio=None
+    if not stream_model:
+          audio,sr= soundfile.read(inputs, dtype='float32')
+    else:  
+          print('numpy  data')
+          sr,audio=inputs
+          data = audio / 65538
+          audio = data.astype(np.float32)
+    print(sr)
+    chunk_size= sr*30
+    print((audio))
+    for i in range(0, len(audio), chunk_size):
+        chunk_end = min(i + chunk_size, len(audio))
+        chunk = whisper.pad_or_trim(audio[i:chunk_end])
+        
+        # submit the chunk to the thread pool for processing
+        results.append(executor.submit(process_chunk, model, chunk, detect_language))
+
+    # print the recognized text and the detected language
+    for result in results:
+        text, language = result.result()
+        #print(text)
+        all_result += text
+        speech_language = language
+
+    # # print the recognized text
+    # all_result+=result.text
     return all_result, speech_language
 
 
@@ -103,12 +122,16 @@ buffer_length=int(RATE / CHUNK * RECORD_SECONDS)
 record_file='record.wav'
 p = pyaudio.PyAudio()  
 
-def mic_audio():
-     stream = p.open(format=FORMAT,
-                    channels=CHANNELS,
-                    rate=RATE,
-                    frames_per_buffer=CHUNK,
-                    input=True)
+def mic_audio(record_file="record.wav"):
+     # 打开录音
+     import keyboard
+     stream = p.open(
+                input_device_index=1,
+                format=FORMAT,
+                channels=CHANNELS,
+                rate=RATE,
+                input=True,
+                frames_per_buffer=CHUNK)
      print("Recording...")
      frames = []
      while True:
@@ -126,24 +149,9 @@ def mic_audio():
      wf.setframerate(RATE)
      wf.writeframes(b''.join(frames))
      wf.close()
-     #return frames
+     return 'OK'
 
-def send_stream(whisper_model):
-     
-     while True:
-          if keyboard.is_pressed('q'):
-               mic_audio()
-               print('recording done')
-               # load speech
-               
-               print('asr model load done')
-               speech_text, speech_language= speech_recognition('voice/temp.mp3',whisper_model)
-                
-          
-     #audio_data, samplerate = soundfile.read(audio_file, dtype="float32")
-     # if len(audio_data.shape) > 1:
-     #   audio_data = np.average(audio_data, axis=1)
-     # push_audio_track_stream(a2f_url, audio_data, RATE , Avatar_instance_A) 
+
 
 import edge_tts
 import threading
@@ -198,7 +206,7 @@ import queue
 async def tts_a2f(text):
     import edge_tts
     import soundfile as sf
-    import numpy as np
+    #import numpy as np
     from  audio2face_streaming_utils import push_audio_track_stream
     generate_wave = edge_tts.Communicate(text, voice='zh-CN-YunxiNeural', rate='-5%', volume='+1%')
     await generate_wave.save('./voice_dir/send_frame.wav')  

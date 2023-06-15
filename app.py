@@ -19,8 +19,6 @@ from utils.toolbox import format_io, find_free_port, on_file_uploaded, on_report
 
 from utils.torch_utils import select_device
 from utils import VID_FORMATS,IMG_FORMATS,write_categories
-VisualGLM_dir=f"VisualGLM_6B"
-sys.path.append(VisualGLM_dir)
 
 import gradio as gr
 import random
@@ -32,6 +30,8 @@ from utils.colorful import *
 
 functional = get_core_functions()
 
+VisualGLM_dir=f"VisualGLM_6B"
+sys.path.append(VisualGLM_dir)
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  #  root directory
 if str(ROOT) not in sys.path:
@@ -45,14 +45,38 @@ category_colors={}
 # 初始对应类别编号
 class_ids = []
 global speech_AI
-speech_AI={'asr':{'whisper':None},'tts':{'tts_VITS':None,'tts_edge':None}} ## speech 
+speech_AI={'asr':{'whisper':None},'tts':{'tts_VITS':None,'tts_edge': None}} ## speech 
 global models_config
 models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None,'sd': None,    ## cv with text
                  'visual_glm': None , 'trans_zh': None,'gligen': None}
-
 NUM_WORKERS=1
 JSON_DATASETS=[]
 
+
+operation_running = False
+
+def toggle_operation(flag):
+
+        import whisper
+        from a2f import speech_recognition,mic_audio,keyboard
+        if speech_AI['asr']['whisper'] is  None:
+            speech_AI['asr']['whisper']=whisper.load_model("small",
+                                download_root="weights")
+        
+        print("asr加载完毕,开始录音!")
+        text=[]
+        speech_text=''
+        while True:
+               # result_txt="你好我没有正确识别到结果"
+
+                if keyboard.is_pressed('q'):  
+                    mic_audio('voice_dir/send_asr.wav')
+                    speech_text,__=speech_recognition('voice_dir/send_asr.wav',speech_AI['asr']['whisper'],False) 
+                    break
+        print(speech_text) 
+        text.append(speech_text)
+        
+        return  text
 async def sadtalker_demo(checkpoint_path,config_path,source_image,
                             driven_audio,
                             preprocess_type,
@@ -100,6 +124,7 @@ def train_visualGLM(name,model_size,mode,train_iters,resume_data,
         p.join()
     return 'OK'    
 
+#具体参数待修复调整
 def start_finetuning_process(gpt_option,model_args,method_type):
     print('fine subprocess start')
     script_path = os.path.abspath(__file__)
@@ -196,20 +221,6 @@ def save_text2img_data(prompt,label,img_name,zh_select):
     }
     JSON_DATASETS.append(example)
             
-
-def auto_opentab_delay(port=7586):
-        import threading, webbrowser, time
-        LOGGER.info(f"\n如果浏览器没有自动打开，请复制并转到以下URL：")
-        LOGGER.info(f"\t（亮色主题）: http://localhost:{port}")
-        LOGGER.info(f"\t（暗色主题）: http://localhost:{port}/?__theme=dark")
-        def open():
-            time.sleep(2)       # 打开浏览器
-            DARK_MODE, = get_conf('DARK_MODE')
-            if DARK_MODE: webbrowser.open_new_tab(f"http://localhost:{port}/?__theme=dark")
-            else: webbrowser.open_new_tab(f"http://localhost:{port}")
-        threading.Thread(target=open, name="open-browser", daemon=True).start()
-        #threading.Thread(target=auto_update, name="self-upgrade", daemon=True).start()
-
 async def load_auto_backend_models(lama, sam, det, tag2text, trans_zh, visual_glm,device=0, quant=4, bar=None): 
     try:    
         with concurrent.futures.ThreadPoolExecutor() as pool:
@@ -494,7 +505,7 @@ def visual_chat(prompt_input, temperature, top_p, image_prompt, result_text,reco
 
                 __, result_text=(models_config['visual_glm'].request_model(prompt_input, temperature, top_p, image_prompt, result_text))
                 if omniverse: 
-                        from llm_cards.bridge_chatgpt import tts_a2f       
+                        from a2f import tts_a2f       
                         asyncio.run(tts_a2f(result_text[-1][-1]))
                 return "",result_text
           else :
@@ -650,7 +661,11 @@ if __name__ == "__main__":
                                 with gr.TabItem('Upload OR TTS'):
                                         
                                         with gr.Column(variant='panel'):
-                                            record_audio = gr.Audio(label="record your voice", source="microphone",type='filepath')
+                                            with gr.Row():
+                                                record_audio = gr.Audio(label="record your voice", source="microphone",type='filepath')
+                                                #Recording_audio=gr.Button('Recording_asr',elem_id="speech2text", variant='primary')
+                                                
+        
                                             with gr.Row():
                                                 upload_audio = gr.Audio(label="Input audio(./wav/.mp3)", source="upload",type='filepath').style(height=20,width=120)
                                                 input_text = gr.Textbox(label="Generating audio from text", lines=2, placeholder="please enter some text here, we genreate the audio from  TTS.")
@@ -715,7 +730,7 @@ if __name__ == "__main__":
                        
                          with gr.Row():
                                 plugin_advanced_arg = gr.Textbox(show_label=True, label="高级参数输入区", visible=False, 
-                                                                 placeholder="这里是特殊函数插件的高级参数输入区").style(container=False)
+                                                                 placeholder="特殊函数插件的高级参数输入区").style(container=False)
 
                                                           
                     with gr.Column(scale=20):
@@ -745,14 +760,18 @@ if __name__ == "__main__":
                                 result_text = gr.Chatbot(label=f'当前模型:{LLM_MODEL}', value=[("", "Hi, What do you want to know ?")]).style(height=CHATBOT_HEIGHT)
                                 history = gr.State([])
                
+               #Recording_audio.click(fn=toggle_operation,inputs=[asr_select],outputs=[input_text]) # 将 toggle_operation 函数绑定到按钮
+               
                sadtalker_submit.click(fn=sadtalker_demo,inputs=[sadtalker_path,sadtalker_config,image_prompt,upload_audio, preprocess_type,is_still_mode,enhancer,
-                    batch_size,  size_of_image,pose_style,exp_weight],outputs=[video_output])
+                                batch_size, size_of_image, pose_style, exp_weight],outputs=[video_output])
                #audio_to_face.click(fn=t2s, inputs=[result_text,input_text,gr.State(True),omniverse_switch], outputs=[upload_audio] )                                 
                asr_button.click(fn=load_speech_model,inputs=[asr_select,tts_select],outputs=[loads_flag])        
                asr.click(fn=s2t, inputs=[upload_audio], outputs=[input_text])                    
-               tts.click(fn=t2s, inputs=[input_text,tts_select], outputs=[upload_audio])   
+               tts.click(fn=t2s, inputs=[input_text,tts_select], outputs=[upload_audio]) 
+               # fine tune VisualGLM  
                visualglm_args.append(train_methods)   
-               fine_tune.click(fn=train_visualGLM,inputs=visualglm_args,outputs=[txt])     
+               fine_tune.click(fn=train_visualGLM,inputs=visualglm_args,outputs=[txt])   
+                 
                # visualGLM inputs    
                cs=[]                 
                cs.extend(list_methods)  
@@ -795,11 +814,19 @@ if __name__ == "__main__":
                image_prompt.upload(fn=clear_fn_image, inputs=clear_button, outputs=[result_text])
                clear_button.click(lambda: ("","","","",""), None, [prompt_input,result_text,txt, input_text,chat_txt])
                image_prompt.clear(fn=clear_fn_image, inputs=clear_button, outputs=[result_text])
-            #    def on_md_dropdown_changed(k):
-            #         cookies = gr.State({'api_key': API_KEY, 'llm_model': LLM_MODEL})
-            #         return {result_text: gr.update(label="当前模型："+k)}
-            #    md_dropdown.select(on_md_dropdown_changed, [md_dropdown],[result_text])
-              # upload_audio.clear(fn=clear_fn_image, inputs=clear_button, outputs=[upload_audio])
+          
+          def auto_opentab_delay(port=7586):
+                import threading, webbrowser, time
+                LOGGER.info(f"\n如果浏览器没有自动打开，请复制并转到以下URL：")
+                LOGGER.info(f"\t（亮色主题）: http://localhost:{port}")
+                LOGGER.info(f"\t（暗色主题）: http://localhost:{port}/?__theme=dark")
+                def open():
+                    time.sleep(2)       # 打开浏览器
+                    DARK_MODE, = get_conf('DARK_MODE')
+                    if DARK_MODE: webbrowser.open_new_tab(f"http://localhost:{port}/?__theme=dark")
+                    else: webbrowser.open_new_tab(f"http://localhost:{port}")
+                threading.Thread(target=open, name="open-browser", daemon=True).start()
+               #threading.Thread(target=auto_update, name="self-upgrade", daemon=True).start()
           auto_opentab_delay(7901)
           block.queue(concurrency_count=CONCURRENT_COUNT).launch(server_name='0.0.0.0', server_port=7901,debug=True, share=False)
      

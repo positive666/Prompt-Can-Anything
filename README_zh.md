@@ -163,7 +163,7 @@ pip install --upgrade diffusers[torch]
 
 更多内容，可以查看requirements, “pip install < your missing packages>”, 如果出现安装版本问题，请仔细看requirements的版本
 
-**Linux环境问题**
+**Linux环境问题【易出现问题的库】**
 
 1. 对于pyaudio
 
@@ -177,7 +177,7 @@ sudo apt-get install python3-all-dev
 pip install pyaudio
 ```
 
-2.使用qlora微调int4模型问题：
+2.VisualGLM训练环境:使用qlora微调int4模型问题：
 
 ```
 pip install  bitsandbytes  -i https://mirrors.aliyun.com/pypi/simple
@@ -248,7 +248,7 @@ pip install  bitsandbytes  -i https://mirrors.aliyun.com/pypi/simple
 
       ```bash
    "--input_prompt" :  你可以手动输入prompt,比如你只想检测你感兴趣的目标类别，可以直接输入给grounded检测模型，也可以输入给tag2text
-   '--color-flag': 使用BOX的标签同类别和实例分割区别:语音分割的类别颜色
+   '--color-flag': 使用BOX的标签同类别和实例分割区别:语义分割的类别颜色
    ```
 
    支持多种任务，例如：
