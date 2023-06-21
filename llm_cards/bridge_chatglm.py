@@ -127,7 +127,104 @@ def predict_no_ui_long_connection(inputs, llm_kwargs, history=[], sys_prompt="",
                 raise RuntimeError("程序终止。")
     return response
 
+import threading 
+import queue
 
+def asr_with_gpt(transcriber,text_queue, llm_kwargs, plugin_kwargs, chatbot, history=[], system_prompt='', stream = True, additional_fn=None):
+    print('开启识别线程')
+   
+    while True:
+            if transcriber.transcript_changed_event.is_set():
+                start_time = time.time()
+                transcriber.transcript_changed_event.clear() 
+                transcript_string=''
+                if transcriber.two_ways:
+                    transcript_string = transcriber.get_transcript()
+                else:
+                    #print(transcriber.transcript_data["You"])
+                    transcript_string=transcriber.transcript_data["You"] 
+                    #transcript_string=transcript_string[0][0][len('You: [') : -len(']\n\n')]
+                if transcript_string!=" ":
+                    response=predict_no_ui_long_connection(str(transcript_string), llm_kwargs, history, system_prompt, None,False) 
+                    end_time = time.time()  # Measure end time
+                    execution_time = end_time - start_time  # Calculate the time it took to execute the function
+                    
+                    text_queue.put((transcript_string,response))
+                    remaining_time = 2 - execution_time
+                    if remaining_time > 0:
+                        time.sleep(remaining_time)
+            
+            else:
+                time.sleep(0.02) # 允许事件循环在这里运行，避免耗费 CPU                     
+        
+
+async def send_ui(text_queue,chatbot, history): 
+    #time.sleep(0.01)
+    while  True:
+       #     print('updata ui',text_queue.qsize())
+        if text_queue.qsize()>0:
+                iss,ans=text_queue.get()
+                chatbot.append((iss,ans))
+                
+                history.extend([iss,ans])
+                
+                print('更新界面中。。。。。')
+             
+                await chatbot.get_cookies(),chatbot, history, 'done'
+        else:
+            print('队列为空')
+        
+def Talk_with_app(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_prompt='', stream = True, additional_fn=None):
+        import threading 
+        from utils import AudioRecorder 
+        from utils import AudioTrans
+        import whisper
+        
+        chat_app=llm_kwargs.get('chat_app', False)
+        print(f'是否开启自动对话系统：{chat_app}')
+        model = whisper.load_model('small',download_root='weights')  
+        # 在主线程中初始化 loop
+        #loop = asyncio.get_event_loop() 
+        
+        if(chat_app):
+            chatbot.append(("开启自动对话系统", "等待效应开启语音识别服务"))
+            #history.append("")
+            yield from update_ui(chatbot=chatbot, history=history, msg="等待响应") # 刷新界面
+            audio_queue = queue.Queue()
+            text_queue=queue.Queue()
+            user_audio_recorder = AudioRecorder.DefaultMicRecorder()
+            user_audio_recorder.record_into_queue(audio_queue)
+
+            time.sleep(2)
+            #speaker_audio_recorder = AudioRecorder.DefaultSpeakerRecorder()
+            #speaker_audio_recorder.record_into_queue(audio_queue)
+            print('开始语音识别服务........')
+        
+            transcriber = AudioTrans.AudioTranscriber(user_audio_recorder.source, None, model)
+            transcribe = threading.Thread(target=transcriber.transcribe_audio_queue, args=(audio_queue,))
+            transcribe.daemon=True
+            transcribe.start()
+            t1=threading.Thread(target=asr_with_gpt, args=(transcriber, text_queue,llm_kwargs, plugin_kwargs, chatbot, history, system_prompt, stream , additional_fn,))
+            t1.daemon=True
+            t1.start()
+        
+            while  True:              
+                while text_queue.qsize()>0:
+                        try:
+                            iss,ans=text_queue.get()
+                            chatbot.append((iss,ans))                   
+                            history.extend([iss,ans])
+
+                           # print('更新界面中。。。。。')
+                            yield from update_ui(chatbot=chatbot, history=history, msg="Done") 
+                        except Exception as e:  
+                            yield from update_ui(chatbot=chatbot, history=history, msg="Error") 
+                            return 
+                time.sleep(0.02)  
+                yield from update_ui(chatbot=chatbot, history=history, msg="等待响应") # 刷新界面
+             
+        chatbot[-1]=('退出对话系统',"已结束对话系统")   
+        yield from update_ui(chatbot=chatbot, history=history, msg="远程返回:") # 刷新界面
 
 def predict(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_prompt='', stream = True, additional_fn=None):
     """

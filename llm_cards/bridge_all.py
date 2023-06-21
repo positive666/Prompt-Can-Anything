@@ -15,10 +15,11 @@ from utils.toolbox import get_conf, trimmed_format_exc
 
 from llm_cards.bridge_chatgpt import predict_no_ui_long_connection as chatgpt_noui
 from llm_cards.bridge_chatgpt import predict as chatgpt_ui
+from llm_cards.bridge_chatgpt import Talk_with_app as talk_chatgpt
 
 from llm_cards.bridge_chatglm import predict_no_ui_long_connection as chatglm_noui
 from llm_cards.bridge_chatglm import predict as chatglm_ui
-
+from llm_cards.bridge_chatglm import Talk_with_app as talk_chatglm
 # from .bridge_tgui import predict_no_ui_long_connection as tgui_noui
 # from .bridge_tgui import predict as tgui_ui   
 
@@ -70,11 +71,13 @@ get_token_num_gpt35 = lambda txt: len(tokenizer_gpt35.encode(txt, disallowed_spe
 get_token_num_gpt4 = lambda txt: len(tokenizer_gpt4.encode(txt, disallowed_special=()))
 
 
+
 model_info = {
     # openai
     "gpt-3.5-turbo": {
         "fn_with_ui": chatgpt_ui,
         "fn_without_ui": chatgpt_noui,
+        "fn_talk": talk_chatgpt,
         "endpoint": openai_endpoint,
         "max_token": 4096,
         "tokenizer": tokenizer_gpt35,
@@ -84,6 +87,7 @@ model_info = {
     "gpt-4": {
         "fn_with_ui": chatgpt_ui,
         "fn_without_ui": chatgpt_noui,
+        "fn_talk": talk_chatgpt,
         "endpoint": openai_endpoint,
         "max_token": 8192,
         "tokenizer": tokenizer_gpt4,
@@ -94,6 +98,7 @@ model_info = {
     "api2d-gpt-3.5-turbo": {
         "fn_with_ui": chatgpt_ui,
         "fn_without_ui": chatgpt_noui,
+        "fn_talk": talk_chatgpt,
         "endpoint": api2d_endpoint,
         "max_token": 4096,
         "tokenizer": tokenizer_gpt35,
@@ -103,6 +108,7 @@ model_info = {
     "api2d-gpt-4": {
         "fn_with_ui": chatgpt_ui,
         "fn_without_ui": chatgpt_noui,
+        "fn_talk": talk_chatgpt,
         "endpoint": api2d_endpoint,
         "max_token": 8192,
         "tokenizer": tokenizer_gpt4,
@@ -113,6 +119,7 @@ model_info = {
     "chatglm": {
         "fn_with_ui": chatglm_ui,
         "fn_without_ui": chatglm_noui,
+        "fn_talk": talk_chatglm,
         "endpoint": None,
         "max_token": 1024,
         "tokenizer": tokenizer_gpt35,
@@ -317,8 +324,11 @@ def predict_all(inputs, llm_kwargs, *args, **kwargs):
     chatbot 为WebUI中显示的对话列表，修改它，然后yeild出去，可以直接修改对话界面内容
     additional_fn代表点击的哪个按钮，按钮见functional.py
     """
-   # print('quantize:',llm_kwargs['quantize'])
+    print('quantize:',llm_kwargs['quantize'])
     method = model_info[llm_kwargs['llm_model']]["fn_with_ui"]
-    
     yield from method(inputs, llm_kwargs, *args, **kwargs)
 
+def talk_all(inputs, llm_kwargs, *args, **kwargs):
+    
+    method = model_info[llm_kwargs['llm_model']]["fn_talk"]
+    yield from method(inputs, llm_kwargs, *args, **kwargs)

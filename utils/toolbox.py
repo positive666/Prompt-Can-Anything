@@ -39,7 +39,7 @@ def ArgsGeneralWrapper(f):
     """
     装饰器函数，用于重组输入参数，改变输入参数的顺序与结构。
     """
-    def decorated(cookies, max_length, llm_model, txt, txt2, top_p, temperature, chatbot, history, system_prompt, plugin_advanced_arg, omniverse_switch,record_audio,asr,quantize,*args):
+    def decorated(cookies, max_length, llm_model, txt, txt2, top_p, temperature, chatbot, history, system_prompt, plugin_advanced_arg, omniverse_switch,record_audio,asr,quantize,chat_app,*args):
         txt_passon = txt
         if txt == "" and txt2 != "": txt_passon = txt2
         # 引入一个有cookie的chatbot
@@ -57,6 +57,7 @@ def ArgsGeneralWrapper(f):
             "record_audio":record_audio,
             "asr":asr,
             "quantize":quantize,
+            "chat_app":chat_app,
         }
         plugin_kwargs = {
             "advanced_arg": plugin_advanced_arg,

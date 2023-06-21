@@ -18,7 +18,7 @@ import logging
 import traceback
 import requests
 import importlib
-
+from a2f import audio_synthesis
 # config_private.py放自己的秘密如API和代理网址
 # 读取时首先看是否存在私密的config_private配置文件（不受git管控），如果有，则覆盖原config文件
 from utils.toolbox import get_conf, update_ui, is_any_api_key, select_api_key, what_keys, clip_history, trimmed_format_exc
@@ -106,9 +106,87 @@ def predict_no_ui_long_connection(inputs, llm_kwargs, history=[], sys_prompt="",
     return result
 
 global asr_handle
-import shutil
-import os
-asr_handle = None
+asr_handle=None
+import queue
+def asr_with_gpt(transcriber,text_queue, llm_kwargs, plugin_kwargs, chatbot, history=[], system_prompt='', stream = True, additional_fn=None):
+    print('开启识别线程')
+    history_text=''
+    while True:
+            if transcriber.transcript_changed_event.is_set():
+                start_time = time.time()
+                transcriber.transcript_changed_event.clear() 
+                transcript_string=''
+                if transcriber.two_ways:
+                    transcript_string = transcriber.get_transcript()
+                else:
+                    #print(transcriber.transcript_data["You"])
+                    transcript_string=transcriber.transcript_data["You"] 
+                    #transcript_string=transcript_string[0][0][len('You: [') : -len(']\n\n')]
+                if transcript_string!=" "and transcript_string!= history_text :
+                    response=predict_no_ui_long_connection(str(transcript_string), llm_kwargs, history, system_prompt, None,False) 
+                    end_time = time.time()  # Measure end time
+                    execution_time = end_time - start_time  # Calculate the time it took to execute the function
+                    
+                    text_queue.put((transcript_string,response))
+                    remaining_time = 2 - execution_time
+                    if remaining_time > 0:
+                        time.sleep(remaining_time)
+            
+            else:
+                time.sleep(0.02) # 允许事件循环在这里运行，避免耗费 CPU                     
+        
+def Talk_with_app(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_prompt='', stream = True, additional_fn=None):
+        import threading 
+        from utils import AudioRecorder 
+        from utils import AudioTrans
+        import whisper
+        
+        chat_app=llm_kwargs.get('chat_app', False)
+        print(f'是否开启自动对话系统：{chat_app}')
+        model = whisper.load_model('small',download_root='weights')  
+        
+        if(chat_app):
+            chatbot.append(("开启自动对话系统", "等待效应开启语音识别服务"))
+            yield from update_ui(chatbot=chatbot, history=history, msg="等待响应") # 刷新界面
+            audio_queue = queue.Queue()
+            text_queue=queue.Queue()
+            user_audio_recorder = AudioRecorder.DefaultMicRecorder()
+            user_audio_recorder.record_into_queue(audio_queue)
+            time.sleep(2)
+            #speaker_audio_recorder = AudioRecorder.DefaultSpeakerRecorder()
+            #speaker_audio_recorder.record_into_queue(audio_queue)
+            print('开始语音识别服务........')
+        
+            transcriber = AudioTrans.AudioTranscriber(user_audio_recorder.source, None, model)
+            transcribe = threading.Thread(target=transcriber.transcribe_audio_queue, args=(audio_queue,))
+            transcribe.daemon=True
+            transcribe.start()
+            t1=threading.Thread(target=asr_with_gpt, args=(transcriber, text_queue,llm_kwargs, plugin_kwargs, chatbot, history, system_prompt, stream , additional_fn,))
+            t1.daemon=True
+            t1.start()
+            
+            while True:              
+                while text_queue.qsize()>0:
+                        try:
+                            iss,ans=text_queue.get()
+                            chatbot.append((iss,ans))                   
+                            history.extend([iss,ans])
+                            audio_synthesis(ans,A2F_URL,Avatar_instance_A)
+                            yield from update_ui(chatbot=chatbot, history=history, msg="Done") 
+                        except Exception as e:
+                            chatbot[-1][-1]='超时错误'  
+                            print(e)
+                            yield from update_ui(chatbot=chatbot, history=history, msg="Error") 
+                            return 
+                time.sleep(0.01)  
+                yield from update_ui(chatbot=chatbot, history=history, msg="等待响应") # 刷新界面
+        
+        chatbot[-1]=('退出对话系统',"已结束对话系统")   
+        yield from update_ui(chatbot=chatbot, history=history, msg="远程返回:") # 刷新界面
+    
+    
+# async def Talk_with_app(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_prompt='', stream = True, additional_fn=None):
+#     await asyncio.gather(talk_with_app(inputs, llm_kwargs, plugin_kwargs, chatbot, history, system_prompt, stream, additional_fn), send_ui )
 def predict(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_prompt='', stream = True, additional_fn=None):
     """
     发送至chatGPT，流式获取输出。
@@ -119,45 +197,20 @@ def predict(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_promp
     chatbot 为WebUI中显示的对话列表，修改它，然后yeild出去，可以直接修改对话界面内容
     additional_fn代表点击的哪个按钮，按钮见functional.py
     """
-      
     omniverse_state = llm_kwargs.get('omniverse', False)
-    src_file=llm_kwargs.get('record_audio', False)
-    # print(src_file)   
-    # # 将指定文件移动到当前目录
-    # #shutil.move(record_file, r'voice_dir/')
-    # dst_file = "audio-0-100.wav"
-
-    # # 判断要移动的文件是否存在
-    # if os.path.exists(src_file):
-    #     # 移动文件
-    #     shutil.move(src_file, dst_file)
-    #     print(f"{src_file} 已成功移动并改名为 {dst_file}")
-    # else:
-    #     print(f"{src_file} 不存在")
+    record_file=llm_kwargs.get('record_audio', False)
     asr=llm_kwargs.get('asr', False)
-   # speech_text=''
-    if  asr:
-        
-        global asr_handle     
+    if asr:     
         import whisper
-        from a2f import speech_recognition,mic_audio
+        global asr_handle    
         if asr_handle is  None:
             print('loads asf model..')
             asr_handle=whisper.load_model("small",
                                  download_root="weights")
-        
-        result = asr_handle.transcribe(src_file)
-        #print(result["text"])
-        # print("asr加载完毕,开始录音")
-        # while True:
-        #        # result_txt="你好我没有正确识别到结果"
-
-        #         if keyboard.is_pressed('q'):  
-        #             mic_audio('voice_dir/send_asr.wav')
-        #speech_text,__=speech_recognition('voice_dir/send_asr.wav',asr_handle,False) 
-        #             break
+           
+        result = asr_handle.transcribe(record_file)
         inputs=result["text"]
-        print('result:',inputs)   
+        print('result:',inputs) 
      
     if is_any_api_key(inputs):
         chatbot._cookies['api_key'] = inputs
@@ -206,7 +259,7 @@ def predict(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_promp
             if retry > MAX_RETRY: raise TimeoutError
 
     gpt_replying_buffer = ""
-    
+    count=0
     is_head_of_the_stream = True
     if stream:
         stream_response =  response.iter_lines()
@@ -236,12 +289,16 @@ def predict(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_promp
                     chunkjson = json.loads(chunk_decoded[6:])
                     status_text = f"finish_reason: {chunkjson['choices'][0]['finish_reason']}"
                     # 如果这里抛出异常，一般是文本过长，详情见get_full_error的输出
-                    gpt_replying_buffer = gpt_replying_buffer + json.loads(chunk_decoded[6:])['choices'][0]["delta"]["content"]
+                    new_buffer=json.loads(chunk_decoded[6:])['choices'][0]["delta"]["content"]
+                    gpt_replying_buffer = gpt_replying_buffer + new_buffer
                     history[-1] = gpt_replying_buffer
-                
-                    chatbot[-1] = (history[-2], history[-1])
-                    yield from update_ui(chatbot=chatbot, history=history, msg=status_text) # 刷新界面
+                    # if omniverse_state and gpt_replying_buffer[-1] in('。'):
 
+                    chatbot[-1] = (history[-2], history[-1])                  
+             
+                    yield from update_ui(chatbot=chatbot, history=history, msg=status_text) # 刷新界面
+                    
+                
                 except Exception as e:
                     traceback.print_exc()
                     yield from update_ui(chatbot=chatbot, history=history, msg="Json解析不合常规") # 刷新界面
@@ -270,14 +327,13 @@ def predict(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_promp
                         chatbot[-1] = (chatbot[-1][0], f"[Local Message] 异常 \n\n{tb_str} \n\n{regular_txt_to_markdown(chunk_decoded)}")
                     yield from update_ui(chatbot=chatbot, history=history, msg="Json异常" + error_msg) # 刷新界面
                     return
+           
         if omniverse_state:
-            t0=time.time()
             from a2f import tts_a2f
-            import asyncio     
-            asyncio.run(tts_a2f(chatbot[-1][-1]))
-            #print("xx:",time.time()-t0)
+            audio_synthesis(chatbot[-1][-1],A2F_URL,Avatar_instance_A)   
+           #asyncio.run(tts_a2f(chatbot[-1][-1]))
 
-    
+        
 def generate_payload(inputs, llm_kwargs, history, system_prompt, stream):
     """
     整合所有信息，选择LLM模型，生成http请求，为发送请求做准备

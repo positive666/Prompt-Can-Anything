@@ -13,7 +13,8 @@ from utils.ops import (LOGGER, Profile, check_file, check_requirements, colorstr
                      dilate_mask, increment_path , scale_boxes, xyxy2xywh,save_format)
 from utils.plot import Annotator, save_one_box,show_box,show_mask,save_mask_data,Draw_img
 from config_private import *
-from llm_cards.bridge_all import predict_all 
+from llm_cards.bridge_all import predict_all,talk_all
+from llm_cards.bridge_chatgpt import Talk_with_app
 from llm_cards.core_functional import get_core_functions
 from utils.toolbox import format_io, find_free_port, on_file_uploaded, on_report_generated, get_conf, ArgsGeneralWrapper, DummyWith
 
@@ -596,7 +597,10 @@ if __name__ == "__main__":
                                                 tts_select = gr.Dropdown(TTS_METHOD,value='VITS', label="语音合成方法").style(container=False)
                                                 asr_gpt = gr.inputs.Checkbox(label='ASR gpt [无需加载按钮]',default=False).style(height=1,width=1)
                                                 asr_button = gr.Button('Loads SPEECH_AI').style(height=5,width=5)  
-
+                         with gr.Accordion('大模型对话系统配置', open=True):
+                                            with gr.Row():                                        
+                                                chat_app = gr.inputs.Checkbox(label='start system',default=False).style(height=1,width=1)
+                                                chat_app_button = gr.Button('Speech_system').style(height=5,width=5)  
                          with gr.Accordion('ViusalGLM训练配置', open=False):
                                 with gr.Row():
                                     train_methods=gr.Dropdown(AVAIL_METHOD_FINETUNE,value=METHOD_FINETUNE, label="微调方法").style(container=False)
@@ -665,7 +669,6 @@ if __name__ == "__main__":
                                                 record_audio = gr.Audio(label="record your voice", source="microphone",type='filepath')
                                                 #Recording_audio=gr.Button('Recording_asr',elem_id="speech2text", variant='primary')
                                                 
-        
                                             with gr.Row():
                                                 upload_audio = gr.Audio(label="Input audio(./wav/.mp3)", source="upload",type='filepath').style(height=20,width=120)
                                                 input_text = gr.Textbox(label="Generating audio from text", lines=2, placeholder="please enter some text here, we genreate the audio from  TTS.")
@@ -684,9 +687,8 @@ if __name__ == "__main__":
                                     if method=='VITS':
                                         print('更新中，暂不支持')
                                     elif method=='edge_tts'  :  
-                                        #send_dir=f'{voice_dir}/send_a2f.wav'
                                         asyncio.run(tts_send2(text,False,send_dir))
-                                    return  send_dir
+                                    return send_dir
                                                     
                          def s2t(speech_file,stream_mode=False):
                             from a2f import speech_recognition
@@ -698,7 +700,7 @@ if __name__ == "__main__":
                                         with gr.Row():
                                             image_prompt = gr.Image(label="Source image", source="upload", type="filepath").style(height=200,width=180)
                                       
-                         prompt_input=gr.inputs.Textbox(lines=2, label="prompt with image/仅与图像相关提示词 : (Optional,注意在使用每一个功能前请考虑在这个框里的TEXT提示词要不要先清空)")
+                         prompt_input=gr.inputs.Textbox(lines=2, label="prompt with image/仅与图像相关提示词 : (Optional,注意使用每一个功能前请考虑在这个框里的TEXT提示词要不要先清空)")
                          
                        
                          inputs = [dir_inputs,image_prompt,prompt_input,box_threshold,iou_threshold,text_threshold,device_input,quant]
@@ -784,16 +786,18 @@ if __name__ == "__main__":
                md_dropdown.select(on_md_dropdown_changed, [md_dropdown],[result_text])
                
                outputs = [gallery, output_text, output_tag,output_classes]             
-               input_combo = [cookies, max_length_sl, md_dropdown,chat_txt,txt,top_p, temperature, result_text, history,system_prompt,plugin_advanced_arg,omniverse_switch,record_audio,asr_gpt,quant_chatglm]        
+               input_combo = [cookies, max_length_sl, md_dropdown,chat_txt,txt,top_p, temperature, result_text, history,system_prompt,plugin_advanced_arg,omniverse_switch,record_audio,asr_gpt,quant_chatglm,chat_app]        
                output_combo = [cookies, result_text, history, status]
+              # output_combo2=[result_text, history, status]
                predict_args = dict(fn=ArgsGeneralWrapper(predict_all), inputs=input_combo, outputs=output_combo)  
-              
+               chat_args=dict(fn=ArgsGeneralWrapper(talk_all), inputs=input_combo, outputs=output_combo)  
                run_button.click(fn=Auto_run, inputs=inputs, outputs=outputs)
                 # 提交按钮、重置按钮
                cancel_handles.append(chat_txt.submit(**predict_args))
                cancel_handles.append(txt.submit(**predict_args))
                cancel_handles.append(run_button_chat.click(**predict_args))
                cancel_handles.append(clear_button.click(**predict_args))
+               cancel_handles.append(chat_app_button.click(**chat_args))
                resetBtn.click(lambda: ([], [], "已重置"), None, [result_text, history, status])
                stopBtn2.click(fn=None, inputs=None, outputs=None, cancels=cancel_handles)
               
@@ -829,6 +833,3 @@ if __name__ == "__main__":
                #threading.Thread(target=auto_update, name="self-upgrade", daemon=True).start()
           auto_opentab_delay(7901)
           block.queue(concurrency_count=CONCURRENT_COUNT).launch(server_name='0.0.0.0', server_port=7901,debug=True, share=False)
-     
-
-     

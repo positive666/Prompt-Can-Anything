@@ -11,7 +11,6 @@ import torchvision.transforms as transforms
 
 from PIL import Image
 import sys
-#sys.path.append('model_cards/Tag2Text')
 from models.tag2text import tag2text_caption
 
 parser = argparse.ArgumentParser(
