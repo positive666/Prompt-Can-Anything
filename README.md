@@ -55,7 +55,7 @@ Through continuous creativity and accumulation, we will integrate and learn from
 
 ### <div align="left"> 🔥 [Update notice, frequent updates, Welcome fork] </div>
 
-- 🔥 v1.2  coming soon
+- 🔥 v1.2  coming soon(因为个人变更工作原因，导致近期暂时停更，预计8月回复，目前语音实时并发已经基本优化好了)
 - 🔥next week，2023/6/6, A detailed demo video for v1.1  
 - 🔥Official latest model integration test for Tag2text version 2 in early June
 - One-click fine-tuning button function, adding: visualglm 
