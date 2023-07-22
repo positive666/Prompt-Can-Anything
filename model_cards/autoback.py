@@ -18,7 +18,6 @@ import torch.nn as nn
 import yaml
 import torch.nn.functional as F
 from PIL import Image
-
 import sys
 
 sys.path.append("model_cards")
@@ -31,9 +30,9 @@ from model_cards.groundingdino.util.utils import clean_state_dict, get_phrases_f
 from model_cards.groundingdino.util import box_ops
 from model_cards.groundingdino.util.slconfig import SLConfig
 
-from model_cards.Tag2Text import inference 
-from Tag2Text.models import tag2text
-import torchvision.transforms as TS
+from model_cards.Tag2Text import inference_tag2text,inference_ram
+from Tag2Text.ram import get_transform
+from Tag2Text.ram.models import tag2text
 from utils.conf import LAMA_MODEL_PATH
 # segment anything
 from model_cards.segment_anything import build_sam, SamPredictor 
@@ -154,9 +153,7 @@ class AutoBackend(nn.Module):
             if methods == "grounded-DINO":
                #Grounding
                from model_cards.groundingdino.models import build_model
-               
-              
-        
+
                config_args=SLConfig.fromfile(args_config)
                config_args.device=self.device
                model=build_model(config_args)
@@ -171,8 +168,7 @@ class AutoBackend(nn.Module):
                 self.model = SamPredictor(build_sam(checkpoint=w).to(self.device))
                 
             elif methods == 'lama':
-                # lama 
-                
+                # lama  
                 from model_cards.lama.saicinpainting.training.trainers import load_checkpoint
                 
                 from omegaconf import OmegaConf
@@ -209,25 +205,28 @@ class AutoBackend(nn.Module):
                 self.model=gligen_models
                 print('load gligen done')
             elif methods == 'tag2text':
+                from Tag2Text.ram.models import tag2text
                 print('----Init Tag2Text----')
-                 # initialize Tag2Text
-                normalize = TS.Normalize(mean=IMAGENET_MEAN,
-                                        std=IMAGENET_STD,
-                                        )
                 self.size=384
-                self.transform = TS.Compose([
-                                TS.Resize((self.size, self.size)),
-                                TS.ToTensor(), normalize
-                            ])
-                # filter out attributes and action categories which are difficult to grounding
-                delete_tag_index = []
-                for i in range(3012, 3429):
-                    delete_tag_index.append(i) 
+                self.transform = get_transform(image_size=self.size)
+            
+                # delete some tags that may disturb captioning
+                # 127: "quarter"; 2961: "back", 3351: "two"; 3265: "three"; 3338: "four"; 3355: "five"; 3359: "one"
+                delete_tag_index = [127,2961, 3351, 3265, 3338, 3355, 3359]
                 # load model
-                self.model = tag2text.tag2text_caption(pretrained=w,
+                self.model = tag2text(pretrained=w,
                                 image_size=self.size,
                                 vit='swin_b',
                                 delete_tag_index=delete_tag_index).to(self.device).eval()    
+            elif methods =='ram':
+                from Tag2Text.ram.models import ram
+                print('----Init ram---')
+                self.size=384
+                self.transform = get_transform(image_size=self.size)
+                # load model
+                self.model = ram(pretrained=w,
+                             image_size=self.size,
+                             vit='swin_l').to(self.device).eval()    
             else :
                 LOGGER('not find methods')
                 raise TypeError(f'model=:{methods} is not a  saved method')
@@ -262,6 +261,8 @@ class AutoBackend(nn.Module):
                 return self.sam_inference(im,prompt)
             elif self.flag=="tag2text":            
                 return self.tag2text_inference(im,prompt)
+            elif self.flag=='ram':
+                return self.ram_inference(im)
             elif self.flag=='lama':
                 return self.lama_inference(im,prompt)
             elif self.flga== 'gligen':
@@ -275,8 +276,8 @@ class AutoBackend(nn.Module):
                 else:
                     return self.from_numpy(y)
     def gligen_inference(config=None, starting_noise=None,negative_prompt=None,
-                    batch_size=5,guidance_scale=None,no_plms=None)   :
-         print('d')
+                batch_size=5,guidance_scale=None,no_plms=None)   :
+                print('wait update')
     def grounded_inference(self,im,caption,box_threshold,text_threshold,iou_threshold):
                     
                     H,W=im.shape[0],im.shape[1]
@@ -333,9 +334,16 @@ class AutoBackend(nn.Module):
     def tag2text_inference(self,im,prompt):     
               
                     raw_image = cv2.resize(im, (self.size, self.size))
-                    raw_image=Image.fromarray(raw_image)
-                    raw_image  = self.transform(raw_image).unsqueeze(0).to(self.device)
-                    return inference.inference(raw_image , self.model, prompt)    
+                    raw_image =Image.fromarray(raw_image)
+                    raw_image = self.transform(raw_image).unsqueeze(0).to(self.device)
+                    return inference_tag2text.inference(raw_image , self.model, prompt) 
+    
+    def ram_inference(self,im):     
+
+                    raw_image = cv2.resize(im, (self.size, self.size))
+                    raw_image =Image.fromarray(raw_image)
+                    raw_image = self.transform(raw_image).unsqueeze(0).to(self.device)
+                    return inference_ram.inference(raw_image,self.model) 
     def lama_inference(self,im,mask) :
                 from model_cards.lama.saicinpainting.evaluation.data import pad_tensor_to_modulo
                 from model_cards.lama.saicinpainting.evaluation.utils import move_to_device

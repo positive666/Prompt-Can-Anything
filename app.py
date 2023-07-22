@@ -48,7 +48,7 @@ class_ids = []
 global speech_AI
 speech_AI={'asr':{'whisper':None},'tts':{'tts_VITS':None,'tts_edge': None}} ## speech 
 global models_config
-models_config = {'tag2text': None, 'lama': None,'sam': None,'grounded': None,'sd': None,    ## cv with text
+models_config = {'tag2text': None, 'ram': None,'lama': None,'sam': None,'grounded': None,'sd': None,    ## cv with text
                  'visual_glm': None , 'trans_zh': None,'gligen': None}
 NUM_WORKERS=1
 JSON_DATASETS=[]
@@ -69,15 +69,14 @@ def toggle_operation(flag):
         speech_text=''
         while True:
                # result_txt="你好我没有正确识别到结果"
-
                 if keyboard.is_pressed('q'):  
                     mic_audio('voice_dir/send_asr.wav')
                     speech_text,__=speech_recognition('voice_dir/send_asr.wav',speech_AI['asr']['whisper'],False) 
                     break
         print(speech_text) 
         text.append(speech_text)
-        
         return  text
+
 async def sadtalker_demo(checkpoint_path,config_path,source_image,
                             driven_audio,
                             preprocess_type,
@@ -204,8 +203,6 @@ async def load_speech_model(asr_method,tts_method):
             
         elif not tts_method:
             LOGGER.info('pass')
-        #   models_config['whisper']=None  
-   
         return '语音识别记载完成'
 
                
@@ -222,10 +219,10 @@ def save_text2img_data(prompt,label,img_name,zh_select):
     }
     JSON_DATASETS.append(example)
             
-async def load_auto_backend_models(lama, sam, det, tag2text, trans_zh, visual_glm,device=0, quant=4, bar=None): 
+async def load_auto_backend_models(lama, sam, det,tag2text,ram, trans_zh, visual_glm,device=0, quant=4, bar=None): 
     try:    
         with concurrent.futures.ThreadPoolExecutor() as pool:
-                wait_coros =  asyncio.get_event_loop().run_in_executor(pool, load_auto_backend_model, lama, sam, det, tag2text, trans_zh, visual_glm,device, quant, bar)
+                wait_coros =  asyncio.get_event_loop().run_in_executor(pool, load_auto_backend_model, lama, sam, det, tag2text,ram,trans_zh, visual_glm,device, quant, bar)
                 await asyncio.wait([wait_coros])
         await asyncio.sleep(0.01) 
     except Exception as e:
@@ -234,30 +231,29 @@ async def load_auto_backend_models(lama, sam, det, tag2text, trans_zh, visual_gl
     return 'Loads Done !'
    
 
-def load_auto_backend_model(lama,sam,det,tag2text,trans_zh,visual_glm,device,quant,bar):
+def load_auto_backend_model(lama,sam,det,tag2text,ram,trans_zh,visual_glm,device,quant,bar):
     """
     加载模型库
     """
     # Load model    
     
-    global models_config    
+    global models_config
  
     if visual_glm and not models_config['visual_glm']:
           from VisualGLM_6B.chatglm import  VisualGLM
           models_config['visual_glm']=VisualGLM(gpu_device=int(device),quant=int(quant))
           LOGGER.info(f'GPU{int(device)}———量化VisualGLM模型:int{int(quant)}')
     elif not visual_glm:
-          LOGGER.info('free visualGLM memory')
+          LOGGER.info('no select visualGLM')
           models_config['visual_glm']=None  
     else:    
           LOGGER.info('free or no visual_glm')      
            
     device = select_device(device)    
     if tag2text and not models_config['tag2text']:
-                models_config['tag2text'] = AutoBackend("tag2text",weights=Tag2Text_Model_Path,device=device)
-               
+                models_config['tag2text'] = AutoBackend("tag2text",weights=Tag2Text_Model_Path,device=device)              
     elif not tag2text  :
-            LOGGER.info('free memory')
+            LOGGER.info('no tag2text')
             models_config['tag2text'] =None 
     else :
             LOGGER.info('free or tag2text pass')   
@@ -276,7 +272,15 @@ def load_auto_backend_model(lama,sam,det,tag2text,trans_zh,visual_glm,device,qua
             models_config['sam'] =None      
     else:
             LOGGER.info("PASS SAM")
-            
+
+    if ram and not models_config['ram']:
+            LOGGER.info("ram loads")
+            models_config['ram']= AutoBackend('ram',weights=Ram_Model_Path ,device=device)
+    elif not ram :
+            models_config['ram'] =None      
+    else:
+            LOGGER.info("PASS ram")       
+
     if trans_zh and not models_config['trans_zh']:
             from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM
             cn_tokenizer = AutoTokenizer.from_pretrained("Helsinki-NLP/opus-mt-en-zh",cache_dir='weights')
@@ -315,8 +319,8 @@ def Auto_run(
         lama=False,   # use lama models
         sam=True,    # use segment-anythings
         det=True,    # use grounded detect model with text
-        tag2text=True,
-       # chatgpt=False,
+        tag2text=False,
+        ram=False,
         save_txt=False,  # save results to *.txt
         save_xml=False,  # save results to *.xml
         save_mask=False,
@@ -384,7 +388,20 @@ def Auto_run(
                         if save_caption:
                             save_text2img_data(None, caption,name_p,zh_select)
                             #save_format(label_format="txt",save_path=f'{save_dir}/captions',img_name=name_p, results=caption)
-                      
+                    if ram:
+                        LOGGER.info(f'ram No need prompt:{prompt}')
+                        en_tag,zh_tag = models_config['ram'](im = img_rgb,prompt=prompt,box_threshold=conf_thres,text_threshold=text_thres,iou_threshold=iou_thres)
+                       
+                        prompt=en_tag.replace(' |', ',')
+                        zh_tag=zh_tag.replace(' |', ', ')
+                        #LOGGER.info(preds[1])
+                        LOGGER.info(f"en_Tags: {prompt}")
+                        print(f"zh_Tags : {zh_tag}")
+                        # if zh_select and prompt :
+                        #     caption=models_config['trans_zh'](caption, max_length=1000, clean_up_tokenization_spaces=True)[0]["generated_text"]
+                        # if save_caption:
+                        #     save_text2img_data(None, caption,name_p,zh_select)
+
                     if det:
                         if input_prompt:
                             prompt=input_prompt
@@ -556,7 +573,8 @@ if __name__ == "__main__":
                                 methods_options={'Lama': gr.inputs.Checkbox(label='Lama model[近期更新测试中]',default=False), 
                                                 'Sam': gr.inputs.Checkbox(label='Sam[当前仅支持检测器的BOX输入]',default=False),
                                                 'Det': gr.inputs.Checkbox(label='Grounded[可输入文本的检测器]',default=False), 
-                                                'Tag2text': gr.inputs.Checkbox(label='Tag2text[图文理解]',default=False)
+                                                'Tag2text': gr.inputs.Checkbox(label='Tag2text[图文理解]',default=False),
+                                                'ram': gr.inputs.Checkbox(label='ram[识别标签]',default=False)
                                 }
                                 
                                 visual_glm=gr.inputs.Checkbox(label='VisualGLM',default=False)

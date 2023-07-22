@@ -1,6 +1,6 @@
 torch>1.10.0
 torchvision
-transformers
+transformers #tag2text if interfence error, install latest version
 tensorboard
 addict
 yapf

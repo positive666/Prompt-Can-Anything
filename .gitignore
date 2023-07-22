@@ -142,5 +142,6 @@ results/
 .idea/
 weights/
 voice_dir/
-
+SadTalker/
+VITS/
 config_private.py

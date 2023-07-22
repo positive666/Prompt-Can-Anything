@@ -28,11 +28,17 @@ You can accomplish anything through this project! Let’s learn more about the d
 
 Integrate diversified GPT, mainly using the port of chatgpt, and use the open-source Tsinghua VISUALGLM to deploy and fine-tune localized GPT, as well as try to improve the model structure. Through multimodal application tools, we can conduct dialogues and content creation.
 
+easy example( asr->llM_model->tts->a2f app)
+
+https://github.com/positive666/Prompt-Can-Anything/assets/28972473/c9cc64af-939d-480f-a684-08d8db34b25f
+
  3. ⭐ 3D && 2D Avatar(comming soon)
 
 Complete a role design interaction through a 3D Engine combined with multimodal tasks such as GPT;
 
 Complete a role design interaction through the Sadtalker open source project and multimodal tasks such as GPT.
+
+
 
 
 
@@ -53,17 +59,24 @@ Through continuous creativity and accumulation, we will integrate and learn from
 
 </details>
 
-### <div align="left"> 🔥 [Update notice, frequent updates, Welcome fork] </div>
+### <div align="left"> 🔥 [August , Update plan preview , Welcome fork] </div>
 
-- 🔥 v1.2  coming soon(因为个人变更工作原因，导致近期暂时停更，预计8月回复，目前语音实时并发已经基本优化好了)
-- 🔥next week，2023/6/6, A detailed demo video for v1.1  
-- 🔥Official latest model integration test for Tag2text version 2 in early June
-- One-click fine-tuning button function, adding: visualglm 
-- Voice text processing link GPT, joining chatglm   
-- Generating class models will be added and tested in the near future
-- One-click fine-tuning button function, adding: SAM
+- 🔥 v1.2  coming soon(因为个人变更工作原因，目前更新较慢，目前语音实时并发已经基本优化好了)
+
+-  Optimization of speech problems and code logic optimization before optimization, add Gilgen
+
+- 🔥Official latest model integration test for Tag2text version 2 in early June,add RAM(Done)
+
+- One-click fine-tuning button function, adding: visualglm  (Done)
+
+-  Voice text processing link GPT, joining chatglm   with a2f APP( Done)
+
+  
+
+  
 
 ### <div align="left">⭐[News list] </div>
+	-【2023/7/21】  update tag2text and ram with offical repo
 	-【2023/6/7】   v1.15:add submodule SadTalker,update UI
 	-【2023/6/6】   v1.15:environment installation problems and supplementary instructions, special models are called independently, and no need to install dependencies; Added the function of one-click fine-tuning of VisualGLM, considering machine configuration and video memory with caution
 	-【2023/6/5】   v1.15 a vide demo and plan,fix asr bug ,chatgpt with asr and tts 

@@ -88,7 +88,8 @@ MODEL_QUANTIZE=['None','4','8']
 # 填写你自己的模型地址，按照下面格式
 GROUNED_MODEL_TYPE= {'S': "../Grounded-Segment-Anything-main/groundingdino_swint_ogc.pth",'L':None}
 SAM_MODEL_TYPE= {'vit_h': "F:\\sam_vit_h_4b8939.pth"  ,'vit_l':None,'vit_b':None}
-Tag2Text_Model_Path='F:\\tag2text_swin_14m.pth'#'weights/tag2text/tag2text_swin_14m.pth'
+Tag2Text_Model_Path='E:\\code\\git_code\\weights_all\\tag2text_swin_14m.pth'
+Ram_Model_Path='E:\\code\\git_code\\weights_all\\ram_swin_large_14m.pth'
 LAMA_MODEL_PATH='F:\\Inpaint-Anything\\big-lama'
 
 # Omniverse  配置
