@@ -313,7 +313,9 @@ For more content, you can check the requirements, “pip install < your missing 
 
 ​           start asr&tts with audio2face 
 
-​			you need  install audio2face in omniverse APP,see [Omniverse Platform for 3D Design Collaboration and Simulation | NVIDIA](https://www.nvidia.cn/omniverse/)
+​			you need  install audio2face in omniverse APP,see
+
+https://www.nvidia.cn/omniverse/
 
 ​			step1. In audio2face，open a demo ,choose a Player ,auto build Trt engine ,（not support GTX10xx GPU）
 
