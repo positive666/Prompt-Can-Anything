@@ -289,7 +289,7 @@ For more content, you can check the requirements, “pip install < your missing 
 
 <img src="asset/image-20230427093103453.png" alt="image-20230427093103453" style="zoom: 33%;" />
 
-2.   webui
+2.   webui(all)
 
 ```pyhton
 		python app.py
@@ -304,6 +304,26 @@ For more content, you can check the requirements, “pip install < your missing 
 
 
 <img src="asset/v1.1_demo.png" alt="image-20230527022556630" style="zoom:50%;" />
+
+​	2.1 audio2face with llm model (Beta)
+
+​			In Fact, ASR\TTS\LLM ，They are all arbitrarily replaceable.
+
+​           this  is  a easy  example, support chatglm,chatgpt(you can use anything llm model,but you need custom )
+
+​           start asr&tts with audio2face 
+
+​			you need  install audio2face in omniverse APP,see [Omniverse Platform for 3D Design Collaboration and Simulation | NVIDIA](https://www.nvidia.cn/omniverse/)
+
+​			step1. In audio2face，open a demo ,choose a Player ,auto build Trt engine ,（not support GTX10xx GPU）
+
+<img src="asset/a2f.png" alt="image-20230725122731372" style="zoom:67%;" />
+
+​	      step 2. in webui ,click"start system" and" Speech_system"
+
+​	
+
+   																 <img src="asset/start-chat.png">
 
 ## 🔨To Do List
 
