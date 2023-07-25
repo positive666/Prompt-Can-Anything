@@ -304,11 +304,17 @@ pip install  bitsandbytes  -i https://mirrors.aliyun.com/pypi/simple
    
    ​           这是一个简单的例子，实际上asr、tts\llm_model\这些组件是可以任意替换的，只要你具备基本的开发能力，通过语言模型和语音驱动去完成A2F的服务，你需要安装Omniverse软件和Audio2face的应用，GPU不能是比较旧的帕斯卡架构，详情可以看https://www.nvidia.cn/omniverse/
    
-   ​			步骤1.在Omniverse中，点击如图下的例子，安装一个Demo player,它会自动完成tensortt的构建，然后可以使用
+   ​			步骤1.在Omniverse中，点击如图下的例子，安装一个Demo player,它会自动完成tensortt的构建，然后可以如下图中获取Player的路径Prim Path
    
    <img src="E:/code/git_code/Prompt-Can-Anything/asset/a2f.png" alt="image-20230725122731372" style="zoom:50%;" />
    
-   ​	     步骤2. 程序运行起来后，在web端如图下操作点击 ‘start system’后，点击加载“Speech_system”启动语音模式，但是注意TTS是网络服务。
+   
+   
+   ​										<img src="asset/a2f2023.png" alt="image-20230331372" style="zoom: 33%;"/>	
+   
+   ​										 ![image-20230725133326397](asset/getpath.png) 
+   
+   ​	     步骤2. 程序运行起来后，将上面获得的路径拷贝，填写在config_private的“Avatar_instance_A”，在web端如图下操作点击 ‘start system’后，点击加载“Speech_system”启动语音模式，但是注意TTS是网络服务。
    
    ​														   					   <img src="asset/start-chat.png" style="zoom:50%;" >
    

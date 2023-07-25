@@ -317,11 +317,17 @@ For more content, you can check the requirements, “pip install < your missing 
 
 https://www.nvidia.cn/omniverse/
 
-​			step1. In audio2face，open a demo ,choose a Player ,auto build Trt engine ,（not support GTX10xx GPU）
+​			step1. In audio2face，open a demo ,choose a Player ,auto build Trt engine ,（not support GTX10xx GPU），latest version support chinese!
+
+​						get model pim path.
 
 <img src="asset/a2f.png" alt="image-20230725122731372" style="zoom: 33%;"/>
 
-​	      step 2. in webui ,click"start system" and" Speech_system"
+​										<img src="asset/a2f2023.png" alt="image-20230331372" style="zoom: 33%;"/>	
+
+​										 ![image-20230725133326397](asset\getpath.png) 
+
+​    step 2. in webui , configure your Prim path "Avatar_instance_A" in config_private.py , click"start system" and" Speech_system"
 
 ​																		 								<img src="asset/start-chat.png" style="zoom:67%;">
 
