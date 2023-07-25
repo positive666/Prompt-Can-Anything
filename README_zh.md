@@ -306,11 +306,13 @@ pip install  bitsandbytes  -i https://mirrors.aliyun.com/pypi/simple
    
    ​			点击如图下的例子，安装一个Demo player,它会自动完成tensortt的构建，然后可以使用
    
-   <img src="E:/code/git_code/Prompt-Can-Anything/asset/a2f.png" alt="image-20230725122731372" style="zoom:67%;" />
+   <img src="E:/code/git_code/Prompt-Can-Anything/asset/a2f.png" alt="image-20230725122731372" style="zoom:50%;" />
    
-   ​	     程序运行起来后，在web端如图下操作点击‘start system’后，点击加载“Speech_system”启动语音模式，但是注意TTS是网络服务。
+   ​	     程序运行起来后，在web端如图下操作点击 ‘start system’后，点击加载“Speech_system”启动语音模式，但是注意TTS是网络服务。
    
-   ​														   		 <img src="E:/code/git_code/Prompt-Can-Anything/asset/start-chat.png">
+   ​														   					   <img src="asset/start-chat.png" style="zoom:50%;" >
+   
+   
 
 ## 🔨计划清单
 

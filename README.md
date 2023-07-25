@@ -317,13 +317,15 @@ For more content, you can check the requirements, “pip install < your missing 
 
 ​			step1. In audio2face，open a demo ,choose a Player ,auto build Trt engine ,（not support GTX10xx GPU）
 
-<img src="asset/a2f.png" alt="image-20230725122731372" style="zoom:67%;" />
+<img src="asset/a2f.png" alt="image-20230725122731372" style="zoom: 33%;"/>
 
 ​	      step 2. in webui ,click"start system" and" Speech_system"
 
-​	
+​																		 								<img src="asset/start-chat.png" style="zoom:67%;">
 
-   																 <img src="asset/start-chat.png">
+
+
+
 
 ## 🔨To Do List
 
