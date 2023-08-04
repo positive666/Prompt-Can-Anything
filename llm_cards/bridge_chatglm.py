@@ -11,7 +11,7 @@ load_message = "ChatGLM尚未加载，加载需要一段时间。注意，取决
 
 #################################################################################
 class GetGLMHandle(Process):
-    def __init__(self,quantize='None'):
+    def __init__(self,quantize=None):
         super().__init__(daemon=True)
         self.parent, self.child = Pipe()
         self.chatglm_model = None
@@ -41,22 +41,32 @@ class GetGLMHandle(Process):
         # 第一次运行，加载参数
         torch.cuda.init()
         retry = 0
-       
-
+        
+        LOCAL_MODEL_QUANT, device,LOCAL_MODEL_PATH = get_conf('LOCAL_MODEL_QUANT', 'LOCAL_MODEL_DEVICE','LOCAL_MODEL_PATH')
+        if LOCAL_MODEL_QUANT == "INT4":         # INT4
+            _model_name_ = "THUDM/chatglm2-6b-int4"
+        elif LOCAL_MODEL_QUANT == "INT8":       # INT8
+            _model_name_ = "THUDM/chatglm2-6b-int8"
+        else:
+            _model_name_ = "THUDM/chatglm2-6b"  # FP16
         while True:
             try:
+                if LOCAL_MODEL_PATH is not None:
+                    print('检测到本地模型')
+                    _model_name_=LOCAL_MODEL_PATH
                 if self.chatglm_model is None:
-                    self.chatglm_tokenizer = AutoTokenizer.from_pretrained("THUDM/chatglm-6b", trust_remote_code=True,cache_dir='weights')
-                    device, = get_conf('LOCAL_MODEL_DEVICE')
+                    self.chatglm_tokenizer = AutoTokenizer.from_pretrained(_model_name_, trust_remote_code=True,cache_dir='weights')
                     if device=='cpu':
-                        self.chatglm_model = AutoModel.from_pretrained("THUDM/chatglm-6b", trust_remote_code=True,cache_dir='weights').float()
+                        self.chatglm_model = AutoModel.from_pretrained(_model_name_, trust_remote_code=True,cache_dir='weights').float()
                     else:
-                        if int(self.quantize)==8 or int(self.quantize)==4:
-                            self.chatglm_model = AutoModel.from_pretrained("THUDM/chatglm-6b", trust_remote_code=True,cache_dir='weights').quantize(int(self.quantize)).half().cuda()
+                        if int(self.quantize)==8 or int((self.quantize))==4 :
+                            print(f'{_model_name_}---在线量化 {self.quantize}')
+                            self.chatglm_model = AutoModel.from_pretrained(_model_name_, trust_remote_code=True,cache_dir='weights').quantize(int(self.quantize)).half().cuda()
                         else :
-                            self.chatglm_model = AutoModel.from_pretrained("THUDM/chatglm-6b", trust_remote_code=True,cache_dir='weights').half().cuda()   
+                                self.chatglm_model = AutoModel.from_pretrained(_model_name_, trust_remote_code=True,cache_dir='weights').half().cuda()   
                     self.chatglm_model = self.chatglm_model.eval()
                     break
+                #elif:
                 else:
                     break
             except:
@@ -105,7 +115,7 @@ def predict_no_ui_long_connection(inputs, llm_kwargs, history=[], sys_prompt="",
     """
     global glm_handle
     if glm_handle is None:
-        glm_handle = GetGLMHandle()
+        glm_handle = GetGLMHandle(quantize=llm_kwargs.get('quantize', False) )
         if len(observe_window) >= 1: observe_window[0] = load_message + "\n\n" + glm_handle.info
         if not glm_handle.success: 
             error = glm_handle.info
@@ -232,22 +242,10 @@ def predict(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_promp
         函数的说明请见 request_llm/bridge_all.py
     """
     chatbot.append((inputs, ""))
-    omniverse_state = llm_kwargs.get('omniverse', False)
-    record_file=llm_kwargs.get('record_audio', False)
-    asr=llm_kwargs.get('asr', False)
-    if record_file and asr:
-        import whisper
-        from a2f import speech_recognition
-        speech_text,speech_language=speech_recognition(record_file,whisper.load_model("small",
-                                download_root="weights") ,False)                             
-        inputs=speech_text  
-        print('asr result:',inputs)   
-    
+
     global glm_handle
-    quantize=llm_kwargs.get('quantize', False)  
-    print(f'准备进行量化{quantize}')
     if glm_handle is None:
-        glm_handle = GetGLMHandle(quantize=quantize)
+        glm_handle = GetGLMHandle(quantize=llm_kwargs.get('quantize', False))
         chatbot[-1] = (inputs, load_message + "\n\n" + glm_handle.info)
         yield from update_ui(chatbot=chatbot, history=[])
         if not glm_handle.success: 
@@ -255,11 +253,8 @@ def predict(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_promp
             return
 
     if additional_fn is not None:
-        import core_functional
-        importlib.reload(core_functional)    # 热更新prompt
-        core_functional = core_functional.get_core_functions()
-        if "PreProcess" in core_functional[additional_fn]: inputs = core_functional[additional_fn]["PreProcess"](inputs)  # 获取预处理函数（如果有的话）
-        inputs = core_functional[additional_fn]["Prefix"] + inputs + core_functional[additional_fn]["Suffix"]
+        from core_functional import handle_core_functionality
+        inputs, history = handle_core_functionality(additional_fn, inputs, history, chatbot)
 
     # 处理历史信息
     history_feedin = []

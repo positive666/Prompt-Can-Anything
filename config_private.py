@@ -1,5 +1,5 @@
 # [step 1]>> 例如： API_KEY = "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" （此key无效）
-API_KEY ="sk-B8jefFQfIFtWjaaFtxNjxxxxxxxxxxxxxxxxxxx"
+API_KEY ="sk-Xxo96I3YQVHvOxxxxi"
 
 # [step 2]>> 改为True应用代理，如果直接在海外服务器部署，此处不修改
 USE_PROXY = True
@@ -13,8 +13,8 @@ if USE_PROXY:
     # 代理网络的地址，打开你的*学*网软件查看代理的协议(socks5/http)、地址(localhost)和端口(11284)
     proxies = {
         #          [协议]://  [地址]  :[端口]
-        "http":  "socks5h://localhost:4781",
-        "https": "socks5h://localhost:4781",
+        "http":  "socks5h://localhost:17890",
+        "https": "socks5h://localhost:17890",
     }
 else:
     proxies = None
@@ -46,15 +46,22 @@ WEB_PORT = -1
 MAX_RETRY = 2
 
 # 模型选择是 (注意: LLM_MODEL是默认选中的模型, 同时它必须被包含在AVAIL_LLM_MODELS切换列表中 )
-LLM_MODEL = "gpt-3.5-turbo" # 可选 ↓↓↓
-AVAIL_LLM_MODELS = ["gpt-3.5-turbo", "api2d-gpt-3.5-turbo", "gpt-4", "api2d-gpt-4", "chatglm", "stack-claude"]
+LLM_MODEL = "chatglm2" # 可选 ↓↓↓
+AVAIL_LLM_MODELS = ["gpt-3.5-turbo-16k", "gpt-3.5-turbo", "azure-gpt-3.5", "api2d-gpt-3.5-turbo", "gpt-4", "api2d-gpt-4", "chatglm2", "moss", "newbing", "stack-claude"]
 # P.S. 其他可用的模型还包括 ["newbing-free", "jittorllms_rwkv", "jittorllms_pangualpha", "jittorllms_llama"]
+
+LOCAL_MODEL_PATH='weights'# 填写后覆盖网络下载模型，直接从本地读取
+ChatGLM_PTUNING_CHECKPOINT = "" # 例如"/home/hmp/ChatGLM2-6B/ptuning/output/6b-pt-128-1e-2/checkpoint-100"
 
 # 本地LLM模型如ChatGLM的执行方式 CPU/GPU
 LOCAL_MODEL_DEVICE = "cuda" # 可选 "cuda"
-
+LOCAL_MODEL_QUANT = "FP16" # 默认 "FP16" "INT4" 启用量化INT4版本 "INT8" 启用量化INT8版本
 # 设置gradio的并行线程数（不需要修改）
 CONCURRENT_COUNT = 100
+# 是否在提交时自动清空输入框
+AUTO_CLEAR_TXT = False
+# 色彩主体，可选 ["Default", "Chuanhu-Small-and-Beautiful"]
+THEME = "Default"
 
 # 加一个live2d装饰
 ADD_WAIFU = False

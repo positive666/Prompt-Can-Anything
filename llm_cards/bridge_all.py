@@ -125,6 +125,15 @@ model_info = {
         "tokenizer": tokenizer_gpt35,
         "token_cnt": get_token_num_gpt35,
     },
+     "chatglm2": {
+        "fn_with_ui": chatglm_ui,
+        "fn_without_ui": chatglm_noui,
+        "fn_talk": talk_chatglm,
+        "endpoint": None,
+        "max_token": 1024,
+        "tokenizer": tokenizer_gpt35,
+        "token_cnt": get_token_num_gpt35,
+    },
     # newbing
     # "newbing": {
     #     "fn_with_ui": newbing_ui,
@@ -330,5 +339,5 @@ def predict_all(inputs, llm_kwargs, *args, **kwargs):
 
 def talk_all(inputs, llm_kwargs, *args, **kwargs):
     
-    method = model_info[llm_kwargs['llm_model']]["fn_talk"]
+    method = model_info[llm_kwargs['llm_model']]["talk_chatglm"]
     yield from method(inputs, llm_kwargs, *args, **kwargs)

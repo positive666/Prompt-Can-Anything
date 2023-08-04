@@ -2,6 +2,7 @@ import markdown
 import importlib
 import traceback
 import inspect
+import gradio
 import re
 import os
 from latex2mathml.converter import convert as tex2mathml
@@ -39,7 +40,7 @@ def ArgsGeneralWrapper(f):
     """
     装饰器函数，用于重组输入参数，改变输入参数的顺序与结构。
     """
-    def decorated(cookies, max_length, llm_model, txt, txt2, top_p, temperature, chatbot, history, system_prompt, plugin_advanced_arg, omniverse_switch,record_audio,asr,quantize,chat_app,*args):
+    def decorated(request: gradio.Request,cookies, max_length, llm_model, txt, txt2, top_p, temperature, chatbot, history, system_prompt, plugin_advanced_arg, omniverse_switch,record_audio,asr,quantize,chat_app,*args):
         txt_passon = txt
         if txt == "" and txt2 != "": txt_passon = txt2
         # 引入一个有cookie的chatbot
@@ -58,6 +59,7 @@ def ArgsGeneralWrapper(f):
             "asr":asr,
             "quantize":quantize,
             "chat_app":chat_app,
+            'client_ip': request.client.host,
         }
         plugin_kwargs = {
             "advanced_arg": plugin_advanced_arg,
@@ -189,6 +191,36 @@ def write_results_to_file(history, file_name=None):
     print(res)
     return res
 
+
+def write_history_to_file(history, file_basename=None, file_fullname=None):
+    """
+    将对话记录history以Markdown格式写入文件中。如果没有指定文件名，则使用当前时间生成文件名。
+    """
+    import os
+    import time
+    if file_fullname is None:
+        if file_basename is not None:
+            file_fullname = os.path.join(get_log_folder(), file_basename)
+        else:
+            file_fullname = os.path.join(get_log_folder(), f'GPT-Academic-{gen_time_str()}.md')
+    os.makedirs(os.path.dirname(file_fullname), exist_ok=True)
+    with open(file_fullname, 'w', encoding='utf8') as f:
+        f.write('# GPT-Academic Report\n')
+        for i, content in enumerate(history):
+            try:    
+                if type(content) != str: content = str(content)
+            except:
+                continue
+            if i % 2 == 0:
+                f.write('## ')
+            try:
+                f.write(content)
+            except:
+                # remove everything that cannot be handled by utf8
+                f.write(content.encode('utf-8', 'ignore').decode())
+            f.write('\n\n')
+    res = os.path.abspath(file_fullname)
+    return res
 
 def regular_txt_to_markdown(text):
     """
@@ -336,8 +368,11 @@ def format_io(self, y):
     if y is None or y == []:
         return []
     i_ask, gpt_reply = y[-1]
-    i_ask = text_divide_paragraph(i_ask)  # 输入部分太自由，预处理一波
-    gpt_reply = close_up_code_segment_during_stream(gpt_reply)  # 当代码输出半截的时候，试着补上后个```
+    # 输入部分太自由，预处理一波
+    if i_ask is not None: i_ask = text_divide_paragraph(i_ask)
+    # 当代码输出半截的时候，试着补上后个```
+    if gpt_reply is not None: gpt_reply = close_up_code_segment_during_stream(gpt_reply)
+    # process
     y[-1] = (
         None if i_ask is None else markdown.markdown(i_ask, extensions=['fenced_code', 'tables']),
         None if gpt_reply is None else markdown_convertion(gpt_reply)
@@ -425,6 +460,24 @@ def find_recent_files(directory):
 
     return recent_files
 
+def promote_file_to_downloadzone(file, rename_file=None, chatbot=None):
+    # 将文件复制一份到下载区
+    import shutil
+    if rename_file is None: rename_file = f'{gen_time_str()}-{os.path.basename(file)}'
+    new_path = os.path.join(get_log_folder(), rename_file)
+    # 如果已经存在，先删除
+    if os.path.exists(new_path) and not os.path.samefile(new_path, file): os.remove(new_path)
+    # 把文件复制过去
+    if not os.path.exists(new_path): shutil.copyfile(file, new_path)
+    # 将文件添加到chatbot cookie中，避免多用户干扰
+    if chatbot:
+        if 'file_to_promote' in chatbot._cookies: current = chatbot._cookies['file_to_promote']
+        else: current = []
+        chatbot._cookies.update({'file_to_promote': [new_path] + current})
+
+def disable_auto_promotion(chatbot):
+    chatbot._cookies.update({'file_to_promote': []})
+    return
 
 def on_file_uploaded(files, chatbot, txt, txt2, checkboxes):
     """
@@ -464,14 +517,21 @@ def on_file_uploaded(files, chatbot, txt, txt2, checkboxes):
     return chatbot, txt, txt2
 
 
-def on_report_generated(files, chatbot):
-    from utils.toolbox import find_recent_files
-    report_files = find_recent_files('gpt_log')
+def on_report_generated(cookies, files, chatbot):
+    from toolbox import find_recent_files
+    if 'file_to_promote' in cookies:
+        report_files = cookies['file_to_promote']
+        cookies.pop('file_to_promote')
+    else:
+        report_files = find_recent_files('gpt_log')
     if len(report_files) == 0:
-        return None, chatbot
+        return cookies, None, chatbot
     # files.extend(report_files)
-    chatbot.append(['报告如何远程获取？', '报告已经添加到右侧“文件上传区”（可能处于折叠状态），请查收。'])
-    return report_files, chatbot
+    file_links = ''
+    for f in report_files: file_links += f'<br/><a href="file={os.path.abspath(f)}" target="_blank">{f}</a>'
+    chatbot.append(['报告如何远程获取？', f'报告已经添加到右侧“文件上传区”（可能处于折叠状态），请查收。{file_links}'])
+    return cookies, report_files, chatbot
+
 
 def is_openai_api_key(key):
     API_MATCH_ORIGINAL = re.match(r"sk-[a-zA-Z0-9]{48}$", key)
@@ -525,6 +585,13 @@ def select_api_key(keys, llm_model):
 
     api_key = random.choice(avail_key_list) # 随机负载均衡
     return api_key
+
+def load_chat_cookies():
+    API_KEY, LLM_MODEL, AZURE_API_KEY = get_conf('API_KEY', 'LLM_MODEL', 'AZURE_API_KEY')
+    if is_any_api_key(AZURE_API_KEY):
+        if is_any_api_key(API_KEY): API_KEY = API_KEY + ',' + AZURE_API_KEY
+        else: API_KEY = AZURE_API_KEY
+    return {'api_key': API_KEY, 'llm_model': LLM_MODEL}
 
 def read_env_variable(arg, default_value):
     """
@@ -771,6 +838,10 @@ def gen_time_str():
     import time
     return time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
 
+def get_log_folder(user='default', plugin_name='shared'):
+    _dir = os.path.join(os.path.dirname(__file__), 'gpt_log', user, plugin_name)
+    if not os.path.exists(_dir): os.makedirs(_dir)
+    return _dir
 
 class ProxyNetworkActivate():
     """
@@ -789,3 +860,126 @@ class ProxyNetworkActivate():
         if 'HTTP_PROXY' in os.environ: os.environ.pop('HTTP_PROXY')
         if 'HTTPS_PROXY' in os.environ: os.environ.pop('HTTPS_PROXY')
         return
+    
+def objdump(obj, file='objdump.tmp'):
+    import pickle
+    with open(file, 'wb+') as f:
+        pickle.dump(obj, f)
+    return
+
+def objload(file='objdump.tmp'):
+    import pickle, os
+    if not os.path.exists(file): 
+        return
+    with open(file, 'rb') as f:
+        return pickle.load(f)
+    
+def Singleton(cls):
+    """
+    一个单实例装饰器
+    """
+    _instance = {}
+ 
+    def _singleton(*args, **kargs):
+        if cls not in _instance:
+            _instance[cls] = cls(*args, **kargs)
+        return _instance[cls]
+ 
+    return _singleton
+
+"""
+========================================================================
+第四部分
+接驳虚空终端:
+    - set_conf:                     在运行过程中动态地修改配置
+    - set_multi_conf:               在运行过程中动态地修改多个配置
+    - get_plugin_handle:            获取插件的句柄
+    - get_plugin_default_kwargs:    获取插件的默认参数
+    - get_chat_handle:              获取简单聊天的句柄
+    - get_chat_default_kwargs:      获取简单聊天的默认参数
+========================================================================
+"""
+
+def set_conf(key, value):
+    from toolbox import read_single_conf_with_lru_cache, get_conf
+    read_single_conf_with_lru_cache.cache_clear()
+    get_conf.cache_clear()
+    os.environ[key] = str(value)
+    altered, = get_conf(key)
+    return altered
+
+def set_multi_conf(dic):
+    for k, v in dic.items(): set_conf(k, v)
+    return
+
+def get_plugin_handle(plugin_name):
+    """
+    e.g. plugin_name = 'crazy_functions.批量Markdown翻译->Markdown翻译指定语言'
+    """
+    import importlib
+    assert '->' in plugin_name, \
+        "Example of plugin_name: crazy_functions.批量Markdown翻译->Markdown翻译指定语言"
+    module, fn_name = plugin_name.split('->')
+    f_hot_reload = getattr(importlib.import_module(module, fn_name), fn_name)
+    return f_hot_reload
+
+def get_chat_handle():
+    """
+    """
+    from llm_cards.bridge_all import predict_no_ui_long_connection
+    return predict_no_ui_long_connection
+
+def get_plugin_default_kwargs():
+    """
+    """
+    from toolbox import get_conf, ChatBotWithCookies
+
+    WEB_PORT, LLM_MODEL, API_KEY = \
+        get_conf('WEB_PORT', 'LLM_MODEL', 'API_KEY')
+
+    llm_kwargs = {
+        'api_key': API_KEY,
+        'llm_model': LLM_MODEL,
+        'top_p':1.0, 
+        'max_length': None,
+        'temperature':1.0,
+    }
+    chatbot = ChatBotWithCookies(llm_kwargs)
+
+    # txt, llm_kwargs, plugin_kwargs, chatbot, history, system_prompt, web_port
+    default_plugin_kwargs = {
+        "main_input": "./README.md",
+        "llm_kwargs": llm_kwargs,
+        "plugin_kwargs": {},
+        "chatbot_with_cookie": chatbot,
+        "history": [],
+        "system_prompt": "You are a good AI.", 
+        "web_port": WEB_PORT
+    }
+    return default_plugin_kwargs
+
+def get_chat_default_kwargs():
+    """
+    """
+    from toolbox import get_conf
+
+    LLM_MODEL, API_KEY = get_conf('LLM_MODEL', 'API_KEY')
+
+    llm_kwargs = {
+        'api_key': API_KEY,
+        'llm_model': LLM_MODEL,
+        'top_p':1.0, 
+        'max_length': None,
+        'temperature':1.0,
+    }
+
+    default_chat_kwargs = {
+        "inputs": "Hello there, are you ready?",
+        "llm_kwargs": llm_kwargs,
+        "history": [],
+        "sys_prompt": "You are AI assistant",
+        "observe_window": None,
+        "console_slience": False,
+    }
+
+    return default_chat_kwargs

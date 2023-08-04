@@ -2,6 +2,7 @@
 # 'secondary' 颜色对应 theme.py 中的 neutral_hue
 # 'stop' 颜色对应 theme.py 中的 color_er
 # 默认按钮颜色是 secondary
+import importlib
 from utils.toolbox import clear_line_break
 
 
@@ -76,3 +77,13 @@ def get_core_functions():
             "Visible": False,
         }
     }
+
+def handle_core_functionality(additional_fn, inputs, history, chatbot):
+    import core_functional
+    importlib.reload(core_functional)    # 热更新prompt
+    core_functional = core_functional.get_core_functions()
+    if "PreProcess" in core_functional[additional_fn]: inputs = core_functional[additional_fn]["PreProcess"](inputs)  # 获取预处理函数（如果有的话）
+    inputs = core_functional[additional_fn]["Prefix"] + inputs + core_functional[additional_fn]["Suffix"]
+    if core_functional[additional_fn].get("AutoClearHistory", False):
+        history = []
+    return inputs, history

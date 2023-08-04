@@ -21,7 +21,7 @@ requests
 setuptools
 termcolor
 nltk
-gradio>=3.28.0
+gradio==3.28.3 #or 3.32.2 否则会有Markdown的符号
 airscale
 omegaconf
 #cpython #windows 

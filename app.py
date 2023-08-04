@@ -16,7 +16,7 @@ from config_private import *
 from llm_cards.bridge_all import predict_all,talk_all
 from llm_cards.bridge_chatgpt import Talk_with_app
 from llm_cards.core_functional import get_core_functions
-from utils.toolbox import format_io, find_free_port, on_file_uploaded, on_report_generated, get_conf, ArgsGeneralWrapper, DummyWith
+from utils.toolbox import format_io, find_free_port, on_file_uploaded, on_report_generated, get_conf, ArgsGeneralWrapper, load_chat_cookies, DummyWith
 
 from utils.torch_utils import select_device
 from utils import VID_FORMATS,IMG_FORMATS,write_categories
@@ -537,6 +537,22 @@ def clear_fn_image(value):
 if __name__ == "__main__":
          
           #check_requirements(exclude=('tensorboard', 'thop'))
+          proxies, WEB_PORT, LLM_MODEL, CONCURRENT_COUNT, AUTHENTICATION, CHATBOT_HEIGHT, LAYOUT, AVAIL_LLM_MODELS, AUTO_CLEAR_TXT = \
+          get_conf('proxies', 'WEB_PORT', 'LLM_MODEL', 'CONCURRENT_COUNT', 'AUTHENTICATION', 'CHATBOT_HEIGHT', 'LAYOUT', 'AVAIL_LLM_MODELS', 'AUTO_CLEAR_TXT')
+          AUTO_CLEAR_TXT = get_conf('AUTO_CLEAR_TXT')
+        # 如果WEB_PORT是-1, 则随机选取WEB端口
+          PORT = find_free_port() if WEB_PORT <= 0 else WEB_PORT
+          functional = get_core_functions()
+          from themes.theme import adjust_theme, advanced_css, theme_declaration
+            # 高级函数插件
+          from llm_cards.crazy_functional import get_crazy_functions
+          crazy_fns = get_crazy_functions()
+
+        # 处理markdown文本格式的转变
+          gr.Chatbot.postprocess = format_io
+          # 代理与自动更新
+          from utils.check_proxy import check_proxy, auto_update, warm_up_modules
+          proxy_info = check_proxy(proxies)
           voice_dir='voice_dir'
           if not os.path.exists(voice_dir):
                 os.mkdir(voice_dir)
@@ -599,7 +615,8 @@ if __name__ == "__main__":
                          inputxs.extend(list(save_options.values()))
                          dir_inputs =gr.inputs.Textbox(label='加载本地图像文件夹路径',default='train_imgs')
                          with gr.Accordion('LLM模型配置', open=False):
-                            md_dropdown = gr.Dropdown(AVAIL_LLM_MODELS, value=LLM_MODEL, label="更换LLM模型/请求源 [暂时仅支持chatgpt]").style(container=False)
+                            checkboxes = gr.CheckboxGroup(["基础功能区", "函数插件区", "底部输入区", "输入清除键", "插件参数区"], value=["基础功能区", "函数插件区"], label="显示/隐藏功能区")
+                            md_dropdown = gr.Dropdown(AVAIL_LLM_MODELS, value=LLM_MODEL, label="更换LLM模型源 [暂时仅支持chatgpt/glm2]").style(container=False)
                             max_length_sl = gr.Slider(minimum=256, maximum=4096, value=512, step=1, interactive=True, label="Local LLM MaxLength")
                             with gr.Row():
                                 quant_chatglm= gr.Dropdown(MODEL_QUANTIZE,value=None,label="llm quantize[chatglm] ").style(container=False)
@@ -731,28 +748,47 @@ if __name__ == "__main__":
                          with gr.Row():
                                 resetBtn = gr.Button("重置", variant="secondary"); resetBtn.style(size="sm")
                                 stopBtn2 = gr.Button("停止", variant="secondary"); stopBtn2.style(size="sm")
+                                clearBtn = gr.Button("清除", variant="secondary", visible=False); clearBtn.style(size="sm")
                          with gr.Tabs(elem_id="Chatbox"): 
-                            with gr.TabItem('对话区'):   
-                                with gr.Row():  
-                                    chat_txt=gr.Textbox(lines=3,show_label=False, placeholder="question").style(container=False)
+                            with gr.TabItem('对话区'):  
+                                with gr.Accordion("输入区", open=True, elem_id="input-panel") as area_input_primary: 
+                                    with gr.Row():  
+                                        chat_txt=gr.Textbox(lines=3,show_label=False, placeholder="question").style(container=False)
                          with gr.Accordion("备选输入区", open=True, visible=False) as area_input_secondary:
                             with gr.Row():
                                 txt = gr.Textbox(show_label=False, placeholder="Input question here.", label="输入区2").style(container=False)
                          with gr.Row():
                             run_button_chat = gr.Button('Chat_Sumbit',variant="primary")
                             run_button_2 = gr.Button('VisualGLM',variant="primary")
-                         with gr.Accordion("学术ChatGPT基础功能", open=True) as area_basic_fn:
+                         with gr.Accordion("学术ChatGPT基础功能", open=False) as area_basic_fn:
                               with gr.Row():
                                 for k in functional:
                                     if ("Visible" in functional[k]) and (not functional[k]["Visible"]): continue
                                     variant = functional[k]["Color"] if "Color" in functional[k] else "secondary"
                                     functional[k]["Button"] = gr.Button(k, variant=variant)   
-                       
+                         with gr.Accordion("函数插件区", open=False, elem_id="plugin-panel") as area_crazy_fn:
+                            with gr.Row():
+                                gr.Markdown("插件可读取“输入区”文本/路径作为参数（上传文件自动修正路径）")
+                            with gr.Row():
+                                for k in crazy_fns:
+                                    if not crazy_fns[k].get("AsButton", True): continue
+                                    variant = crazy_fns[k]["Color"] if "Color" in crazy_fns[k] else "secondary"
+                                    crazy_fns[k]["Button"] = gr.Button(k, variant=variant)
+                                    crazy_fns[k]["Button"].style(size="sm")
                          with gr.Row():
-                                plugin_advanced_arg = gr.Textbox(show_label=True, label="高级参数输入区", visible=False, 
+                            with gr.Accordion("更多函数插件", open=False):
+                                dropdown_fn_list = [k for k in crazy_fns.keys() if not crazy_fns[k].get("AsButton", True)]
+                                with gr.Row():
+                                    dropdown = gr.Dropdown(dropdown_fn_list, value=r"打开插件列表", label="", show_label=False).style(container=False)  
+                                with gr.Row():      
+                                    plugin_advanced_arg = gr.Textbox(show_label=True, label="高级参数输入区", visible=False, 
                                                                  placeholder="特殊函数插件的高级参数输入区").style(container=False)
-
-                                                          
+                                with gr.Row():
+                                    switchy_bt = gr.Button(r"请先从插件列表中选择", variant="secondary")
+                         with gr.Row():
+                            with gr.Accordion("点击展开“文件上传区”。上传本地文件/压缩包供函数插件调用。", open=False) as area_file_up:
+                                file_upload = gr.Files(label="任何文件, 但推荐上传压缩文件(zip, tar)", file_count="multiple")        
+                       
                     with gr.Column(scale=20):
                          with gr.Accordion('输出区', open=True):
                             with gr.TabItem('图像输出'):   
@@ -774,14 +810,27 @@ if __name__ == "__main__":
                          with gr.Row():
                             with gr.Accordion("备选输入区", open=True, visible=False) as area_input_secondary:
                                  system_prompt = gr.Textbox(show_label=True, placeholder=f"Chat Prompt", label="下方输入对话支持图像和文本", value="AI assistant.")
-                                            
+                                 #stopBtn2 = gr.Button("停止", variant="secondary"); stopBtn2.style(size="sm")
+                                 clearBtn2 = gr.Button("清除", variant="secondary", visible=False); clearBtn2.style(size="sm")           
                          with gr.Row():
                             with gr.Column(scale=2):
                                 result_text = gr.Chatbot(label=f'当前模型:{LLM_MODEL}', value=[("", "Hi, What do you want to know ?")]).style(height=CHATBOT_HEIGHT)
                                 history = gr.State([])
                
                #Recording_audio.click(fn=toggle_operation,inputs=[asr_select],outputs=[input_text]) # 将 toggle_operation 函数绑定到按钮
-               
+                  # 功能区显示开关与功能区的互动
+               def fn_area_visibility(a):
+                    ret = {}
+                    ret.update({area_basic_fn: gr.update(visible=("基础功能区" in a))})
+                    ret.update({area_crazy_fn: gr.update(visible=("函数插件区" in a))})
+                    ret.update({area_input_primary: gr.update(visible=("底部输入区" not in a))})
+                    ret.update({area_input_secondary: gr.update(visible=("底部输入区" in a))})
+                    ret.update({clearBtn: gr.update(visible=("输入清除键" in a))})
+                    ret.update({clearBtn2: gr.update(visible=("输入清除键" in a))})
+                    ret.update({plugin_advanced_arg: gr.update(visible=("插件参数区" in a))})
+                    if "底部输入区" in a: ret.update({txt: gr.update(value="")})
+                    return ret
+               checkboxes.select(fn_area_visibility, [checkboxes], [area_basic_fn, area_crazy_fn, area_input_primary, area_input_secondary, chat_txt,txt , clearBtn, clearBtn2, plugin_advanced_arg] )
                sadtalker_submit.click(fn=sadtalker_demo,inputs=[sadtalker_path,sadtalker_config,image_prompt,upload_audio, preprocess_type,is_still_mode,enhancer,
                                 batch_size, size_of_image, pose_style, exp_weight],outputs=[video_output])
                #audio_to_face.click(fn=t2s, inputs=[result_text,input_text,gr.State(True),omniverse_switch], outputs=[upload_audio] )                                 
@@ -815,7 +864,7 @@ if __name__ == "__main__":
                cancel_handles.append(txt.submit(**predict_args))
                cancel_handles.append(run_button_chat.click(**predict_args))
                cancel_handles.append(clear_button.click(**predict_args))
-               cancel_handles.append(chat_app_button.click(**chat_args))
+               cancel_handles.append(chat_app_button.click(**chat_args)) 
                resetBtn.click(lambda: ([], [], "已重置"), None, [result_text, history, status])
                stopBtn2.click(fn=None, inputs=None, outputs=None, cancels=cancel_handles)
               
@@ -824,7 +873,37 @@ if __name__ == "__main__":
                     dict_args=dict(fn=ArgsGeneralWrapper(predict_all), inputs=[*input_combo, gr.State(True),gr.State(k)], outputs=output_combo)
                     
                     cancel_handles.append(functional[k]["Button"].click(**dict_args))
-               
+               # 文件上传区，接收文件后与chatbot的互动
+               file_upload.upload(on_file_uploaded, [file_upload, result_text, chat_txt, txt, checkboxes], [result_text, chat_txt, txt])
+                # 函数插件-固定按钮区
+               for k in crazy_fns:
+                    if not crazy_fns[k].get("AsButton", True): continue
+                    click_handle = crazy_fns[k]["Button"].click(ArgsGeneralWrapper(crazy_fns[k]["Function"]), [*input_combo, gr.State(PORT)], output_combo)
+                    click_handle.then(on_report_generated, [cookies, file_upload, result_text], [cookies, file_upload, result_text])
+                    cancel_handles.append(click_handle)
+                # 函数插件-下拉菜单与随变按钮的互动
+               def on_dropdown_changed(k):
+                    variant = crazy_fns[k]["Color"] if "Color" in crazy_fns[k] else "secondary"
+                    ret = {switchy_bt: gr.update(value=k, variant=variant)}
+                    if crazy_fns[k].get("AdvancedArgs", False): # 是否唤起高级插件参数区
+                        ret.update({plugin_advanced_arg: gr.update(visible=True,  label=f"插件[{k}]的高级参数说明：" + crazy_fns[k].get("ArgsReminder", [f"没有提供高级参数功能说明"]))})
+                    else:
+                        ret.update({plugin_advanced_arg: gr.update(visible=False, label=f"插件[{k}]不需要高级参数。")})
+                    return ret
+               dropdown.select(on_dropdown_changed, [dropdown], [switchy_bt, plugin_advanced_arg] )
+               def on_md_dropdown_changed(k):
+                    return {result_text: gr.update(label="当前模型："+k)}
+               md_dropdown.select(on_md_dropdown_changed, [md_dropdown], [result_text] )
+                # 随变按钮的回调函数注册
+               def route(request: gr.Request, k, *args, **kwargs):
+                    if k in [r"打开插件列表", r"请先从插件列表中选择"]: return
+                    yield from ArgsGeneralWrapper(crazy_fns[k]["Function"])(request, *args, **kwargs)
+               click_handle = switchy_bt.click(route,[switchy_bt, *input_combo, gr.State(PORT)], output_combo)
+               click_handle.then(on_report_generated, [cookies, file_upload, result_text], [cookies, file_upload, result_text])
+               cancel_handles.append(click_handle)
+                # 终止按钮的回调函数注册
+              # stopBtn.click(fn=None, inputs=None, outputs=None, cancels=cancel_handles)
+               #stopBtn2.click(fn=None, inputs=None, outputs=None, cancels=cancel_handles)     
                #VisualGLM run         
                run_button_2.click(fn=visual_chat,inputs=[chat_txt, visual_temperature, visual_top_p, image_prompt,
                                                          result_text,record_audio,upload_audio,omniverse_switch],
@@ -836,7 +915,10 @@ if __name__ == "__main__":
                image_prompt.upload(fn=clear_fn_image, inputs=clear_button, outputs=[result_text])
                clear_button.click(lambda: ("","","","",""), None, [prompt_input,result_text,txt, input_text,chat_txt])
                image_prompt.clear(fn=clear_fn_image, inputs=clear_button, outputs=[result_text])
-          
+            #    def init_cookie(cookies, chatbot):
+            #             # 为每一位访问的用户赋予一个独一无二的uuid编码
+            #             cookies.update({'uuid': uuid.uuid4()})
+            #             return cookies
           def auto_opentab_delay(port=7586):
                 import threading, webbrowser, time
                 LOGGER.info(f"\n如果浏览器没有自动打开，请复制并转到以下URL：")

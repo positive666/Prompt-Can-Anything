@@ -3,15 +3,20 @@ def check_proxy(proxies):
     import requests
     proxies_https = proxies['https'] if proxies is not None else '无'
     try:
-        response = requests.get("https://ipapi.co/json/",
-                                proxies=proxies, timeout=4)
+        response = requests.get("https://ipapi.co/json/", proxies=proxies, timeout=4)
         data = response.json()
         print(f'查询代理的地理位置，返回的结果是{data}')
         if 'country_name' in data:
             country = data['country_name']
             result = f"代理配置 {proxies_https}, 代理所在地：{country}"
         elif 'error' in data:
-            result = f"代理配置 {proxies_https}, 代理所在地：未知，IP查询频率受限"
+            alternative = _check_with_backup_source(proxies)
+            if alternative is None:
+                result = f"代理配置 {proxies_https}, 代理所在地：未知，IP查询频率受限"
+            else:
+                result = f"代理配置 {proxies_https}, 代理所在地：{alternative}"
+        else:
+            result = f"代理配置 {proxies_https}, 代理数据解析失败：{data}"
         print(result)
         return result
     except:
@@ -19,12 +24,17 @@ def check_proxy(proxies):
         print(result)
         return result
 
+def _check_with_backup_source(proxies):
+    import random, string, requests
+    random_string = ''.join(random.choices(string.ascii_letters + string.digits, k=32))
+    try: return requests.get(f"http://{random_string}.edns.ip-api.com/json", proxies=proxies, timeout=4).json()['dns']['geo']
+    except: return None
 
 def backup_and_download(current_version, remote_version):
     """
     一键更新协议：备份和下载
     """
-    from utils.toolbox import get_conf
+    from toolbox import get_conf
     import shutil
     import os
     import requests
@@ -62,7 +72,7 @@ def patch_and_restart(path):
     import sys
     import time
     import glob
-    from utils.colorful import print亮黄, print亮绿, print亮红
+    from colorful import print亮黄, print亮绿, print亮红
     # if not using config_private, move origin config.py as config_private.py
     if not os.path.exists('config_private.py'):
         print亮黄('由于您没有设置config_private.py私密配置，现将您的现有配置移动至config_private.py以防止配置丢失，',
@@ -99,7 +109,7 @@ def auto_update(raise_error=False):
     一键更新协议：查询版本和用户意见
     """
     try:
-        from utils.toolbox import get_conf
+        from toolbox import get_conf
         import requests
         import time
         import json
@@ -115,8 +125,8 @@ def auto_update(raise_error=False):
         with open('./version', 'r', encoding='utf8') as f:
             current_version = f.read()
             current_version = json.loads(current_version)['version']
-        if (remote_version - current_version) >= 0.01:
-            from utils.colorful import print亮黄
+        if (remote_version - current_version) >= 0.01-1e-5:
+            from colorful import print亮黄
             print亮黄(
                 f'\n新版本可用。新版本:{remote_version}，当前版本:{current_version}。{new_feature}')
             print('（1）Github更新地址:\nhttps://github.com/binary-husky/chatgpt_academic\n')
@@ -128,7 +138,7 @@ def auto_update(raise_error=False):
                 except:
                     msg = '更新失败。'
                     if raise_error:
-                        from utils.toolbox import trimmed_format_exc
+                        from toolbox import trimmed_format_exc
                         msg += trimmed_format_exc()
                     print(msg)
             else:
@@ -137,9 +147,9 @@ def auto_update(raise_error=False):
         else:
             return
     except:
-        msg = '自动更新程序：已禁用'
+        msg = '自动更新程序：已禁用。建议排查：代理网络配置。'
         if raise_error:
-            from utils.toolbox import trimmed_format_exc
+            from toolbox import trimmed_format_exc
             msg += trimmed_format_exc()
         print(msg)
 
@@ -154,6 +164,6 @@ def warm_up_modules():
 if __name__ == '__main__':
     import os
     os.environ['no_proxy'] = '*'  # 避免代理网络产生意外污染
-    from utils.toolbox import get_conf
+    from toolbox import get_conf
     proxies, = get_conf('proxies')
     check_proxy(proxies)
