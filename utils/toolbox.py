@@ -521,7 +521,7 @@ def on_file_uploaded(files, chatbot, txt, txt2, checkboxes):
 
 
 def on_report_generated(cookies, files, chatbot):
-    from toolbox import find_recent_files
+    from utils.toolbox import find_recent_files
     if 'file_to_promote' in cookies:
         report_files = cookies['file_to_promote']
         cookies.pop('file_to_promote')
