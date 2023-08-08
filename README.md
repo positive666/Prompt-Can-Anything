@@ -61,7 +61,7 @@ Through continuous creativity and accumulation, we will integrate and learn from
 
 ### <div align="left"> 🔥 [August , Update plan preview , Welcome fork] </div>
 
-- 🔥 add gpt_academic repo and add langchain\agent comming soon
+- 🔥 add gpt_academic repo crazy functions and add langchain\agent comming soon
 
 -  Optimization of speech problems and code logic optimization before optimization, add Gilgen
 
