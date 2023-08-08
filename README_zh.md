@@ -63,6 +63,9 @@
 
 ### <div align="left">🔥 [8月更新预告，更新频繁，感兴趣关注]</div>
 
+
+-  修复了LLM调用相关的BUG和界面调整，正在更新langchains和Agent
+
 -  更新了ram&7tag2Text【Done】
 
 -  修复优化开源GLM的一些功能，一键微调按钮和各种微调模型
@@ -82,6 +85,8 @@
 </details>
 
 ### <div align="left">⭐ [更新列表]</div>
+
+-  【2023/8/7】  v1.2: 修复了界面已知BUG，分离了部分依赖，修复了chatglm2和多模型加载问题，完整添加了最新的学术GPT功能，并在更新agent和LANGCHAIN
 
 -  【2023/7/21】 v1.15: 更新了Tag2text和ram的代码，支持RAM，是一个中英识别标签的双模态模型
 
@@ -117,6 +122,8 @@
 
 - [lama](https://github.com/advimman/lama)：分辨率鲁棒的大屏蔽填充与傅立叶卷积
 
+- [gpt_academic](https://github.com/binary-husky/gpt_academic) :  丰富的LLM工具箱。
+
   ## :hammer_and_wrench: YOCO: 快速入门
 
 首先，需要有基本的gpu深度学习环境。
@@ -143,7 +150,7 @@ cd  model_cards
 python setup.py install
 ```
 
-安装清华视觉VisualGLM（可选，最好用LINUX系统，window后面测试后补充安装方案）：
+安装清华智谱视觉VisualGLM（可选，最好用LINUX系统，window后面测试后补充安装方案）：
 
 ```bash
 git submodule update --init --recursive
@@ -335,6 +342,7 @@ pip install  bitsandbytes  -i https://mirrors.aliyun.com/pypi/simple
 
 ## 参考工作 
 
+- [gpt_academic](https://github.com/binary-husky/gpt_academic)
 - [Segment Anything](https://github.com/facebookresearch/segment-anything)
 - [Grounding DINO](https://github.com/IDEA-Research/GroundingDINO)
 - [Tag2text](https://github.com/xinyu1205/Tag2Text) 

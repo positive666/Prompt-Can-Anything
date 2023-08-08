@@ -61,7 +61,7 @@ Through continuous creativity and accumulation, we will integrate and learn from
 
 ### <div align="left"> 🔥 [August , Update plan preview , Welcome fork] </div>
 
-- 🔥 v1.2  coming soon(因为个人变更工作原因，目前更新较慢，目前语音实时并发已经基本优化好了)
+- 🔥 add gpt_academic repo and add langchain\agent comming soon
 
 -  Optimization of speech problems and code logic optimization before optimization, add Gilgen
 
@@ -76,6 +76,8 @@ Through continuous creativity and accumulation, we will integrate and learn from
   
 
 ### <div align="left">⭐[News list] </div>
+
+  -【2023/8/7】   Fix bug with llm(chatglm2,gpt3.5 loads and improve gradio ui)
 	-【2023/7/21】  update tag2text and ram with offical repo
 	-【2023/6/7】   v1.15:add submodule SadTalker,update UI
 	-【2023/6/6】   v1.15:environment installation problems and supplementary instructions, special models are called independently, and no need to install dependencies; Added the function of one-click fine-tuning of VisualGLM, considering machine configuration and video memory with caution
@@ -102,7 +104,7 @@ Through continuous creativity and accumulation, we will integrate and learn from
 - [SadTalker](https://github.com/OpenTalker/SadTalker): Learning Realistic 3D Motion Coefficients for Stylized Audio-Driven Single Image Talking Face Animation
 - [lama](https://github.com/advimman/lama) :  Resolution-robust large mask Inpainting with Fourier Convolutions
 
-  
+- [gpt_academic](https://github.com/binary-husky/gpt_academic) :  LLM tools.
   
   ## :hammer_and_wrench: YOCO: Quick Start
 
@@ -349,6 +351,7 @@ https://www.nvidia.cn/omniverse/
 
 ## :cupid: Acknowledgements
 
+- [gpt_academic](https://github.com/binary-husky/gpt_academic)
 - [Segment Anything](https://github.com/facebookresearch/segment-anything)
 - [Grounding DINO](https://github.com/IDEA-Research/GroundingDINO)
 - [Tag2text](https://github.com/xinyu1205/Tag2Text) 

@@ -777,8 +777,6 @@ class IntentAgent(BaseSingleActionAgent):
     问题：什么是游戏角色皮卡丘？
     意图类别：游戏角色信息查询
     
-    问题：什么是演员刘德华？
-    意图类别：演员信息查询
 
     问题：“{query}”
     """
