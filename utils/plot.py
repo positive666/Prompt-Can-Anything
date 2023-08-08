@@ -18,7 +18,7 @@ import pandas as pd
 import torch
 import json
 from PIL import Image, ImageDraw, ImageFont
-from pycocotools import mask as maskUtils
+#from pycocotools import mask as maskUtils
 from utils import TryExcept, threaded
 from utils.ops import (CONFIG_DIR, FONT, LOGGER, check_requirements, clip_boxes, increment_path,
                            is_ascii, xywh2xyxy, xyxy2xywh,fitness)

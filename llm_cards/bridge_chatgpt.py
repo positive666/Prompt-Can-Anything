@@ -18,7 +18,7 @@ import logging
 import traceback
 import requests
 import importlib
-from a2f import audio_synthesis
+
 # config_private.py放自己的秘密如API和代理网址
 # 读取时首先看是否存在私密的config_private配置文件（不受git管控），如果有，则覆盖原config文件
 from utils.toolbox import get_conf, update_ui, is_any_api_key, select_api_key, what_keys, clip_history, trimmed_format_exc
@@ -137,6 +137,7 @@ def asr_with_gpt(transcriber,text_queue, llm_kwargs, plugin_kwargs, chatbot, his
         
 def Talk_with_app(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_prompt='', stream = True, additional_fn=None):
         import threading 
+        from a2f import audio_synthesis
         from utils import AudioRecorder 
         from utils import AudioTrans
         import whisper
@@ -329,7 +330,7 @@ def predict(inputs, llm_kwargs, plugin_kwargs, chatbot, history=[], system_promp
                     return
            
         if omniverse_state:
-            from a2f import tts_a2f
+            from a2f import tts_a2f,audio_synthesis
             audio_synthesis(chatbot[-1][-1],A2F_URL,Avatar_instance_A)   
            #asyncio.run(tts_a2f(chatbot[-1][-1]))
 

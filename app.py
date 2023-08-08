@@ -742,13 +742,15 @@ if __name__ == "__main__":
                          inputs.extend(inputxs)
 
                          with gr.Row():
-                                run_button = gr.Button('Run CV_Task',variant="primary")
-                                clear_button= gr.Button("清除文本", variant="secondary")
-                                status = gr.Markdown(f"Tip: 按Enter提交, 按Shift+Enter换行。当前模型: {LLM_MODEL} \n ")
+                                run_button = gr.Button('Run CV_Task',variant="primary"); run_button.style(size="sm")
+                                clear_button= gr.Button("清除文本", variant="secondary"); clear_button.style(size="sm")
+                        
                          with gr.Row():
-                                resetBtn = gr.Button("重置", variant="secondary"); resetBtn.style(size="sm")
-                                stopBtn2 = gr.Button("停止", variant="secondary"); stopBtn2.style(size="sm")
-                                clearBtn = gr.Button("清除", variant="secondary", visible=False); clearBtn.style(size="sm")
+                                    resetBtn = gr.Button("重置", variant="secondary"); resetBtn.style(size="sm")
+                                    stopBtn2 = gr.Button("停止", variant="secondary"); stopBtn2.style(size="sm")
+                                    clearBtn = gr.Button("清除", variant="secondary", visible=False); clearBtn.style(size="sm")
+                         with gr.Row():       
+                                status = gr.Markdown(f"Tips: 按Enter提交, 按Shift+Enter换行。当前模型: {LLM_MODEL} \n ")           
                          with gr.Tabs(elem_id="Chatbox"): 
                             with gr.TabItem('对话区'):  
                                 with gr.Accordion("输入区", open=True, elem_id="input-panel") as area_input_primary: 
