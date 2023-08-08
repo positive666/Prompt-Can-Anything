@@ -330,21 +330,21 @@ def get_crazy_functions():
         function_plugins.update({
             "[功能尚不稳定] 构建知识库（请先上传文件素材）": {
                 "Color": "stop",
-                "AsButton": False,
+                "AsButton": True,
                 "AdvancedArgs": True,
                 "ArgsReminder": "待注入的知识库名称id, 默认为default",
                 "Function": HotReload(知识库问答)
             }
         })
     except:
-        print('Load function plugin failed')
+        print('Load{知识库问答} function plugin failed')
 
     try:
         from crazy_functions.Langchain知识库 import 读取知识库作答
         function_plugins.update({
             "[功能尚不稳定] 知识库问答": {
                 "Color": "stop",
-                "AsButton": False,
+                "AsButton": True,
                 "AdvancedArgs": True,
                 "ArgsReminder": "待提取的知识库名称id, 默认为default, 您需要首先调用构建知识库",
                 "Function": HotReload(读取知识库作答)

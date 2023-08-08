@@ -145,3 +145,5 @@ voice_dir/
 SadTalker/
 VITS/
 config_private.py
+private_upload
+gpt_log

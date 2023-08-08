@@ -547,7 +547,13 @@ if __name__ == "__main__":
             # 高级函数插件
           from llm_cards.crazy_functional import get_crazy_functions
           crazy_fns = get_crazy_functions()
-
+          import logging, uuid
+          os.makedirs("gpt_log", exist_ok=True)
+          try:logging.basicConfig(filename="gpt_log/chat_secrets.log", level=logging.INFO, encoding="utf-8", format="%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+          except:logging.basicConfig(filename="gpt_log/chat_secrets.log", level=logging.INFO,  format="%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+        # Disable logging output from the 'httpx' logger
+          logging.getLogger("httpx").setLevel(logging.WARNING)
+          print("所有问询记录将自动保存在本地目录./gpt_log/chat_secrets.log, 请注意自我隐私保护哦！")
         # 处理markdown文本格式的转变
           gr.Chatbot.postprocess = format_io
           # 代理与自动更新
@@ -735,9 +741,8 @@ if __name__ == "__main__":
                                         with gr.Row():
                                             image_prompt = gr.Image(label="Source image", source="upload", type="filepath").style(height=200,width=180)
                                       
-                         prompt_input=gr.inputs.Textbox(lines=2, label="prompt with image/仅与图像相关提示词 : (Optional,注意使用每一个功能前请考虑在这个框里的TEXT提示词要不要先清空)")
-                         
-                       
+                         prompt_input=gr.inputs.Textbox(lines=2, label="prompt with image/仅与图像相关 : (Optional,注意每个功能请考虑在这个框里的TEXT提示词要不要先清空)")
+                           
                          inputs = [dir_inputs,image_prompt,prompt_input,box_threshold,iou_threshold,text_threshold,device_input,quant]
                          inputs.extend(inputxs)
 
@@ -750,7 +755,7 @@ if __name__ == "__main__":
                                     stopBtn2 = gr.Button("停止", variant="secondary"); stopBtn2.style(size="sm")
                                     clearBtn = gr.Button("清除", variant="secondary", visible=False); clearBtn.style(size="sm")
                          with gr.Row():       
-                                status = gr.Markdown(f"Tips: 按Enter提交, 按Shift+Enter换行。当前模型: {LLM_MODEL} \n ")           
+                                status = gr.Markdown(f"Tips:Enter提交, 按Shift+Enter换行。当前模型: {LLM_MODEL} \n ")           
                          with gr.Tabs(elem_id="Chatbox"): 
                             with gr.TabItem('对话区'):  
                                 with gr.Accordion("输入区", open=True, elem_id="input-panel") as area_input_primary: 
@@ -779,7 +784,8 @@ if __name__ == "__main__":
                                     crazy_fns[k]["Button"].style(size="sm")
                          with gr.Row():
                             with gr.Accordion("更多函数插件", open=False):
-                                dropdown_fn_list = [k for k in crazy_fns.keys() if not crazy_fns[k].get("AsButton", True)]
+                                # update
+                                dropdown_fn_list = crazy_fns.keys() 
                                 with gr.Row():
                                     dropdown = gr.Dropdown(dropdown_fn_list, value=r"打开插件列表", label="", show_label=False).style(container=False)  
                                 with gr.Row():      
@@ -879,6 +885,7 @@ if __name__ == "__main__":
                file_upload.upload(on_file_uploaded, [file_upload, result_text, chat_txt, txt, checkboxes], [result_text, chat_txt, txt])
                 # 函数插件-固定按钮区
                for k in crazy_fns:
+                    print(f'检查插件名字{k}，是否载入')
                     if not crazy_fns[k].get("AsButton", True): continue
                     click_handle = crazy_fns[k]["Button"].click(ArgsGeneralWrapper(crazy_fns[k]["Function"]), [*input_combo, gr.State(PORT)], output_combo)
                     click_handle.then(on_report_generated, [cookies, file_upload, result_text], [cookies, file_upload, result_text])
@@ -904,8 +911,8 @@ if __name__ == "__main__":
                click_handle.then(on_report_generated, [cookies, file_upload, result_text], [cookies, file_upload, result_text])
                cancel_handles.append(click_handle)
                 # 终止按钮的回调函数注册
-              # stopBtn.click(fn=None, inputs=None, outputs=None, cancels=cancel_handles)
-               #stopBtn2.click(fn=None, inputs=None, outputs=None, cancels=cancel_handles)     
+             #  stopBtn.click(fn=None, inputs=None, outputs=None, cancels=cancel_handles)
+               stopBtn2.click(fn=None, inputs=None, outputs=None, cancels=cancel_handles)     
                #VisualGLM run         
                run_button_2.click(fn=visual_chat,inputs=[chat_txt, visual_temperature, visual_top_p, image_prompt,
                                                          result_text,record_audio,upload_audio,omniverse_switch],
