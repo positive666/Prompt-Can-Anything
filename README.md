@@ -2,7 +2,7 @@
 
 <p align="center"> English | <a href="README_zh.md">中文</a></p>
 
-This is a gradio  library and research repository that combines SOTA AI applications. It can help you achieve anything - all you need to do is provide prompts and make one click. Through the prompts and creativity of SOTA models, you can do anything.
+This is a gradio  library and research repository that combines SOTA AI applications. It can help you achieve anything - all you need to do is provide prompts and make one click. Through the prompts and creativity of SOTA models, you can do anything.You don't have to install all the features, you can install them according to the features you want to use.
 
 **Motivation**
 
@@ -67,7 +67,7 @@ Through continuous creativity and accumulation, we will integrate and learn from
 
 - 🔥Official latest model integration test for Tag2text version 2 in early June,add RAM(Done)
 
-- One-click fine-tuning button function, adding: visualglm  (Done)
+-  One-click fine-tuning button function, adding: visualglm  (Done)
 
 -  Voice text processing link GPT, joining chatglm   with a2f APP( Done)
 
@@ -77,15 +77,25 @@ Through continuous creativity and accumulation, we will integrate and learn from
 
 ### <div align="left">⭐[News list] </div>
 
+
   -【2023/8/7】   Fix bug with llm(chatglm2,gpt3.5 loads and improve gradio ui)
+
 	-【2023/7/21】  update tag2text and ram with offical repo
+
 	-【2023/6/7】   v1.15:add submodule SadTalker,update UI
+
 	-【2023/6/6】   v1.15:environment installation problems and supplementary instructions, special models are called independently, and no need to install dependencies; Added the function of one-click fine-tuning of VisualGLM, considering machine configuration and video memory with caution
+
 	-【2023/6/5】   v1.15 a vide demo and plan,fix asr bug ,chatgpt with asr and tts 
+
 	-【2023/5/31】  Fixed the already issue, add tts demo, the Linux platform is tested through all open features
+
 	-【2023/5/23】  add web demo:Add VisualGLM ,chatgpt from [Academic-gpt](https://github.com/binary-husky/gpt_academic)
+
 	-【2023/5/7】   add web demo:At present, the function of text generation, detection and segmentation of images or image folders on the website has been tested normally, and the program does not need to be restarted, and the last model loading configuration is remembered, and it will be continuously optimized in the future.
+
 	-【2023/5/4】   add  semantic segmentatio label, add args(--color-flag --save-mask )
+  
 	-【2023/4/26】  YOCO,Automatic annotation TOOLS:Commit preliminary code ,For the input image or folder, you can obtain the results of detection, segmentation, and text annotation , optional chatgpt api.
 
 
