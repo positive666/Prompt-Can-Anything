@@ -78,7 +78,7 @@ Through continuous creativity and accumulation, we will integrate and learn from
 ### <div align="left">⭐[News list] </div>
 
 
-  -【2023/8/7】   Fix bug with llm(chatglm2,gpt3.5 loads and improve gradio ui)
+	-【2023/8/7】   Fix bug with llm(chatglm2,gpt3.5 loads and improve gradio ui)
 
 	-【2023/7/21】  update tag2text and ram with offical repo
 
@@ -95,7 +95,7 @@ Through continuous creativity and accumulation, we will integrate and learn from
 	-【2023/5/7】   add web demo:At present, the function of text generation, detection and segmentation of images or image folders on the website has been tested normally, and the program does not need to be restarted, and the last model loading configuration is remembered, and it will be continuously optimized in the future.
 
 	-【2023/5/4】   add  semantic segmentatio label, add args(--color-flag --save-mask )
-  
+
 	-【2023/4/26】  YOCO,Automatic annotation TOOLS:Commit preliminary code ,For the input image or folder, you can obtain the results of detection, segmentation, and text annotation , optional chatgpt api.
 
 
