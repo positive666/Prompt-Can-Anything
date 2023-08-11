@@ -40,8 +40,9 @@ def ArgsGeneralWrapper(f):
     """
     装饰器函数，用于重组输入参数，改变输入参数的顺序与结构。
     """
-    def decorated(request: gradio.Request,cookies, max_length, llm_model, txt, txt2, top_p, temperature, chatbot, history, system_prompt, plugin_advanced_arg, omniverse_switch,record_audio,asr,quantize,chat_app,*args):
+    def decorated(request: gradio.Request,cookies, max_length, llm_model, txt, txt2, top_p, temperature, chatbot, history, system_prompt, plugin_advanced_arg, omniverse_switch,record_audio,asr,quantize,chat_app,vs_path,*args):
         txt_passon = txt
+        print('检查本地当前使用的矢量库',vs_path)
         if txt == "" and txt2 != "": txt_passon = txt2
         # 引入一个有cookie的chatbot
         cookies.update({
@@ -57,16 +58,26 @@ def ArgsGeneralWrapper(f):
             'omniverse': omniverse_switch,
             "record_audio":record_audio,
             "asr":asr,
-            "quantize":quantize,
-            "chat_app":chat_app,
+            "quantize": quantize,
+            "chat_app": chat_app,
             'client_ip': request.client.host,
         }
         plugin_kwargs = {
             "advanced_arg": plugin_advanced_arg,
+            "local_doc_qa": None,
+            "vs_path": vs_path,
         }
         chatbot_with_cookie = ChatBotWithCookies(cookies)
         chatbot_with_cookie.write_list(chatbot)
-        yield from f(txt_passon, llm_kwargs, plugin_kwargs, chatbot_with_cookie, history, system_prompt, *args)
+        if cookies.get('lock_plugin', None) is None:
+            # 正常状态
+            yield from f(txt_passon, llm_kwargs, plugin_kwargs, chatbot_with_cookie, history, system_prompt, *args)
+        else:
+            # 处理个别特殊插件的锁定状态
+            module, fn_name = cookies['lock_plugin'].split('->')
+            f_hot_reload = getattr(importlib.import_module(module, fn_name), fn_name)
+            yield from f_hot_reload(txt_passon, llm_kwargs, plugin_kwargs, chatbot_with_cookie, history, system_prompt, *args)
+    return decorated
     return decorated
 
 

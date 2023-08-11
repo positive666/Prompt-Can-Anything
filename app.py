@@ -28,7 +28,7 @@ import multiprocessing as mp
 import asyncio
 import concurrent.futures
 from utils.colorful import *
-
+from crazy_functions.langchain_agent import Langchains_agent作答
 functional = get_core_functions()
 
 VisualGLM_dir=f"VisualGLM_6B"
@@ -761,6 +761,12 @@ if __name__ == "__main__":
                                 with gr.Accordion("输入区", open=True, elem_id="input-panel") as area_input_primary: 
                                     with gr.Row():  
                                         chat_txt=gr.Textbox(lines=3,show_label=False, placeholder="question").style(container=False)
+                            with gr.TabItem('知识问答区'):  
+                                with gr.Accordion("问答区输入区", open=True, elem_id="input-panel") as area_input_primary:   
+                                    with gr.Row():
+                                        query=gr.Textbox(lines=3,show_label=False, placeholder="question").style(container=False)
+                                    with gr.Row():
+                                        query_summit = gr.Button('Query_Sumbit',variant="primary").style(size="sm")          
                          with gr.Accordion("备选输入区", open=True, visible=False) as area_input_secondary:
                             with gr.Row():
                                 txt = gr.Textbox(show_label=False, placeholder="Input question here.", label="输入区2").style(container=False)
@@ -795,8 +801,67 @@ if __name__ == "__main__":
                                     switchy_bt = gr.Button(r"请先从插件列表中选择", variant="secondary")
                          with gr.Row():
                             with gr.Accordion("点击展开“文件上传区”。上传本地文件/压缩包供函数插件调用。", open=False) as area_file_up:
-                                file_upload = gr.Files(label="任何文件, 但推荐上传压缩文件(zip, tar)", file_count="multiple")        
-                       
+                                with gr.Tab("上传文件"):
+                                    file_upload = gr.Files(label="任何文件, 但推荐上传压缩文件(zip, tar)", file_count="multiple")  
+                                    load_file_button = gr.Button("上传文件并加载知识库")      
+                                with gr.Tab("上传文件夹"):
+                                    folder_files = gr.File(label="添加文件",
+                                                   # file_types=['.txt', '.md', '.docx', '.pdf'],
+                                                   file_count="directory",
+                                                   show_label=False)
+                                    load_folder_button = gr.Button("上传文件夹并加载知识库")
+                                with gr.Tab("添加单条内容"):
+                                    one_title = gr.Textbox(label="标题", placeholder="请输入要添加单条段落的标题", lines=1)
+                                    one_conent = gr.Textbox(label="内容", placeholder="请输入要添加单条段落的内容", lines=5)
+                                    one_content_segmentation = gr.Checkbox(value=True, label="禁止内容分句入库",
+                                                                        interactive=True)
+                                    
+                                    load_conent_button = gr.Button("添加内容并加载知识库")
+                         with gr.Column(scale=5):
+                            from langchain_demo import *
+                            mode = gr.Radio(["LLM 对话", "知识库问答", "Bing搜索问答"],
+                                            label="请选择使用模式",
+                                            value="知识库问答", )
+                            knowledge_set = gr.Accordion("知识库设定", visible=False)
+                            vs_setting = gr.Accordion("配置知识库")
+                          
+                            with vs_setting:
+                                vs_refresh = gr.Button("更新已有知识库选项")
+                                select_vs = gr.Dropdown(get_vs_list(),
+                                                        label="请选择要加载的知识库",
+                                                        interactive=True,
+                                                        value=get_vs_list()[0] if len(get_vs_list()) > 0 else None
+                                                        )
+                                vs_name = gr.Textbox(label="请输入新建知识库名称，当前知识库命名暂不支持中文",
+                                                    lines=1,
+                                                    interactive=True,
+                                                    visible=True)
+                                vs_add = gr.Button(value="添加至知识库选项", visible=True)
+                                vs_delete = gr.Button("删除本知识库", visible=False)
+                                file2vs = gr.Column(visible=False)
+                                with file2vs:
+                                    # load_vs = gr.Button("加载知识库")
+                                    gr.Markdown("向知识库中添加文件")
+                                    sentence_size = gr.Number(value=SENTENCE_SIZE, precision=0,
+                                                            label="文本入库分句长度限制",
+                                                            interactive=True, visible=True)
+                                    with gr.Tab("上传文件"):
+                                        files = gr.File(label="添加文件",
+                                                        file_types=['.txt', '.md', '.docx', '.pdf', '.png', '.jpg', ".csv",'.pptx'],
+                                                        file_count="multiple",
+                                                        show_label=False)
+                                        load_file_button = gr.Button("上传文件并加载知识库")
+                                    with gr.Tab("上传文件夹"):
+                                        folder_files = gr.File(label="添加文件",
+                                                            file_count="directory",
+                                                            show_label=False)
+                                        load_folder_button = gr.Button("上传文件夹并加载知识库")
+                                    with gr.Tab("删除文件"):
+                                        files_to_delete = gr.CheckboxGroup(choices=[],
+                                                                        label="请从知识库已有文件中选择要删除的文件",
+                                                                        interactive=True)
+                                        delete_file_button = gr.Button("从知识库中删除选中文件")
+                                    
                     with gr.Column(scale=20):
                          with gr.Accordion('输出区', open=True):
                             with gr.TabItem('图像输出'):   
@@ -826,7 +891,38 @@ if __name__ == "__main__":
                                 history = gr.State([])
                
                #Recording_audio.click(fn=toggle_operation,inputs=[asr_select],outputs=[input_text]) # 将 toggle_operation 函数绑定到按钮
-                  # 功能区显示开关与功能区的互动
+               vs_path, file_status, model_status = gr.State(os.path.join(KB_ROOT_PATH, get_vs_list()[0], "vector_store") 
+                                                             if len(get_vs_list()) > 1 else ""), gr.State(""), gr.State(init_model())
+               #local_doc_qa=gr.s
+               mode.change(fn=change_mode,inputs=[mode, result_text], outputs=[vs_setting, knowledge_set, result_text])  
+
+               vs_refresh.click(fn=refresh_vs_list,
+                                                inputs=[],
+                                                outputs=select_vs)
+               vs_add.click(fn=add_vs_name,
+                                            inputs=[vs_name, result_text],
+                                            outputs=[select_vs, vs_name, vs_add, file2vs, result_text, vs_delete])
+               vs_delete.click(fn=delete_vs,
+                                                inputs=[select_vs, result_text],
+                                                outputs=[select_vs, vs_name, vs_add, file2vs, result_text, vs_delete])
+               select_vs.change(fn=change_vs_name_input,
+                                                inputs=[select_vs, result_text],
+                                                outputs=[vs_name, vs_add, file2vs, vs_path, result_text, files_to_delete, vs_delete])
+               load_file_button.click(get_vector_store,
+                                                    show_progress=True,
+                                                    inputs=[select_vs, files, sentence_size, result_text, vs_add, vs_add],
+                                                    outputs=[vs_path, files, result_text, files_to_delete], )
+               load_folder_button.click(get_vector_store,
+                                                        show_progress=True,
+                                                        inputs=[select_vs, folder_files, sentence_size, result_text, vs_add,
+                                                                vs_add],
+                                                        outputs=[vs_path, folder_files, result_text, files_to_delete], )
+               flag_csv_logger.setup([chat_txt,vs_path,result_text, mode], "flagged")
+             
+               delete_file_button.click(delete_file, show_progress=True,
+                                                     inputs=[select_vs, files_to_delete, result_text],
+                                                     outputs=[files_to_delete, result_text])    
+ # 功能区显示开关与功能区的互动
                def fn_area_visibility(a):
                     ret = {}
                     ret.update({area_basic_fn: gr.update(visible=("基础功能区" in a))})
@@ -861,31 +957,33 @@ if __name__ == "__main__":
                md_dropdown.select(on_md_dropdown_changed, [md_dropdown],[result_text])
                
                outputs = [gallery, output_text, output_tag,output_classes]             
-               input_combo = [cookies, max_length_sl, md_dropdown,chat_txt,txt,top_p, temperature, result_text, history,system_prompt,plugin_advanced_arg,omniverse_switch,record_audio,asr_gpt,quant_chatglm,chat_app]        
+               input_combo = [cookies, max_length_sl, md_dropdown,chat_txt,txt,top_p, temperature, result_text, history,system_prompt,plugin_advanced_arg,omniverse_switch,record_audio,asr_gpt,quant_chatglm,chat_app,vs_path]        
                output_combo = [cookies, result_text, history, status]
-              # output_combo2=[result_text, history, status]
+              
                predict_args = dict(fn=ArgsGeneralWrapper(predict_all), inputs=input_combo, outputs=output_combo)  
                chat_args=dict(fn=ArgsGeneralWrapper(talk_all), inputs=input_combo, outputs=output_combo)  
                run_button.click(fn=Auto_run, inputs=inputs, outputs=outputs)
+               query_args=dict(fn=ArgsGeneralWrapper(Langchains_agent作答), inputs=input_combo, outputs=output_combo)  
+               #query_summit.click(Langchains_agent作答,inputs=inputs, outputs=outputs)
                 # 提交按钮、重置按钮
                cancel_handles.append(chat_txt.submit(**predict_args))
                cancel_handles.append(txt.submit(**predict_args))
                cancel_handles.append(run_button_chat.click(**predict_args))
                cancel_handles.append(clear_button.click(**predict_args))
                cancel_handles.append(chat_app_button.click(**chat_args)) 
+               cancel_handles.append(query_summit.click(**query_args)) 
                resetBtn.click(lambda: ([], [], "已重置"), None, [result_text, history, status])
                stopBtn2.click(fn=None, inputs=None, outputs=None, cancels=cancel_handles)
               
                for k in functional:
                     if ("Visible" in functional[k]) and (not functional[k]["Visible"]): continue
-                    dict_args=dict(fn=ArgsGeneralWrapper(predict_all), inputs=[*input_combo, gr.State(True),gr.State(k)], outputs=output_combo)
-                    
+                    dict_args=dict(fn=ArgsGeneralWrapper(predict_all), inputs=[*input_combo, gr.State(True),gr.State(k)], outputs=output_combo)    
                     cancel_handles.append(functional[k]["Button"].click(**dict_args))
                # 文件上传区，接收文件后与chatbot的互动
                file_upload.upload(on_file_uploaded, [file_upload, result_text, chat_txt, txt, checkboxes], [result_text, chat_txt, txt])
                 # 函数插件-固定按钮区
                for k in crazy_fns:
-                    print(f'检查插件名字{k}，是否载入')
+                    #print(f'检查插件名字{k}，是否载入')
                     if not crazy_fns[k].get("AsButton", True): continue
                     click_handle = crazy_fns[k]["Button"].click(ArgsGeneralWrapper(crazy_fns[k]["Function"]), [*input_combo, gr.State(PORT)], output_combo)
                     click_handle.then(on_report_generated, [cookies, file_upload, result_text], [cookies, file_upload, result_text])
