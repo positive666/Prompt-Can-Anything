@@ -78,7 +78,7 @@ def ArgsGeneralWrapper(f):
             f_hot_reload = getattr(importlib.import_module(module, fn_name), fn_name)
             yield from f_hot_reload(txt_passon, llm_kwargs, plugin_kwargs, chatbot_with_cookie, history, system_prompt, *args)
     return decorated
-    return decorated
+ 
 
 
 def update_ui(chatbot, history, msg='正常', **kwargs):  # 刷新界面
