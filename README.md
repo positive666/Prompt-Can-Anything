@@ -79,23 +79,23 @@ Through continuous creativity and accumulation, we will integrate and learn from
 
 
 	-【2023/8/7】   Fix bug with llm(chatglm2,gpt3.5 loads and improve gradio ui)
-
+	
 	-【2023/7/21】  update tag2text and ram with offical repo
-
+	
 	-【2023/6/7】   v1.15:add submodule SadTalker,update UI
-
+	
 	-【2023/6/6】   v1.15:environment installation problems and supplementary instructions, special models are called independently, and no need to install dependencies; Added the function of one-click fine-tuning of VisualGLM, considering machine configuration and video memory with caution
-
+	
 	-【2023/6/5】   v1.15 a vide demo and plan,fix asr bug ,chatgpt with asr and tts 
-
+	
 	-【2023/5/31】  Fixed the already issue, add tts demo, the Linux platform is tested through all open features
-
+	
 	-【2023/5/23】  add web demo:Add VisualGLM ,chatgpt from [Academic-gpt](https://github.com/binary-husky/gpt_academic)
-
+	
 	-【2023/5/7】   add web demo:At present, the function of text generation, detection and segmentation of images or image folders on the website has been tested normally, and the program does not need to be restarted, and the last model loading configuration is remembered, and it will be continuously optimized in the future.
-
+	
 	-【2023/5/4】   add  semantic segmentatio label, add args(--color-flag --save-mask )
-
+	
 	-【2023/4/26】  YOCO,Automatic annotation TOOLS:Commit preliminary code ,For the input image or folder, you can obtain the results of detection, segmentation, and text annotation , optional chatgpt api.
 
 
@@ -141,7 +141,7 @@ Installation of Ground detector (compiling)
 
 ```bash
 cd model_cards
-python setup.py install
+pip install -e .
 ```
 
 Installation of Tsinghua VisualGLM (optional, better to use LINUX system, installation plan will be updated after testing on Windows)
@@ -200,7 +200,7 @@ pip install pyaudio
 
 **Windows installation issue**
 
-​			to be resolved and sorted out.Notice
+​		as Linux
 
 For more content, you can check the requirements, “pip install < your missing packages>”, and if there are version installation issues, please check the version carefully in the requirements.
 
@@ -270,7 +270,7 @@ For more content, you can check the requirements, “pip install < your missing 
 
 **🏃Demo**
 
- [Video demo 1 online on baidu clound ](https://pan.baidu.com/s/1AllUjuOVhzJh7abe71iCxg?pwd=c6v）   
+ [Video demo 1 online on baidu clound ](https://pan.baidu.com/s/1AllUjuOVhzJh7abe71iCxg?pwd=c6v6）   
  [ Video demo 2 ] (https://pan.baidu.com/s/1jdP9mgUhyfLh_hz1W3pkeQ?pwd=c6v6)
 
 
@@ -354,7 +354,7 @@ https://www.nvidia.cn/omniverse/
 - [x] Support ChatGPT/VISUALGLM/ASR/TTS
 - [x]   YOCO labeling fine-tuning of VISUALGLM demo[next week]
 - [x] 3D && 2D avatar 
-- [ ] Complete the planned AI combination “Annison”
+- [ ] Complete the planned AI combination “Anything”
 - [ ] Fine-tune the segmentation and ground detectors of SAM, and expand the input control of SAM
 - [ ] Release training methods
 - [ ] Knowledge cloning

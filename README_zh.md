@@ -148,7 +148,7 @@ pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
 
 ```
 cd  model_cards
-python setup.py install
+pip install -e .
 ```
 
 安装清华智谱视觉VisualGLM（可选，最好用LINUX系统，window后面测试后补充安装方案）：
@@ -205,7 +205,7 @@ pip install  bitsandbytes  -i https://mirrors.aliyun.com/pypi/simple
 
 **Windows安装问题**
 
-待解决整理
+目前除了LLM的加速和微调三方库，无特殊问题。
 
 运行
 
@@ -261,7 +261,7 @@ pip install  bitsandbytes  -i https://mirrors.aliyun.com/pypi/simple
 
 ## 🏃Demo
 
- [视频Demo介绍 ](https://pan.baidu.com/s/1AllUjuOVhzJh7abe71iCxg?pwd=c6v）  
+ [视频Demo介绍 ](https://pan.baidu.com/s/1AllUjuOVhzJh7abe71iCxg?pwd=c6v6）  
  [ Video demo 2 ] (https://pan.baidu.com/s/1jdP9mgUhyfLh_hz1W3pkeQ?pwd=c6v6)
 
 1. 自动标注的测试样例
