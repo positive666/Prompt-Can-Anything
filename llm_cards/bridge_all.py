@@ -339,5 +339,5 @@ def predict_all(inputs, llm_kwargs, *args, **kwargs):
 
 def talk_all(inputs, llm_kwargs, *args, **kwargs):
     
-    method = model_info[llm_kwargs['llm_model']]["talk_chatglm"]
+    method = model_info[llm_kwargs['llm_model']]["fn_talk"]
     yield from method(inputs, llm_kwargs, *args, **kwargs)
