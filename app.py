@@ -578,7 +578,7 @@ if __name__ == "__main__":
                                     text_threshold=gr.inputs.Number(label='Text Threshold', default=0.25)
                                     device_input=gr.inputs.Textbox(label='device',default='0')
                                     quant=gr.inputs.Number(label='quant levels',default=4)   
-                                                      
+                                     
                             with gr.TabItem('其他【不需要修改】'):
                                     option_inputs  = {
                                     'Save Conf': gr.inputs.Checkbox(label='Save Conf',default=False),
@@ -755,7 +755,7 @@ if __name__ == "__main__":
                                     stopBtn2 = gr.Button("停止", variant="secondary"); stopBtn2.style(size="sm")
                                     clearBtn = gr.Button("清除", variant="secondary", visible=False); clearBtn.style(size="sm")
                          with gr.Row():       
-                                status = gr.Markdown(f"Tips:Enter提交, 按Shift+Enter换行。当前模型: {LLM_MODEL} \n ")           
+                                status = gr.Markdown(f"Tip: 按Enter提交, 按Shift+Enter换行。当前模型: {LLM_MODEL} \n {proxy_info}", elem_id="state-panel")        
                          with gr.Tabs(elem_id="Chatbox"): 
                             with gr.TabItem('对话区'):  
                                 with gr.Accordion("输入区", open=True, elem_id="input-panel") as area_input_primary: 
@@ -871,11 +871,17 @@ if __name__ == "__main__":
                cancel_handles.append(chat_txt.submit(**predict_args))
                cancel_handles.append(txt.submit(**predict_args))
                cancel_handles.append(run_button_chat.click(**predict_args))
-               cancel_handles.append(clear_button.click(**predict_args))
+               cancel_handles.append(run_button_2.click(**predict_args))
                cancel_handles.append(chat_app_button.click(**chat_args)) 
                resetBtn.click(lambda: ([], [], "已重置"), None, [result_text, history, status])
                stopBtn2.click(fn=None, inputs=None, outputs=None, cancels=cancel_handles)
-              
+               clearBtn.click(lambda: ("",""), None, [chat_txt,txt])
+               clearBtn2.click(lambda: ("",""), None, [chat_txt,txt])
+               if AUTO_CLEAR_TXT:
+                    run_button_chat.click(lambda: ("",""), None, [chat_txt,txt])
+                    run_button_2.click(lambda: ("",""), None, [chat_txt,txt])
+                    chat_txt.submit(lambda: ("",""), None, [chat_txt,txt])
+                    txt.submit(lambda: ("",""), None, [chat_txt,txt])
                for k in functional:
                     if ("Visible" in functional[k]) and (not functional[k]["Visible"]): continue
                     dict_args=dict(fn=ArgsGeneralWrapper(predict_all), inputs=[*input_combo, gr.State(True),gr.State(k)], outputs=output_combo)
