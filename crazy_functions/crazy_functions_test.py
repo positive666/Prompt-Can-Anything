@@ -173,6 +173,20 @@ def test_Langchain知识库():
     for cookies, cb, hist, msg in silence_stdout(读取知识库作答)(txt, llm_kwargs, plugin_kwargs, chatbot, history, system_prompt, web_port):
         cli_printer.print(cb)   #  print(cb)
 
+
+def Langchains_agent():
+    from crazy_functions.langchain_agent import Langchains知识库问答
+    txt = "C:\\Users\\chengrui4\\Desktop\\FUNDAT\\planning.pptx"
+    
+    chatbot = ChatBotWithCookies(llm_kwargs)
+    for cookies, cb, hist, msg in silence_stdout(Langchains知识库问答)(txt, llm_kwargs, plugin_kwargs, chatbot, history, system_prompt, web_port):
+        cli_printer.print(cb)   # 
+    chatbot = ChatBotWithCookies(cookies)
+    from crazy_functions.langchain_agent import Langchains_agent作答
+    txt = "What is the installation method？"
+    for cookies, cb, hist, msg in silence_stdout(Langchains_agent作答)(txt, llm_kwargs, plugin_kwargs, chatbot, history, system_prompt, web_port):
+        cli_printer.print(cb)   # print(cb)
+
 def test_Langchain知识库读取():
     from crazy_functions.Langchain知识库 import 读取知识库作答
     txt = "远程云服务器部署？"
@@ -241,9 +255,9 @@ if __name__ == "__main__":
     # test_联网回答问题()
     # test_解析ipynb文件()
     # test_数学动画生成manim()
-    # test_Langchain知识库()
-    # test_Langchain知识库读取()
-    test_Latex()
+    Langchains_agent()
+   # # test_Langchain知识库读取()
+    #test_Latex()
     # test_chatglm_finetune()
     input("程序完成，回车退出。")
     print("退出。")
